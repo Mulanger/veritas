@@ -24,8 +24,15 @@ android {
     }
 
     buildTypes {
+        debug {
+            applicationIdSuffix = ".debug"
+            versionNameSuffix = "-debug"
+            buildConfigField("boolean", "ENABLE_DESIGN_GALLERY", "true")
+        }
+
         release {
             isMinifyEnabled = false
+            buildConfigField("boolean", "ENABLE_DESIGN_GALLERY", "false")
         }
     }
 

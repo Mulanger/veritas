@@ -10,6 +10,7 @@ plugins {
     alias(libs.plugins.ksp) apply false
     alias(libs.plugins.kotlin.jvm) apply false
     alias(libs.plugins.ktlint) apply false
+    alias(libs.plugins.roborazzi) apply false
 }
 
 subprojects {
@@ -40,6 +41,7 @@ tasks.register("precommitCheck") {
         ":app:detekt",
         ":core-common:detekt",
         ":core-design:detekt",
+        ":core-design:verifyRoborazziDebug",
         ":data-detection:detekt",
         ":domain-detection:detekt",
         ":feature-home:detekt",
@@ -58,4 +60,3 @@ tasks.register("test") {
         ":feature-home:testDebugUnitTest",
     )
 }
-

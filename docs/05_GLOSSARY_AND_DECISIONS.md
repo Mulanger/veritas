@@ -347,6 +347,28 @@ Aesthetic/behavioral references for the agent when making small judgment calls:
 
 ## Part 7 — Version history
 
+### D-020 · Roborazzi over Paparazzi for Phase 1 screenshot tests
+**Phase:** 1
+**Date:** 2026-04-22
+**Context:** Phase 1 required a screenshot test system for Compose primitives and allowed either Paparazzi or Roborazzi.
+**Decision:** Use Roborazzi in `core-design` with Robolectric-backed unit tests, and wire `verifyRoborazziDebug` into the root `precommitCheck` task and CI.
+**Alternatives considered:** Paparazzi.
+**Reasoning:** Roborazzi fits the Kotlin 2.x + current AGP stack cleanly, works with Android resources in local unit tests, and lets the same primitive composables be exercised by both the screenshot suite and the gallery screen without introducing a second rendering model.
+**Reversal cost:** medium - the test fixtures and baseline images are isolated to `core-design`, so switching frameworks later is possible but would require re-recording baselines and rewriting the screenshot harness.
+**Approved by human:** pending checkpoint, 2026-04-22
+
+### D-021 · Variable font assets for Manrope and JetBrains Mono
+**Phase:** 1
+**Date:** 2026-04-22
+**Context:** The visual spec required multiple weights for both Manrope and JetBrains Mono in the Compose theme.
+**Decision:** Store one variable TTF per family in `res/font/` and map the required weight set through Compose `FontFamily` entries.
+**Alternatives considered:** Commit one static TTF file per required weight.
+**Reasoning:** Variable fonts keep the asset footprint smaller, still expose the exact required weight mappings to Compose, and reduce maintenance overhead versus managing many near-duplicate files.
+**Reversal cost:** low - the change is localized to two font resources and the `FontFamily` setup in `core-design`.
+**Approved by human:** pending checkpoint, 2026-04-22
+
+---
+
 | Version | Date | Changes |
 |---|---|---|
 | 1.0 | April 2026 | Initial document set at start of build |
