@@ -1,0 +1,1786 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Veritas — Mockups 3/4: Verdicts & Forensic Depth</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700;800&family=Manrope:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0b0d;
+    --panel: #111318;
+    --panel-2: #171a21;
+    --line: #22262f;
+    --line-2: #2c3140;
+    --ink: #e9ecf1;
+    --ink-dim: #9ba3b4;
+    --ink-mute: #5c6473;
+    --ok: #3fd69b;
+    --ok-dim: #1f6b4f;
+    --warn: #f5b642;
+    --warn-dim: #7a5a1d;
+    --bad: #ff5a5a;
+    --bad-dim: #7a2828;
+    --accent: #8ab4ff;
+    --mono: 'JetBrains Mono', ui-monospace, monospace;
+    --sans: 'Manrope', system-ui, sans-serif;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body {
+    background: var(--bg); color: var(--ink);
+    font-family: var(--sans); min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+    background-image:
+      radial-gradient(ellipse at 20% 10%, rgba(138,180,255,0.05), transparent 50%),
+      radial-gradient(ellipse at 80% 90%, rgba(63,214,155,0.04), transparent 50%);
+    background-attachment: fixed;
+  }
+  .page { max-width: 1440px; margin: 0 auto; padding: 56px 32px 120px; }
+  .masthead {
+    display: flex; align-items: flex-end; justify-content: space-between;
+    padding-bottom: 28px; border-bottom: 1px solid var(--line); margin-bottom: 56px;
+  }
+  .masthead .title {
+    font-family: var(--mono); font-weight: 800;
+    letter-spacing: 0.18em; font-size: 13px; color: var(--ink-dim);
+  }
+  .masthead h1 {
+    font-family: var(--sans); font-weight: 300;
+    font-size: 64px; line-height: 1; letter-spacing: -0.03em; margin-top: 14px;
+  }
+  .masthead h1 em { font-style: normal; font-weight: 700; }
+  .masthead .meta {
+    font-family: var(--mono); font-size: 11px;
+    color: var(--ink-mute); text-align: right; line-height: 1.8;
+  }
+  .masthead .meta span { color: var(--ink-dim); }
+
+  .section { margin-bottom: 80px; }
+  .section-head {
+    display: flex; align-items: baseline; gap: 20px;
+    margin-bottom: 32px; padding-bottom: 16px;
+    border-bottom: 1px dashed var(--line);
+  }
+  .section-num {
+    font-family: var(--mono); font-size: 11px;
+    color: var(--ink-mute); letter-spacing: 0.1em;
+  }
+  .section-title { font-size: 24px; font-weight: 600; letter-spacing: -0.01em; }
+  .section-desc {
+    color: var(--ink-dim); font-size: 14px;
+    margin-left: auto; max-width: 480px; line-height: 1.5;
+  }
+
+  .phones {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(310px, 1fr));
+    gap: 40px 32px; justify-items: center;
+  }
+
+  .phone {
+    width: 310px; height: 640px;
+    border-radius: 44px; background: #000;
+    padding: 10px; position: relative;
+    box-shadow:
+      0 0 0 2px #1a1d24, 0 0 0 3px #0a0b0d,
+      0 30px 80px -20px rgba(0,0,0,0.8),
+      0 12px 28px -12px rgba(138,180,255,0.08);
+  }
+  .phone::before {
+    content: ''; position: absolute; top: 22px; left: 50%;
+    transform: translateX(-50%); width: 86px; height: 24px;
+    background: #000; border-radius: 14px; z-index: 20;
+  }
+  .screen {
+    width: 100%; height: 100%;
+    border-radius: 34px; overflow: hidden;
+    position: relative; background: var(--bg);
+  }
+  .statusbar {
+    height: 44px; display: flex; align-items: center;
+    justify-content: space-between; padding: 0 28px;
+    font-family: var(--mono); font-size: 11px; font-weight: 700;
+    color: var(--ink); position: relative; z-index: 10;
+  }
+  .statusbar .icons { display: flex; gap: 5px; align-items: center; }
+  .bar { display: inline-flex; gap: 2px; }
+  .bar i { display: block; width: 2px; background: var(--ink); border-radius: 1px; }
+  .bar i:nth-child(1) { height: 3px; }
+  .bar i:nth-child(2) { height: 5px; }
+  .bar i:nth-child(3) { height: 7px; }
+  .bar i:nth-child(4) { height: 9px; }
+  .batt {
+    width: 22px; height: 10px; border: 1px solid var(--ink);
+    border-radius: 2px; position: relative; padding: 1px;
+  }
+  .batt::after {
+    content: ''; position: absolute; right: -3px; top: 3px;
+    width: 2px; height: 4px; background: var(--ink); border-radius: 0 1px 1px 0;
+  }
+  .batt i { display: block; width: 70%; height: 100%; background: var(--ink); border-radius: 1px; }
+
+  .phone-label {
+    text-align: center; margin-top: 18px;
+    font-family: var(--mono); font-size: 11px;
+    color: var(--ink-mute); letter-spacing: 0.1em;
+  }
+  .phone-label strong {
+    color: var(--ink-dim); display: block;
+    font-weight: 700; margin-bottom: 4px; letter-spacing: 0.14em;
+  }
+  .phone-label em {
+    display: block; font-style: normal; margin-top: 4px;
+    font-family: var(--mono); font-size: 9.5px; color: var(--ink-mute);
+    letter-spacing: 0.08em;
+  }
+
+  /* Brand + top bar */
+  .verdict-screen {
+    position: absolute; inset: 0;
+    background: var(--bg);
+    display: flex; flex-direction: column;
+    padding: 44px 0 0 0;
+  }
+  .verdict-top {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 18px 22px 14px;
+    border-bottom: 1px solid var(--line);
+  }
+  .brand { display: flex; align-items: center; gap: 8px; }
+  .brand-mark {
+    width: 18px; height: 18px; border: 1.5px solid var(--accent);
+    border-radius: 4px; position: relative;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .brand-mark::before {
+    content: ''; position: absolute; inset: 3px;
+    border: 1px solid rgba(138,180,255,0.4); border-radius: 1px;
+  }
+  .brand-mark::after {
+    content: ''; width: 4px; height: 4px;
+    background: var(--accent); border-radius: 50%;
+    box-shadow: 0 0 6px var(--accent);
+  }
+  .brand-name {
+    font-family: var(--mono); font-weight: 700;
+    font-size: 12px; letter-spacing: 0.18em; color: var(--ink);
+  }
+  .close-btn {
+    width: 28px; height: 28px; border-radius: 50%;
+    background: var(--panel); display: flex;
+    align-items: center; justify-content: center;
+    color: var(--ink-dim); font-size: 16px; font-weight: 300;
+  }
+
+  /* === SCANNING AUDIO === */
+  .scan-wrap {
+    flex: 1;
+    display: flex; flex-direction: column;
+    padding: 20px 20px 28px;
+  }
+  .audio-preview {
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    background: linear-gradient(180deg, #1a1d24 0%, #0f1014 100%);
+    padding: 28px 20px 24px;
+    position: relative;
+    overflow: hidden;
+  }
+  .audio-wave-container {
+    position: relative;
+    height: 100px;
+  }
+  .audio-wave-bars {
+    display: flex; align-items: center;
+    justify-content: space-between;
+    height: 100%;
+    gap: 2px;
+    position: relative; z-index: 2;
+  }
+  .audio-wave-bars .wb {
+    flex: 1;
+    background: var(--ink-dim);
+    opacity: 0.6;
+    border-radius: 1px;
+    min-height: 4px;
+  }
+  .audio-wave-bars .wb.highlight {
+    background: var(--accent);
+    opacity: 1;
+    box-shadow: 0 0 6px var(--accent);
+  }
+  .audio-scan-line {
+    position: absolute;
+    top: 0; bottom: 0;
+    left: 38%;
+    width: 2px;
+    background: var(--accent);
+    box-shadow: 0 0 12px var(--accent), 0 0 3px var(--accent);
+    z-index: 3;
+  }
+  .audio-scan-line::before {
+    content: '';
+    position: absolute;
+    left: -3px; top: -4px;
+    width: 8px; height: 4px;
+    background: var(--accent);
+    border-radius: 1px;
+  }
+  .audio-scan-line::after {
+    content: '';
+    position: absolute;
+    left: -3px; bottom: -4px;
+    width: 8px; height: 4px;
+    background: var(--accent);
+    border-radius: 1px;
+  }
+  .audio-meta {
+    margin-top: 14px;
+    display: flex; justify-content: space-between;
+    font-family: var(--mono); font-size: 9px;
+    color: var(--ink-mute); letter-spacing: 0.12em;
+  }
+
+  /* Scan steps */
+  .scan-status {
+    margin-top: 16px;
+    display: flex; flex-direction: column; gap: 10px;
+  }
+  .scan-status .label {
+    font-family: var(--mono); font-size: 10px;
+    letter-spacing: 0.15em; color: var(--ink-mute);
+  }
+  .scan-step {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 12px;
+    background: var(--panel);
+    border-radius: 8px;
+    border: 1px solid var(--line);
+    font-size: 12px;
+    color: var(--ink-dim);
+  }
+  .scan-step.active { color: var(--ink); border-color: var(--accent); }
+  .scan-step.done { opacity: 0.6; }
+  .scan-step .dot {
+    width: 8px; height: 8px; border-radius: 50%; background: var(--line-2);
+    flex-shrink: 0;
+  }
+  .scan-step.active .dot {
+    background: var(--accent);
+    box-shadow: 0 0 8px var(--accent);
+  }
+  .scan-step.done .dot { background: var(--ok); }
+  .scan-step .step-meta {
+    margin-left: auto;
+    font-family: var(--mono); font-size: 10px;
+    color: var(--ink-mute);
+  }
+  .scan-step.skipped {
+    opacity: 0.5;
+    font-style: italic;
+  }
+
+  /* === SCANNING IMAGE (minimal) === */
+  .image-preview-scan {
+    flex: 1;
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    position: relative;
+    overflow: hidden;
+    background: linear-gradient(180deg, #1a1d24 0%, #0f1014 100%);
+    min-height: 280px;
+  }
+  .image-preview-scan .fake-img {
+    position: absolute; inset: 0;
+    background:
+      radial-gradient(ellipse at 40% 35%, rgba(255,220,200,0.25), transparent 30%),
+      radial-gradient(ellipse at 62% 35%, rgba(255,220,200,0.25), transparent 30%),
+      linear-gradient(135deg, #3a4152 0%, #2a2f3a 60%, #1a1e28 100%);
+    opacity: 0.7;
+  }
+  .image-preview-scan .fake-img::after {
+    content: ''; position: absolute;
+    top: 50%; left: 50%;
+    width: 150px; height: 180px;
+    transform: translate(-50%, -50%);
+    border-radius: 75px / 90px;
+    background:
+      radial-gradient(ellipse at 35% 35%, rgba(255,230,210,0.2), transparent 30%),
+      radial-gradient(ellipse at 65% 35%, rgba(255,230,210,0.2), transparent 30%),
+      linear-gradient(180deg, #8b7355 0%, #5a4a35 100%);
+    filter: blur(2px);
+  }
+  .image-scan-line-single {
+    position: absolute;
+    left: 0; right: 0;
+    height: 2px;
+    top: 62%;
+    background: linear-gradient(90deg, transparent, var(--accent), transparent);
+    box-shadow: 0 0 16px var(--accent), 0 0 4px var(--accent);
+    z-index: 3;
+  }
+  .scan-corners {
+    position: absolute; inset: 12px;
+    pointer-events: none;
+  }
+  .scan-corners::before, .scan-corners::after {
+    content: ''; position: absolute;
+    width: 22px; height: 22px;
+    border: 2px solid var(--accent);
+  }
+  .scan-corners::before {
+    top: 0; left: 0;
+    border-right: none; border-bottom: none;
+  }
+  .scan-corners::after {
+    bottom: 0; right: 0;
+    border-left: none; border-top: none;
+  }
+  .image-scan-caption {
+    padding: 10px 14px;
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    margin-top: 16px;
+    display: flex; gap: 10px; align-items: center;
+  }
+  .image-scan-caption .dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--accent);
+    box-shadow: 0 0 8px var(--accent);
+    flex-shrink: 0;
+  }
+  .image-scan-caption .text {
+    font-size: 11px;
+    color: var(--ink-dim);
+    font-family: var(--mono);
+    letter-spacing: 0.05em;
+  }
+  .image-scan-caption .text strong { color: var(--ink); font-weight: 700; }
+
+  /* Model not ready variant */
+  .skeleton-preview {
+    flex: 1;
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    background: linear-gradient(180deg, #14171e 0%, #0c0d11 100%);
+    min-height: 280px;
+    position: relative;
+    overflow: hidden;
+  }
+  .skeleton-preview::before {
+    content: ''; position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg,
+      transparent 0%,
+      rgba(138,180,255,0.04) 50%,
+      transparent 100%);
+  }
+  .skeleton-preview .sk-bar {
+    position: absolute; left: 20px; right: 20px;
+    height: 10px;
+    background: var(--line);
+    border-radius: 5px;
+  }
+  .skeleton-preview .sk-bar:nth-child(1) { top: 24px; width: 70%; }
+  .skeleton-preview .sk-bar:nth-child(2) { top: 44px; width: 85%; }
+  .skeleton-preview .sk-bar:nth-child(3) { top: 180px; width: 55%; height: 8px; }
+  .skeleton-preview .sk-circle {
+    position: absolute;
+    top: 90px; left: 50%;
+    transform: translateX(-50%);
+    width: 60px; height: 60px;
+    border-radius: 50%;
+    background: var(--line);
+  }
+
+  /* === VERDICT === */
+  .vx {
+    flex: 1;
+    padding: 20px 20px 24px;
+    display: flex; flex-direction: column;
+  }
+  .vx-tag {
+    font-family: var(--mono); font-size: 10px;
+    letter-spacing: 0.2em; color: var(--ink-mute);
+    margin-bottom: 12px;
+  }
+  .vx-verdict {
+    font-family: var(--sans); font-weight: 800;
+    font-size: 36px; line-height: 0.95;
+    letter-spacing: -0.025em; margin-bottom: 14px;
+  }
+  .vx.ok .vx-verdict { color: var(--ok); }
+  .vx.warn .vx-verdict { color: var(--warn); }
+  .vx.bad .vx-verdict { color: var(--bad); }
+  .vx-confidence {
+    display: flex; align-items: center; gap: 10px;
+    margin-bottom: 20px;
+  }
+  .vx-confidence .bar-wrap {
+    flex: 1; height: 6px;
+    background: var(--panel); border-radius: 3px;
+    overflow: hidden; position: relative;
+  }
+  .vx-confidence .bar-wrap .range {
+    position: absolute; height: 100%; border-radius: 3px;
+  }
+  .vx.ok .bar-wrap .range { background: var(--ok); }
+  .vx.warn .bar-wrap .range { background: var(--warn); }
+  .vx.bad .bar-wrap .range { background: var(--bad); }
+  .vx-confidence .num {
+    font-family: var(--mono); font-size: 11px;
+    color: var(--ink-dim); font-weight: 700;
+  }
+
+  /* Audio verdict waveform preview at top */
+  .audio-verdict-wave {
+    margin-bottom: 16px;
+    padding: 12px 14px;
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    position: relative;
+    overflow: hidden;
+  }
+  .audio-verdict-wave .mini-wave {
+    display: flex; align-items: center;
+    gap: 1.5px; height: 32px;
+  }
+  .audio-verdict-wave .mini-wave .wb {
+    flex: 1; background: var(--ink-mute);
+    border-radius: 1px; min-height: 3px;
+  }
+  .audio-verdict-wave .mini-wave .wb.flag {
+    background: var(--bad);
+    box-shadow: 0 0 4px var(--bad);
+  }
+  .audio-verdict-wave .mini-wave .wb.flag-warn {
+    background: var(--warn);
+  }
+  .audio-verdict-wave .mini-wave .wb.flag-ok {
+    background: var(--ok);
+  }
+  .audio-verdict-wave .wave-meta {
+    display: flex; justify-content: space-between;
+    margin-top: 8px;
+    font-family: var(--mono); font-size: 9px;
+    color: var(--ink-mute); letter-spacing: 0.1em;
+  }
+
+  /* Image verdict — preview image at top */
+  .image-verdict-preview {
+    margin-bottom: 14px;
+    border-radius: 12px;
+    overflow: hidden;
+    border: 1px solid var(--line);
+    aspect-ratio: 4/3;
+    position: relative;
+    background: linear-gradient(135deg, #2a2f3a, #1a1e28);
+  }
+  .image-verdict-preview.synth::before {
+    content: '';
+    position: absolute; inset: 0;
+    box-shadow: inset 0 0 0 1.5px var(--bad);
+    border-radius: 11px;
+    z-index: 3;
+    pointer-events: none;
+    opacity: 0.7;
+  }
+  .image-verdict-preview.auth::before {
+    content: '';
+    position: absolute; inset: 0;
+    box-shadow: inset 0 0 0 1.5px var(--ok);
+    border-radius: 11px;
+    opacity: 0.35;
+    z-index: 3;
+    pointer-events: none;
+  }
+  .image-verdict-preview .vfig {
+    position: absolute;
+    top: 50%; left: 50%; transform: translate(-50%, -50%);
+    width: 70%; height: 85%;
+    border-radius: 45% / 55%;
+    background:
+      radial-gradient(ellipse at 35% 35%, rgba(255,230,210,0.2), transparent 30%),
+      radial-gradient(ellipse at 65% 35%, rgba(255,230,210,0.2), transparent 30%),
+      linear-gradient(180deg, #8b7355 0%, #5a4a35 100%);
+    filter: blur(1px);
+  }
+  .image-verdict-preview .dims {
+    position: absolute;
+    top: 8px; left: 10px;
+    font-family: var(--mono); font-size: 9px;
+    color: rgba(255,255,255,0.6);
+    letter-spacing: 0.1em;
+    background: rgba(0,0,0,0.4);
+    padding: 2px 6px;
+    border-radius: 3px;
+  }
+
+  .vx-summary {
+    font-size: 14px; line-height: 1.5;
+    color: var(--ink-dim); margin-bottom: 22px;
+  }
+  .vx-summary strong { color: var(--ink); font-weight: 600; }
+
+  .vx-evidence {
+    display: flex; flex-direction: column;
+    gap: 8px; margin-bottom: 18px;
+  }
+  .vx-ev {
+    display: flex; gap: 10px;
+    padding: 11px 12px;
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    font-size: 12px; line-height: 1.4;
+  }
+  .vx-ev .code {
+    font-family: var(--mono); font-size: 9.5px;
+    letter-spacing: 0.1em; color: var(--ink-mute);
+    white-space: nowrap; padding-top: 1px;
+  }
+  .vx-ev .desc { color: var(--ink-dim); }
+  .vx-ev.plus { border-color: var(--ok-dim); }
+  .vx-ev.plus .code { color: var(--ok); }
+  .vx-ev.minus { border-color: var(--bad-dim); }
+  .vx-ev.minus .code { color: var(--bad); }
+  .vx-ev.mixed { border-color: var(--warn-dim); }
+  .vx-ev.mixed .code { color: var(--warn); }
+
+  .vx-actions {
+    margin-top: auto;
+    display: flex; gap: 8px;
+  }
+  .vx-btn {
+    flex: 1; padding: 13px 0;
+    text-align: center; border-radius: 10px;
+    font-size: 12.5px; font-weight: 600;
+    letter-spacing: 0.01em;
+  }
+  .vx-btn.primary { background: var(--ink); color: var(--bg); }
+  .vx-btn.secondary {
+    background: var(--panel); color: var(--ink-dim);
+    border: 1px solid var(--line);
+  }
+
+  /* === FORENSIC AUDIO === */
+  .fx {
+    flex: 1;
+    padding: 14px 0 0;
+    display: flex; flex-direction: column;
+    overflow: hidden;
+  }
+  .fx-header {
+    padding: 0 20px 14px;
+    display: flex; align-items: baseline; gap: 10px;
+    border-bottom: 1px solid var(--line);
+  }
+  .fx-header .pill {
+    font-family: var(--mono); font-size: 9px;
+    letter-spacing: 0.15em; padding: 3px 7px;
+    border-radius: 3px;
+    font-weight: 700;
+  }
+  .fx-header .pill.synth { background: var(--bad-dim); color: var(--bad); }
+  .fx-header .pill.auth { background: var(--ok-dim); color: var(--ok); }
+  .fx-header .title { font-size: 13px; font-weight: 600; }
+
+  .audio-forensic-wave {
+    margin: 14px 20px 0;
+    padding: 16px 14px 12px;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    background: var(--panel);
+  }
+  .audio-forensic-wave .label {
+    font-family: var(--mono); font-size: 9px;
+    letter-spacing: 0.12em; color: var(--ink-mute);
+    margin-bottom: 10px;
+    display: flex; justify-content: space-between;
+  }
+  .audio-forensic-wave .wave-full {
+    display: flex; align-items: center;
+    gap: 1.5px; height: 56px;
+    position: relative;
+  }
+  .audio-forensic-wave .wave-full .wb {
+    flex: 1; background: var(--ink-mute);
+    border-radius: 1px; min-height: 4px;
+  }
+  .audio-forensic-wave .wave-full .wb.flag {
+    background: var(--bad);
+    box-shadow: 0 0 4px var(--bad);
+  }
+  .audio-forensic-wave .wave-full .wb.flag-warn {
+    background: var(--warn);
+  }
+  .audio-forensic-wave .playhead {
+    position: absolute;
+    top: -4px; bottom: -4px;
+    width: 2px;
+    background: var(--accent);
+    box-shadow: 0 0 8px var(--accent);
+    left: 55%;
+  }
+
+  /* Spectrogram */
+  .spectrogram {
+    margin: 12px 20px 0;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    background: #0f1014;
+    position: relative;
+    overflow: hidden;
+    height: 120px;
+  }
+  .spectrogram::before {
+    content: ''; position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(ellipse at 20% 40%, rgba(138,180,255,0.3), transparent 15%),
+      radial-gradient(ellipse at 35% 20%, rgba(138,180,255,0.25), transparent 18%),
+      radial-gradient(ellipse at 50% 60%, rgba(245,182,66,0.2), transparent 20%),
+      radial-gradient(ellipse at 70% 30%, rgba(255,90,90,0.35), transparent 18%),
+      radial-gradient(ellipse at 72% 50%, rgba(255,90,90,0.3), transparent 15%),
+      radial-gradient(ellipse at 85% 40%, rgba(138,180,255,0.2), transparent 20%),
+      linear-gradient(180deg, rgba(138,180,255,0.02), rgba(255,90,90,0.02));
+  }
+  .spectrogram::after {
+    content: '';
+    position: absolute; inset: 0;
+    background: repeating-linear-gradient(90deg, transparent 0px, transparent 20px, rgba(255,255,255,0.02) 20px, rgba(255,255,255,0.02) 21px);
+  }
+  .spec-label {
+    position: absolute;
+    top: 8px; left: 10px;
+    font-family: var(--mono); font-size: 9px;
+    color: var(--ink-dim); letter-spacing: 0.12em;
+    z-index: 2;
+  }
+  .spec-flag {
+    position: absolute;
+    top: 32%; left: 62%;
+    width: 40px; height: 42px;
+    border: 1.5px solid var(--bad);
+    border-radius: 4px;
+    z-index: 2;
+  }
+  .spec-flag::before {
+    content: 'VOCODER';
+    position: absolute;
+    top: -14px; left: 0;
+    font-family: var(--mono); font-size: 8px;
+    color: var(--bad); letter-spacing: 0.1em;
+    white-space: nowrap;
+    font-weight: 700;
+  }
+  .spec-timeline-axis {
+    position: absolute;
+    bottom: 4px; left: 10px; right: 10px;
+    display: flex; justify-content: space-between;
+    font-family: var(--mono); font-size: 8px;
+    color: var(--ink-mute); letter-spacing: 0.1em;
+    z-index: 2;
+  }
+
+  .fx-reasons {
+    margin-top: 14px;
+    padding: 0 20px;
+    overflow-y: auto;
+  }
+  .fx-reasons .label {
+    font-family: var(--mono); font-size: 10px;
+    letter-spacing: 0.15em; color: var(--ink-mute);
+    margin-bottom: 10px;
+  }
+  .reason {
+    padding: 11px 12px;
+    border-left: 2px solid var(--line-2);
+    margin-bottom: 10px;
+    background: rgba(255,255,255,0.01);
+    border-radius: 0 8px 8px 0;
+  }
+  .reason.high { border-left-color: var(--bad); }
+  .reason.mid { border-left-color: var(--warn); }
+  .reason.low { border-left-color: var(--ok); }
+  .reason .head {
+    display: flex; justify-content: space-between; align-items: baseline;
+    margin-bottom: 4px;
+  }
+  .reason .rcode {
+    font-family: var(--mono); font-size: 9.5px;
+    letter-spacing: 0.08em; color: var(--ink-dim); font-weight: 700;
+  }
+  .reason .rweight {
+    font-family: var(--mono); font-size: 9px; color: var(--ink-mute);
+  }
+  .reason .rdesc {
+    font-size: 12px; line-height: 1.45; color: var(--ink-dim);
+  }
+
+  .fx-footer {
+    padding: 12px 20px 18px;
+    border-top: 1px solid var(--line);
+    margin-top: 12px;
+    display: flex; gap: 8px;
+  }
+
+  /* === FORENSIC IMAGE === */
+  .fx-image-toggle {
+    display: flex;
+    margin: 14px 20px 0;
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 3px;
+    gap: 2px;
+  }
+  .fx-image-toggle .tog {
+    flex: 1;
+    text-align: center;
+    padding: 8px 4px;
+    font-family: var(--mono); font-size: 9px;
+    font-weight: 700; letter-spacing: 0.1em;
+    color: var(--ink-mute);
+    border-radius: 7px;
+  }
+  .fx-image-toggle .tog.active {
+    background: var(--bg);
+    color: var(--ink);
+    box-shadow: 0 1px 4px rgba(0,0,0,0.5);
+  }
+  .fx-image-display {
+    margin: 14px 20px 0;
+    aspect-ratio: 4/3;
+    border-radius: 12px;
+    border: 1px solid var(--line);
+    overflow: hidden;
+    position: relative;
+    background: linear-gradient(135deg, #2a2f3a, #1a1e28);
+  }
+  .fx-image-display .fig {
+    position: absolute;
+    top: 50%; left: 50%; transform: translate(-50%, -50%);
+    width: 70%; height: 85%;
+    border-radius: 45% / 55%;
+    background:
+      radial-gradient(ellipse at 35% 35%, rgba(255,230,210,0.2), transparent 30%),
+      radial-gradient(ellipse at 65% 35%, rgba(255,230,210,0.2), transparent 30%),
+      linear-gradient(180deg, #8b7355 0%, #5a4a35 100%);
+    filter: blur(1px);
+  }
+  .heat-blob {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(12px);
+    mix-blend-mode: screen;
+  }
+  .heat-blob.red {
+    width: 70px; height: 50px;
+    background: radial-gradient(circle, rgba(255,80,80,0.8), transparent 70%);
+  }
+  .heat-blob.amber {
+    width: 45px; height: 38px;
+    background: radial-gradient(circle, rgba(255,180,60,0.7), transparent 70%);
+  }
+
+  /* Metadata view */
+  .metadata-list {
+    margin: 14px 20px 0;
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 10px;
+  }
+  .meta-row {
+    display: flex;
+    font-family: var(--mono); font-size: 10.5px;
+    padding: 7px 6px;
+    border-bottom: 1px dashed var(--line);
+  }
+  .meta-row:last-child { border-bottom: none; }
+  .meta-row .k {
+    color: var(--ink-mute);
+    letter-spacing: 0.1em;
+    width: 42%;
+  }
+  .meta-row .v {
+    color: var(--ink);
+    flex: 1;
+  }
+  .meta-row.flag .v {
+    color: var(--bad);
+  }
+  .meta-row.flag .k { color: var(--bad); }
+  .meta-row.flag::after {
+    content: '⚠';
+    color: var(--bad);
+    margin-left: auto;
+  }
+
+  /* === REASON CODE SHEET (bottom sheet modal) === */
+  .sheet-backdrop {
+    position: absolute; inset: 0;
+    background: rgba(0,0,0,0.7);
+    backdrop-filter: blur(2px);
+    z-index: 10;
+  }
+  .sheet-card {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    background: #161922;
+    border-top-left-radius: 22px;
+    border-top-right-radius: 22px;
+    z-index: 11;
+    padding: 14px 22px 28px;
+    max-height: 78%;
+    box-shadow: 0 -20px 40px rgba(0,0,0,0.6);
+  }
+  .sheet-grab {
+    width: 38px; height: 4px; background: #3a3f4d;
+    border-radius: 2px; margin: 0 auto 16px;
+  }
+  .rsheet-code {
+    font-family: var(--mono); font-size: 11px;
+    font-weight: 700; letter-spacing: 0.12em;
+    color: var(--bad);
+    margin-bottom: 8px;
+  }
+  .rsheet-title {
+    font-size: 24px; font-weight: 700;
+    letter-spacing: -0.02em; line-height: 1.1;
+    margin-bottom: 18px;
+  }
+  .rsheet-section {
+    margin-bottom: 16px;
+  }
+  .rsheet-slabel {
+    font-family: var(--mono); font-size: 9px;
+    letter-spacing: 0.15em; color: var(--ink-mute);
+    margin-bottom: 6px;
+    font-weight: 700;
+  }
+  .rsheet-body {
+    font-size: 13px;
+    color: var(--ink-dim);
+    line-height: 1.55;
+  }
+  .rsheet-body strong { color: var(--ink); font-weight: 600; }
+  .rsheet-close {
+    margin-top: 12px;
+    background: var(--panel);
+    color: var(--ink);
+    padding: 12px 0;
+    text-align: center;
+    border-radius: 10px;
+    font-size: 13px; font-weight: 600;
+    border: 1px solid var(--line);
+  }
+
+  /* Context behind reason-sheet: a verdict screen, dimmed */
+  .dimmed-bg {
+    position: absolute; inset: 0;
+    background: var(--bg);
+    opacity: 0.5;
+    pointer-events: none;
+  }
+
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div class="masthead">
+    <div>
+      <div class="title">VERITAS · UI STUDY · FILE 3 OF 4</div>
+      <h1>Verdicts & <em>forensic depth.</em></h1>
+    </div>
+    <div class="meta">
+      <span>SCREENS</span> 13 in this file<br>
+      <span>REFS</span> Visual spec §5, §6, §7<br>
+      <span>FOCUS</span> Audio & image parity
+    </div>
+  </div>
+
+  <!-- === SECTION 1: SCANNING VARIANTS === -->
+  <div class="section">
+    <div class="section-head">
+      <div class="section-num">01 · SCANNING VARIANTS</div>
+      <div class="section-title">What the user sees during analysis</div>
+      <div class="section-desc">Audio needs a waveform, not a scan line. Image is near-instant so the state is minimal. The model-not-ready state is an honest "preparing" message, not a generic spinner.</div>
+    </div>
+    <div class="phones">
+
+      <!-- 5.2 Scanning audio -->
+      <div>
+        <div class="phone"><div class="screen">
+          <div class="statusbar">
+            <span>9:41</span>
+            <div class="icons"><div class="bar"><i></i><i></i><i></i><i></i></div><div class="batt"><i></i></div></div>
+          </div>
+          <div class="verdict-screen" style="padding-top: 0;">
+            <div class="verdict-top">
+              <div class="brand">
+                <div class="brand-mark"></div>
+                <div class="brand-name">VERITAS</div>
+              </div>
+              <div class="close-btn">×</div>
+            </div>
+            <div class="scan-wrap">
+              <div class="audio-preview">
+                <div class="audio-wave-container">
+                  <div class="audio-wave-bars">
+                    <!-- Generate a natural-looking wave pattern -->
+                    <div class="wb" style="height: 20%"></div>
+                    <div class="wb" style="height: 35%"></div>
+                    <div class="wb highlight" style="height: 50%"></div>
+                    <div class="wb highlight" style="height: 72%"></div>
+                    <div class="wb highlight" style="height: 65%"></div>
+                    <div class="wb highlight" style="height: 80%"></div>
+                    <div class="wb highlight" style="height: 45%"></div>
+                    <div class="wb" style="height: 30%"></div>
+                    <div class="wb" style="height: 45%"></div>
+                    <div class="wb" style="height: 60%"></div>
+                    <div class="wb" style="height: 75%"></div>
+                    <div class="wb" style="height: 90%"></div>
+                    <div class="wb" style="height: 65%"></div>
+                    <div class="wb" style="height: 40%"></div>
+                    <div class="wb" style="height: 25%"></div>
+                    <div class="wb" style="height: 45%"></div>
+                    <div class="wb" style="height: 70%"></div>
+                    <div class="wb" style="height: 85%"></div>
+                    <div class="wb" style="height: 60%"></div>
+                    <div class="wb" style="height: 40%"></div>
+                    <div class="wb" style="height: 25%"></div>
+                    <div class="wb" style="height: 35%"></div>
+                    <div class="wb" style="height: 50%"></div>
+                    <div class="wb" style="height: 72%"></div>
+                    <div class="wb" style="height: 60%"></div>
+                    <div class="wb" style="height: 45%"></div>
+                    <div class="wb" style="height: 30%"></div>
+                    <div class="wb" style="height: 20%"></div>
+                    <div class="wb" style="height: 15%"></div>
+                    <div class="wb" style="height: 25%"></div>
+                  </div>
+                  <div class="audio-scan-line"></div>
+                </div>
+                <div class="audio-meta">
+                  <span>0:00</span>
+                  <span>VOICE CLIP · 16KHZ MONO</span>
+                  <span>0:47</span>
+                </div>
+              </div>
+              <div class="scan-status">
+                <div class="label">ANALYSIS · 2 OF 4 STAGES</div>
+                <div class="scan-step done">
+                  <div class="dot"></div>
+                  <span>Spectral artifact scan</span>
+                  <span class="step-meta">0.6s</span>
+                </div>
+                <div class="scan-step active">
+                  <div class="dot"></div>
+                  <span>Prosody analysis</span>
+                  <span class="step-meta">RUNNING</span>
+                </div>
+                <div class="scan-step">
+                  <div class="dot"></div>
+                  <span>Codec fingerprint</span>
+                  <span class="step-meta">QUEUED</span>
+                </div>
+                <div class="scan-step skipped">
+                  <div class="dot"></div>
+                  <span>Speaker consistency</span>
+                  <span class="step-meta">SKIP · &lt;10s</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div></div>
+        <div class="phone-label"><strong>5.2 · SCANNING AUDIO</strong>Waveform scan metaphor<em>VISUAL SPEC §5.2</em></div>
+      </div>
+
+      <!-- 5.3 Scanning image -->
+      <div>
+        <div class="phone"><div class="screen">
+          <div class="statusbar">
+            <span>9:41</span>
+            <div class="icons"><div class="bar"><i></i><i></i><i></i><i></i></div><div class="batt"><i></i></div></div>
+          </div>
+          <div class="verdict-screen" style="padding-top: 0;">
+            <div class="verdict-top">
+              <div class="brand">
+                <div class="brand-mark"></div>
+                <div class="brand-name">VERITAS</div>
+              </div>
+              <div class="close-btn">×</div>
+            </div>
+            <div class="scan-wrap">
+              <div class="image-preview-scan">
+                <div class="fake-img"></div>
+                <div class="scan-corners"></div>
+                <div class="image-scan-line-single"></div>
+              </div>
+              <div class="image-scan-caption">
+                <div class="dot"></div>
+                <div class="text">ANALYZING · <strong>FREQUENCY · SPATIAL · METADATA</strong></div>
+              </div>
+            </div>
+          </div>
+        </div></div>
+        <div class="phone-label"><strong>5.3 · SCANNING IMAGE</strong>~1s — single sweep, minimal<em>VISUAL SPEC §5.3</em></div>
+      </div>
+
+      <!-- 5.4 Model not ready -->
+      <div>
+        <div class="phone"><div class="screen">
+          <div class="statusbar">
+            <span>9:41</span>
+            <div class="icons"><div class="bar"><i></i><i></i><i></i><i></i></div><div class="batt"><i></i></div></div>
+          </div>
+          <div class="verdict-screen" style="padding-top: 0;">
+            <div class="verdict-top">
+              <div class="brand">
+                <div class="brand-mark"></div>
+                <div class="brand-name">VERITAS</div>
+              </div>
+              <div class="close-btn">×</div>
+            </div>
+            <div class="scan-wrap">
+              <div class="skeleton-preview">
+                <div class="sk-bar"></div>
+                <div class="sk-bar"></div>
+                <div class="sk-circle"></div>
+                <div class="sk-bar"></div>
+              </div>
+              <div class="scan-status">
+                <div class="label">PREPARING · ONE-TIME SETUP</div>
+                <div class="scan-step active">
+                  <div class="dot"></div>
+                  <span>Loading detection models</span>
+                  <span class="step-meta">~3s</span>
+                </div>
+                <div style="padding: 10px 12px; font-size: 11px; color: var(--ink-dim); line-height: 1.5; background: var(--panel); border: 1px solid var(--line); border-left: 2px solid var(--accent); border-radius: 8px; margin-top: 2px;">
+                  First scan after a model update. This only happens once.
+                </div>
+              </div>
+            </div>
+          </div>
+        </div></div>
+        <div class="phone-label"><strong>5.4 · MODEL NOT READY</strong>Cold-start honest state<em>VISUAL SPEC §5.4</em></div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- === SECTION 2: AUDIO & IMAGE VERDICTS === -->
+  <div class="section">
+    <div class="section-head">
+      <div class="section-num">02 · AUDIO & IMAGE VERDICTS</div>
+      <div class="section-title">Parity with video, appropriate to the medium</div>
+      <div class="section-desc">Audio verdicts get a mini-waveform with flagged regions. Image verdicts embed the image itself with a border that encodes the verdict. Same anatomy otherwise — same trust rules.</div>
+    </div>
+    <div class="phones">
+
+      <!-- 6.7 Audio verdict synthetic -->
+      <div>
+        <div class="phone"><div class="screen">
+          <div class="statusbar">
+            <span>9:41</span>
+            <div class="icons"><div class="bar"><i></i><i></i><i></i><i></i></div><div class="batt"><i></i></div></div>
+          </div>
+          <div class="verdict-screen" style="padding-top: 0;">
+            <div class="verdict-top">
+              <div class="brand">
+                <div class="brand-mark"></div>
+                <div class="brand-name">VERITAS</div>
+              </div>
+              <div class="close-btn">×</div>
+            </div>
+            <div class="vx bad">
+              <div class="vx-tag">VERDICT · AUDIO · 0:47</div>
+              <div class="vx-verdict">Likely<br>synthetic.</div>
+              <div class="vx-confidence">
+                <div class="bar-wrap">
+                  <div class="range" style="left: 79%; right: 7%;"></div>
+                </div>
+                <div class="num">79–93%</div>
+              </div>
+              <div class="audio-verdict-wave">
+                <div class="mini-wave">
+                  <div class="wb" style="height: 40%"></div>
+                  <div class="wb" style="height: 55%"></div>
+                  <div class="wb" style="height: 65%"></div>
+                  <div class="wb flag" style="height: 70%"></div>
+                  <div class="wb flag" style="height: 85%"></div>
+                  <div class="wb flag" style="height: 90%"></div>
+                  <div class="wb flag" style="height: 75%"></div>
+                  <div class="wb" style="height: 50%"></div>
+                  <div class="wb" style="height: 40%"></div>
+                  <div class="wb" style="height: 60%"></div>
+                  <div class="wb flag-warn" style="height: 75%"></div>
+                  <div class="wb flag-warn" style="height: 80%"></div>
+                  <div class="wb" style="height: 55%"></div>
+                  <div class="wb" style="height: 35%"></div>
+                  <div class="wb" style="height: 25%"></div>
+                  <div class="wb" style="height: 40%"></div>
+                  <div class="wb" style="height: 60%"></div>
+                  <div class="wb flag" style="height: 80%"></div>
+                  <div class="wb flag" style="height: 70%"></div>
+                  <div class="wb" style="height: 45%"></div>
+                </div>
+                <div class="wave-meta">
+                  <span>0:00</span>
+                  <span>3 FLAGGED REGIONS</span>
+                  <span>0:47</span>
+                </div>
+              </div>
+              <div class="vx-summary">
+                Multiple detectors indicate synthetic voice. Spectral artifacts match patterns from neural TTS systems; prosody is unnaturally regular.
+              </div>
+              <div class="vx-evidence">
+                <div class="vx-ev minus">
+                  <div class="code">VOCODER</div>
+                  <div class="desc">Spectral signature matches HiFi-GAN-family vocoder.</div>
+                </div>
+                <div class="vx-ev minus">
+                  <div class="code">PROSODY</div>
+                  <div class="desc">Pause distribution and pitch contour unnaturally uniform.</div>
+                </div>
+              </div>
+              <div class="vx-actions">
+                <div class="vx-btn primary">See details</div>
+                <div class="vx-btn secondary">Done</div>
+              </div>
+            </div>
+          </div>
+        </div></div>
+        <div class="phone-label"><strong>6.7a · AUDIO SYNTHETIC</strong>Voice clone flagged<em>VISUAL SPEC §6.7</em></div>
+      </div>
+
+      <!-- 6.7 Audio verdict authentic -->
+      <div>
+        <div class="phone"><div class="screen">
+          <div class="statusbar">
+            <span>9:41</span>
+            <div class="icons"><div class="bar"><i></i><i></i><i></i><i></i></div><div class="batt"><i></i></div></div>
+          </div>
+          <div class="verdict-screen" style="padding-top: 0;">
+            <div class="verdict-top">
+              <div class="brand">
+                <div class="brand-mark"></div>
+                <div class="brand-name">VERITAS</div>
+              </div>
+              <div class="close-btn">×</div>
+            </div>
+            <div class="vx ok">
+              <div class="vx-tag">VERDICT · AUDIO · 2:14</div>
+              <div class="vx-verdict">Likely<br>authentic.</div>
+              <div class="vx-confidence">
+                <div class="bar-wrap">
+                  <div class="range" style="left: 72%; right: 10%;"></div>
+                </div>
+                <div class="num">72–90%</div>
+              </div>
+              <div class="audio-verdict-wave">
+                <div class="mini-wave">
+                  <div class="wb flag-ok" style="height: 30%"></div>
+                  <div class="wb flag-ok" style="height: 50%"></div>
+                  <div class="wb flag-ok" style="height: 75%"></div>
+                  <div class="wb flag-ok" style="height: 65%"></div>
+                  <div class="wb" style="height: 45%"></div>
+                  <div class="wb flag-ok" style="height: 85%"></div>
+                  <div class="wb flag-ok" style="height: 90%"></div>
+                  <div class="wb" style="height: 60%"></div>
+                  <div class="wb flag-ok" style="height: 70%"></div>
+                  <div class="wb flag-ok" style="height: 55%"></div>
+                  <div class="wb" style="height: 40%"></div>
+                  <div class="wb flag-ok" style="height: 70%"></div>
+                  <div class="wb flag-ok" style="height: 80%"></div>
+                  <div class="wb flag-ok" style="height: 65%"></div>
+                  <div class="wb" style="height: 50%"></div>
+                  <div class="wb flag-ok" style="height: 75%"></div>
+                  <div class="wb flag-ok" style="height: 85%"></div>
+                  <div class="wb flag-ok" style="height: 60%"></div>
+                  <div class="wb" style="height: 35%"></div>
+                  <div class="wb" style="height: 25%"></div>
+                </div>
+                <div class="wave-meta">
+                  <span>0:00</span>
+                  <span>NATURAL PROSODY</span>
+                  <span>2:14</span>
+                </div>
+              </div>
+              <div class="vx-summary">
+                No artifacts of synthetic speech detected. Natural prosody, clean codec fingerprint, and expected room acoustics.
+              </div>
+              <div class="vx-evidence">
+                <div class="vx-ev plus">
+                  <div class="code">SPECTRAL ✓</div>
+                  <div class="desc">No vocoder signature. Frequency envelope consistent with human voice.</div>
+                </div>
+                <div class="vx-ev plus">
+                  <div class="code">PROSODY ✓</div>
+                  <div class="desc">Natural variation in pacing and pitch. Plausible breathing patterns.</div>
+                </div>
+                <div class="vx-ev plus">
+                  <div class="code">CODEC ✓</div>
+                  <div class="desc">Opus compression consistent with a single phone recording.</div>
+                </div>
+              </div>
+              <div class="vx-actions">
+                <div class="vx-btn primary">See details</div>
+                <div class="vx-btn secondary">Done</div>
+              </div>
+            </div>
+          </div>
+        </div></div>
+        <div class="phone-label"><strong>6.7b · AUDIO AUTHENTIC</strong>Natural speech pattern<em>VISUAL SPEC §6.7</em></div>
+      </div>
+
+      <!-- 6.8 Image verdict synthetic -->
+      <div>
+        <div class="phone"><div class="screen">
+          <div class="statusbar">
+            <span>9:41</span>
+            <div class="icons"><div class="bar"><i></i><i></i><i></i><i></i></div><div class="batt"><i></i></div></div>
+          </div>
+          <div class="verdict-screen" style="padding-top: 0;">
+            <div class="verdict-top">
+              <div class="brand">
+                <div class="brand-mark"></div>
+                <div class="brand-name">VERITAS</div>
+              </div>
+              <div class="close-btn">×</div>
+            </div>
+            <div class="vx bad">
+              <div class="vx-tag">VERDICT · IMAGE · 1024×1024</div>
+              <div class="vx-verdict">Likely<br>synthetic.</div>
+              <div class="vx-confidence">
+                <div class="bar-wrap">
+                  <div class="range" style="left: 84%; right: 3%;"></div>
+                </div>
+                <div class="num">84–97%</div>
+              </div>
+              <div class="image-verdict-preview synth">
+                <div class="vfig"></div>
+                <div class="dims">1024 × 1024</div>
+              </div>
+              <div class="vx-summary">
+                Strong generator signature in frequency domain. Spatial artifacts consistent with a recent diffusion model family.
+              </div>
+              <div class="vx-evidence">
+                <div class="vx-ev minus">
+                  <div class="code">FREQ</div>
+                  <div class="desc">Grid pattern in Fourier spectrum — characteristic of diffusion upsampling.</div>
+                </div>
+                <div class="vx-ev minus">
+                  <div class="code">SPATIAL</div>
+                  <div class="desc">Texture micro-patterns match known generator family.</div>
+                </div>
+                <div class="vx-ev minus">
+                  <div class="code">EXIF</div>
+                  <div class="desc">No camera metadata present. Quantization table is atypical for any camera.</div>
+                </div>
+              </div>
+              <div class="vx-actions">
+                <div class="vx-btn primary">See heatmap</div>
+                <div class="vx-btn secondary">Done</div>
+              </div>
+            </div>
+          </div>
+        </div></div>
+        <div class="phone-label"><strong>6.8a · IMAGE SYNTHETIC</strong>Border encodes the verdict<em>VISUAL SPEC §6.8</em></div>
+      </div>
+
+      <!-- 6.8 Image verdict uncertain -->
+      <div>
+        <div class="phone"><div class="screen">
+          <div class="statusbar">
+            <span>9:41</span>
+            <div class="icons"><div class="bar"><i></i><i></i><i></i><i></i></div><div class="batt"><i></i></div></div>
+          </div>
+          <div class="verdict-screen" style="padding-top: 0;">
+            <div class="verdict-top">
+              <div class="brand">
+                <div class="brand-mark"></div>
+                <div class="brand-name">VERITAS</div>
+              </div>
+              <div class="close-btn">×</div>
+            </div>
+            <div class="vx warn">
+              <div class="vx-tag">VERDICT · IMAGE · 480×640</div>
+              <div class="vx-verdict">Uncertain.</div>
+              <div class="vx-confidence">
+                <div class="bar-wrap">
+                  <div class="range" style="left: 38%; right: 32%;"></div>
+                </div>
+                <div class="num">38–68%</div>
+              </div>
+              <div class="image-verdict-preview">
+                <div class="vfig" style="filter: blur(3px);"></div>
+                <div class="dims">480 × 640 · HEAVY COMP.</div>
+              </div>
+              <div class="vx-summary">
+                Low resolution and heavy compression prevent a confident read. Some frequency-domain signals are consistent with AI generation, others are not.
+                <strong>Don't assume either way — find a higher-quality source.</strong>
+              </div>
+              <div class="vx-evidence">
+                <div class="vx-ev mixed">
+                  <div class="code">QUALITY</div>
+                  <div class="desc">Source below reliable-detection resolution threshold (640×480).</div>
+                </div>
+                <div class="vx-ev mixed">
+                  <div class="code">DISAGREE</div>
+                  <div class="desc">Frequency-domain: suspect. Spatial: inconclusive.</div>
+                </div>
+              </div>
+              <div class="vx-actions">
+                <div class="vx-btn primary">Find original</div>
+                <div class="vx-btn secondary">Done</div>
+              </div>
+            </div>
+          </div>
+        </div></div>
+        <div class="phone-label"><strong>6.8b · IMAGE UNCERTAIN</strong>Low-quality input acknowledged<em>VISUAL SPEC §6.8</em></div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- === SECTION 3: FORENSIC DEPTH === -->
+  <div class="section">
+    <div class="section-head">
+      <div class="section-num">03 · FORENSIC DEPTH</div>
+      <div class="section-title">Where users dig in</div>
+      <div class="section-desc">Power-user territory. Audio gets a waveform + spectrogram with flagged frequency regions. Image gets a toggle across heatmap, frequency domain, and metadata. Every reason code is tappable for a plain-language explanation.</div>
+    </div>
+    <div class="phones">
+
+      <!-- 7.2 Forensic audio -->
+      <div>
+        <div class="phone"><div class="screen">
+          <div class="statusbar">
+            <span>9:41</span>
+            <div class="icons"><div class="bar"><i></i><i></i><i></i><i></i></div><div class="batt"><i></i></div></div>
+          </div>
+          <div class="verdict-screen" style="padding-top: 0;">
+            <div class="verdict-top">
+              <div class="brand">
+                <div class="brand-mark"></div>
+                <div class="brand-name">FORENSIC</div>
+              </div>
+              <div class="close-btn">×</div>
+            </div>
+            <div class="fx">
+              <div class="fx-header">
+                <div class="pill synth">SYNTHETIC</div>
+                <div class="title">0:47 total · 3 flags</div>
+              </div>
+              <div class="audio-forensic-wave">
+                <div class="label">
+                  <span>WAVEFORM</span>
+                  <span>0:00 — 0:47</span>
+                </div>
+                <div class="wave-full">
+                  <div class="wb" style="height: 40%"></div>
+                  <div class="wb" style="height: 55%"></div>
+                  <div class="wb" style="height: 65%"></div>
+                  <div class="wb flag" style="height: 70%"></div>
+                  <div class="wb flag" style="height: 85%"></div>
+                  <div class="wb flag" style="height: 90%"></div>
+                  <div class="wb flag" style="height: 75%"></div>
+                  <div class="wb" style="height: 50%"></div>
+                  <div class="wb" style="height: 40%"></div>
+                  <div class="wb" style="height: 60%"></div>
+                  <div class="wb flag-warn" style="height: 75%"></div>
+                  <div class="wb flag-warn" style="height: 80%"></div>
+                  <div class="wb" style="height: 55%"></div>
+                  <div class="wb" style="height: 35%"></div>
+                  <div class="wb" style="height: 25%"></div>
+                  <div class="wb" style="height: 40%"></div>
+                  <div class="wb" style="height: 60%"></div>
+                  <div class="wb flag" style="height: 80%"></div>
+                  <div class="wb flag" style="height: 70%"></div>
+                  <div class="wb" style="height: 45%"></div>
+                  <div class="wb" style="height: 60%"></div>
+                  <div class="wb" style="height: 75%"></div>
+                  <div class="wb" style="height: 50%"></div>
+                  <div class="wb" style="height: 35%"></div>
+                  <div class="wb" style="height: 25%"></div>
+                  <div class="playhead"></div>
+                </div>
+              </div>
+              <div class="spectrogram">
+                <div class="spec-label">SPECTROGRAM · 0–8KHZ</div>
+                <div class="spec-flag"></div>
+                <div class="spec-timeline-axis">
+                  <span>0:00</span>
+                  <span>0:15</span>
+                  <span>0:30</span>
+                  <span>0:47</span>
+                </div>
+              </div>
+              <div class="fx-reasons">
+                <div class="label">REASON CODES · 3 FLAGS</div>
+                <div class="reason high">
+                  <div class="head">
+                    <div class="rcode">VOCODER_SIG_HIFIGAN</div>
+                    <div class="rweight">weight 0.42</div>
+                  </div>
+                  <div class="rdesc">High-frequency energy pattern matches HiFi-GAN-family neural vocoder output.</div>
+                </div>
+                <div class="reason mid">
+                  <div class="head">
+                    <div class="rcode">PROSODY_REGULAR</div>
+                    <div class="rweight">weight 0.26</div>
+                  </div>
+                  <div class="rdesc">Pause distribution and pitch contour unusually uniform across segments.</div>
+                </div>
+              </div>
+              <div class="fx-footer">
+                <div class="vx-btn secondary" style="flex: 0 0 auto; padding: 13px 16px;">Export</div>
+                <div class="vx-btn primary">Back to verdict</div>
+              </div>
+            </div>
+          </div>
+        </div></div>
+        <div class="phone-label"><strong>7.2 · FORENSIC AUDIO</strong>Waveform + spectrogram<em>VISUAL SPEC §7.2</em></div>
+      </div>
+
+      <!-- 7.3a Forensic image - heatmap -->
+      <div>
+        <div class="phone"><div class="screen">
+          <div class="statusbar">
+            <span>9:41</span>
+            <div class="icons"><div class="bar"><i></i><i></i><i></i><i></i></div><div class="batt"><i></i></div></div>
+          </div>
+          <div class="verdict-screen" style="padding-top: 0;">
+            <div class="verdict-top">
+              <div class="brand">
+                <div class="brand-mark"></div>
+                <div class="brand-name">FORENSIC</div>
+              </div>
+              <div class="close-btn">×</div>
+            </div>
+            <div class="fx">
+              <div class="fx-header">
+                <div class="pill synth">SYNTHETIC</div>
+                <div class="title">Image · 1024×1024</div>
+              </div>
+              <div class="fx-image-toggle">
+                <div class="tog">ORIGINAL</div>
+                <div class="tog active">HEATMAP</div>
+                <div class="tog">FREQ.</div>
+                <div class="tog">METADATA</div>
+              </div>
+              <div class="fx-image-display">
+                <div class="fig"></div>
+                <div class="heat-blob red" style="top: 30%; left: 38%;"></div>
+                <div class="heat-blob red" style="top: 55%; left: 58%;"></div>
+                <div class="heat-blob amber" style="top: 25%; left: 66%;"></div>
+              </div>
+              <div class="fx-reasons" style="margin-top: 14px;">
+                <div class="label">REASON CODES · 3 FLAGS</div>
+                <div class="reason high">
+                  <div class="head">
+                    <div class="rcode">DIFFUSION_SPECTRAL_SIG</div>
+                    <div class="rweight">weight 0.48</div>
+                  </div>
+                  <div class="rdesc">Grid pattern in Fourier spectrum characteristic of diffusion upsampling layers.</div>
+                </div>
+              </div>
+              <div class="fx-footer">
+                <div class="vx-btn secondary" style="flex: 0 0 auto; padding: 13px 16px;">Export</div>
+                <div class="vx-btn primary">Back to verdict</div>
+              </div>
+            </div>
+          </div>
+        </div></div>
+        <div class="phone-label"><strong>7.3a · FORENSIC IMAGE — HEATMAP</strong>Grad-CAM over suspect regions<em>VISUAL SPEC §7.3</em></div>
+      </div>
+
+      <!-- 7.3b Forensic image - frequency domain -->
+      <div>
+        <div class="phone"><div class="screen">
+          <div class="statusbar">
+            <span>9:41</span>
+            <div class="icons"><div class="bar"><i></i><i></i><i></i><i></i></div><div class="batt"><i></i></div></div>
+          </div>
+          <div class="verdict-screen" style="padding-top: 0;">
+            <div class="verdict-top">
+              <div class="brand">
+                <div class="brand-mark"></div>
+                <div class="brand-name">FORENSIC</div>
+              </div>
+              <div class="close-btn">×</div>
+            </div>
+            <div class="fx">
+              <div class="fx-header">
+                <div class="pill synth">SYNTHETIC</div>
+                <div class="title">Image · 1024×1024</div>
+              </div>
+              <div class="fx-image-toggle">
+                <div class="tog">ORIGINAL</div>
+                <div class="tog">HEATMAP</div>
+                <div class="tog active">FREQ.</div>
+                <div class="tog">METADATA</div>
+              </div>
+              <div class="fx-image-display" style="background: #0a0b0d;">
+                <!-- FFT visualization -->
+                <div style="position: absolute; inset: 0; background:
+                  radial-gradient(circle at 50% 50%, rgba(255,255,255,0.15) 0%, transparent 2%),
+                  radial-gradient(circle at 50% 50%, rgba(255,255,255,0.08) 0%, transparent 8%),
+                  radial-gradient(circle at 50% 50%, rgba(138,180,255,0.05) 0%, transparent 30%),
+                  repeating-radial-gradient(circle at 50% 50%, transparent 0 16px, rgba(255,80,80,0.12) 16px 17px),
+                  repeating-linear-gradient(0deg, transparent 0 13px, rgba(255,80,80,0.08) 13px 14px),
+                  repeating-linear-gradient(90deg, transparent 0 13px, rgba(255,80,80,0.08) 13px 14px);
+                "></div>
+                <div style="position: absolute; top: 8px; left: 10px; font-family: var(--mono); font-size: 9px; color: var(--ink-dim); letter-spacing: 0.12em;">FFT MAGNITUDE · LOG SCALE</div>
+                <div style="position: absolute; top: 40%; right: 20%; width: 30px; height: 30px; border: 1.5px solid var(--bad); border-radius: 4px;"></div>
+                <div style="position: absolute; top: 40%; right: 20%; transform: translate(0, -18px); font-family: var(--mono); font-size: 8px; color: var(--bad); letter-spacing: 0.1em; font-weight: 700;">GRID PATTERN</div>
+              </div>
+              <div class="fx-reasons" style="margin-top: 14px;">
+                <div class="label">WHY THIS MATTERS</div>
+                <div style="padding: 12px; font-size: 11.5px; color: var(--ink-dim); line-height: 1.5; background: var(--panel); border: 1px solid var(--line); border-radius: 8px;">
+                  Diffusion models upsample through repeated convolutions that leave regular patterns in the frequency domain. Real photos don't have this signature.
+                </div>
+              </div>
+              <div class="fx-footer">
+                <div class="vx-btn secondary" style="flex: 0 0 auto; padding: 13px 16px;">Export</div>
+                <div class="vx-btn primary">Back to verdict</div>
+              </div>
+            </div>
+          </div>
+        </div></div>
+        <div class="phone-label"><strong>7.3b · FORENSIC IMAGE — FREQ.</strong>FFT showing generator signature<em>VISUAL SPEC §7.3</em></div>
+      </div>
+
+      <!-- 7.3c Forensic image - metadata -->
+      <div>
+        <div class="phone"><div class="screen">
+          <div class="statusbar">
+            <span>9:41</span>
+            <div class="icons"><div class="bar"><i></i><i></i><i></i><i></i></div><div class="batt"><i></i></div></div>
+          </div>
+          <div class="verdict-screen" style="padding-top: 0;">
+            <div class="verdict-top">
+              <div class="brand">
+                <div class="brand-mark"></div>
+                <div class="brand-name">FORENSIC</div>
+              </div>
+              <div class="close-btn">×</div>
+            </div>
+            <div class="fx">
+              <div class="fx-header">
+                <div class="pill synth">SYNTHETIC</div>
+                <div class="title">Image · 1024×1024</div>
+              </div>
+              <div class="fx-image-toggle">
+                <div class="tog">ORIGINAL</div>
+                <div class="tog">HEATMAP</div>
+                <div class="tog">FREQ.</div>
+                <div class="tog active">METADATA</div>
+              </div>
+              <div class="metadata-list">
+                <div class="meta-row flag">
+                  <div class="k">CAMERA</div>
+                  <div class="v">&lt;none&gt;</div>
+                </div>
+                <div class="meta-row flag">
+                  <div class="k">EXIF</div>
+                  <div class="v">Stripped / absent</div>
+                </div>
+                <div class="meta-row">
+                  <div class="k">DIMENSIONS</div>
+                  <div class="v">1024 × 1024</div>
+                </div>
+                <div class="meta-row flag">
+                  <div class="k">ASPECT</div>
+                  <div class="v">1:1 · atypical</div>
+                </div>
+                <div class="meta-row">
+                  <div class="k">FORMAT</div>
+                  <div class="v">JPEG · q92</div>
+                </div>
+                <div class="meta-row flag">
+                  <div class="k">QUANT TABLE</div>
+                  <div class="v">Unknown source</div>
+                </div>
+                <div class="meta-row">
+                  <div class="k">COLOR SPACE</div>
+                  <div class="v">sRGB</div>
+                </div>
+                <div class="meta-row flag">
+                  <div class="k">SOFTWARE</div>
+                  <div class="v">&lt;none&gt;</div>
+                </div>
+              </div>
+              <div class="fx-reasons" style="margin-top: 14px;">
+                <div class="label">NOTE</div>
+                <div style="padding: 12px; font-size: 11.5px; color: var(--ink-dim); line-height: 1.5; background: var(--panel); border: 1px solid var(--line); border-radius: 8px;">
+                  Absent EXIF alone is not proof. Screenshots, re-saved images, and privacy-stripped uploads also lack it. Veritas uses metadata as <strong>one signal</strong> in the fusion.
+                </div>
+              </div>
+              <div class="fx-footer">
+                <div class="vx-btn secondary" style="flex: 0 0 auto; padding: 13px 16px;">Export</div>
+                <div class="vx-btn primary">Back to verdict</div>
+              </div>
+            </div>
+          </div>
+        </div></div>
+        <div class="phone-label"><strong>7.3c · FORENSIC IMAGE — META</strong>EXIF forensics with caveat<em>VISUAL SPEC §7.3</em></div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- === SECTION 4: REASON CODE SHEET === -->
+  <div class="section">
+    <div class="section-head">
+      <div class="section-num">04 · REASON CODE SHEET</div>
+      <div class="section-title">Plain-language explainer</div>
+      <div class="section-desc">Tappable from any reason code in any screen. The four-part structure — what, why, what could cause false positive, close — makes the detection auditable without requiring ML literacy.</div>
+    </div>
+    <div class="phones">
+
+      <!-- 7.4 Reason code detail -->
+      <div>
+        <div class="phone"><div class="screen">
+          <div class="statusbar">
+            <span>9:41</span>
+            <div class="icons"><div class="bar"><i></i><i></i><i></i><i></i></div><div class="batt"><i></i></div></div>
+          </div>
+          <!-- Underlying verdict context, dimmed -->
+          <div class="verdict-screen" style="padding-top: 0;">
+            <div class="verdict-top">
+              <div class="brand">
+                <div class="brand-mark"></div>
+                <div class="brand-name">VERITAS</div>
+              </div>
+              <div class="close-btn">×</div>
+            </div>
+            <div class="vx bad">
+              <div class="vx-tag">VERDICT · VIDEO · 0:23</div>
+              <div class="vx-verdict" style="opacity: 0.6;">Likely<br>synthetic.</div>
+            </div>
+          </div>
+          <div class="dimmed-bg"></div>
+          <div class="sheet-backdrop"></div>
+          <div class="sheet-card">
+            <div class="sheet-grab"></div>
+            <div class="rsheet-code">LIP_SYNC_DRIFT</div>
+            <div class="rsheet-title">Lip-sync drift</div>
+            <div class="rsheet-section">
+              <div class="rsheet-slabel">WHAT IT MEANS</div>
+              <div class="rsheet-body">
+                The mouth movements don't line up precisely with the audio. AI-generated videos often have small timing errors — typically 40–150ms — especially at word boundaries.
+              </div>
+            </div>
+            <div class="rsheet-section">
+              <div class="rsheet-slabel">WHY IT MATTERS</div>
+              <div class="rsheet-body">
+                Consistent lip-sync is hard for generative models to get perfectly right. <strong>Real humans align mouth shapes to phoneme onset within milliseconds.</strong>
+              </div>
+            </div>
+            <div class="rsheet-section">
+              <div class="rsheet-slabel">COULD CAUSE A FALSE POSITIVE</div>
+              <div class="rsheet-body">
+                Poor audio recording, heavy re-compression, videos dubbed into another language, or a bad cellular connection during recording.
+              </div>
+            </div>
+            <div class="rsheet-close">Close</div>
+          </div>
+        </div></div>
+        <div class="phone-label"><strong>7.4 · REASON CODE SHEET</strong>Tappable from any reason chip<em>VISUAL SPEC §7.4</em></div>
+      </div>
+
+      <!-- 7.5 Diagnostic export preview -->
+      <div>
+        <div class="phone"><div class="screen">
+          <div class="statusbar">
+            <span>9:41</span>
+            <div class="icons"><div class="bar"><i></i><i></i><i></i><i></i></div><div class="batt"><i></i></div></div>
+          </div>
+          <div class="verdict-screen" style="padding-top: 0;">
+            <div class="verdict-top">
+              <div class="brand">
+                <div class="brand-mark"></div>
+                <div class="brand-name">EXPORT</div>
+              </div>
+              <div class="close-btn">×</div>
+            </div>
+            <div class="fx">
+              <div style="padding: 18px 20px 0;">
+                <div style="font-size: 20px; font-weight: 700; letter-spacing: -0.01em; margin-bottom: 6px;">Export diagnostic</div>
+                <div style="font-size: 12.5px; color: var(--ink-dim); line-height: 1.5; margin-bottom: 16px;">
+                  A text file with verdict, reason codes, model versions, and device info.
+                  <strong style="color: var(--ink);">No media is included.</strong>
+                </div>
+              </div>
+              <div style="margin: 0 20px 14px; padding: 14px; background: #0f1014; border: 1px solid var(--line); border-radius: 10px; font-family: var(--mono); font-size: 10px; line-height: 1.5; color: var(--ink-dim); max-height: 280px; overflow-y: auto;">
+                <div style="color: var(--accent);"># VERITAS DIAGNOSTIC v1</div>
+                <div style="margin-top: 4px;">generated: 2026-04-22T09:41:17Z</div>
+                <div style="margin-top: 10px; color: var(--ink-mute);"># VERDICT</div>
+                <div>id: vrd_4f2a...</div>
+                <div>outcome: LIKELY_SYNTHETIC</div>
+                <div>confidence: 0.82-0.96</div>
+                <div>media_type: VIDEO</div>
+                <div>duration_ms: 23400</div>
+                <div style="margin-top: 10px; color: var(--ink-mute);"># REASONS</div>
+                <div style="color: var(--bad);">- LIP_SYNC_DRIFT · 0.38</div>
+                <div style="color: var(--bad);">- RPPG_ABSENT · 0.29</div>
+                <div style="color: var(--warn);">- EAR_GEOMETRY · 0.18</div>
+                <div style="margin-top: 10px; color: var(--ink-mute);"># MODELS</div>
+                <div>video_temporal: 2.4.1</div>
+                <div>video_spatial: 2.3.0</div>
+                <div>fusion: 1.1.0</div>
+                <div style="margin-top: 10px; color: var(--ink-mute);"># DEVICE</div>
+                <div>android_api: 35</div>
+                <div>hw: gpu-delegate</div>
+                <div>locale: en-US</div>
+                <div style="margin-top: 10px; color: var(--ink-mute);"># (no media, no user identifiers)</div>
+              </div>
+              <div class="fx-footer">
+                <div class="vx-btn secondary">Share…</div>
+                <div class="vx-btn primary">Save to device</div>
+              </div>
+            </div>
+          </div>
+        </div></div>
+        <div class="phone-label"><strong>7.5 · EXPORT PREVIEW</strong>User sees exactly what leaves<em>VISUAL SPEC §7.5</em></div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Coverage note -->
+  <div style="margin-top: 80px; padding: 32px; border: 1px dashed var(--line); border-radius: 16px; background: var(--panel);">
+    <h3 style="font-family: var(--mono); font-size: 11px; letter-spacing: 0.15em; color: var(--ink-dim); margin-bottom: 18px;">COVERAGE NOTE · FILE 3 OF 4</h3>
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px;">
+      <div>
+        <h4 style="font-size: 13px; margin-bottom: 6px;">This file (11 screens)</h4>
+        <p style="font-size: 12px; color: var(--ink-dim); line-height: 1.55;">
+          Scanning audio + image + not-ready · Audio verdict (synth, auth) · Image verdict (synth, uncertain) · Forensic audio · Forensic image (heatmap/freq/meta) · Reason code sheet · Diagnostic export preview.
+        </p>
+      </div>
+      <div>
+        <h4 style="font-size: 13px; margin-bottom: 6px;">Variants covered by written spec alone</h4>
+        <p style="font-size: 12px; color: var(--ink-dim); line-height: 1.55;">
+          Audio uncertain · Image authentic · Video uncertain variants — all inherit anatomy from this file plus file 1. Agents apply the pattern.
+        </p>
+      </div>
+      <div>
+        <h4 style="font-size: 13px; margin-bottom: 6px;">Final file</h4>
+        <p style="font-size: 12px; color: var(--ink-dim); line-height: 1.55;">
+          File 4: settings tree (8 screens) · history list + detail · all 13 error states · then the agent kickoff and session prompts.
+        </p>
+      </div>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>

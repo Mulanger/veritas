@@ -1,0 +1,11 @@
+.gradle/
+.idea/
+local.properties
+**/build/
+*.iml
+
+/.android-sdk/
+/.tooling/
+/files/
+
+docs/SESSION_NOTES.md

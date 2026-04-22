@@ -1,0 +1,1491 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Veritas — Mockups 2/4: Onboarding, Home & Capture</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700;800&family=Manrope:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0b0d;
+    --panel: #111318;
+    --panel-2: #171a21;
+    --line: #22262f;
+    --line-2: #2c3140;
+    --ink: #e9ecf1;
+    --ink-dim: #9ba3b4;
+    --ink-mute: #5c6473;
+    --ok: #3fd69b;
+    --ok-dim: #1f6b4f;
+    --warn: #f5b642;
+    --warn-dim: #7a5a1d;
+    --bad: #ff5a5a;
+    --bad-dim: #7a2828;
+    --accent: #8ab4ff;
+    --mono: 'JetBrains Mono', ui-monospace, monospace;
+    --sans: 'Manrope', system-ui, sans-serif;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body {
+    background: var(--bg); color: var(--ink);
+    font-family: var(--sans); min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+    background-image:
+      radial-gradient(ellipse at 20% 10%, rgba(138,180,255,0.05), transparent 50%),
+      radial-gradient(ellipse at 80% 90%, rgba(63,214,155,0.04), transparent 50%);
+    background-attachment: fixed;
+  }
+  .page { max-width: 1440px; margin: 0 auto; padding: 56px 32px 120px; }
+  .masthead {
+    display: flex; align-items: flex-end; justify-content: space-between;
+    padding-bottom: 28px; border-bottom: 1px solid var(--line); margin-bottom: 56px;
+  }
+  .masthead .title {
+    font-family: var(--mono); font-weight: 800;
+    letter-spacing: 0.18em; font-size: 13px; color: var(--ink-dim);
+  }
+  .masthead h1 {
+    font-family: var(--sans); font-weight: 300;
+    font-size: 64px; line-height: 1; letter-spacing: -0.03em; margin-top: 14px;
+  }
+  .masthead h1 em { font-style: normal; font-weight: 700; }
+  .masthead .meta {
+    font-family: var(--mono); font-size: 11px;
+    color: var(--ink-mute); text-align: right; line-height: 1.8;
+  }
+  .masthead .meta span { color: var(--ink-dim); }
+
+  .section { margin-bottom: 80px; }
+  .section-head {
+    display: flex; align-items: baseline; gap: 20px;
+    margin-bottom: 32px; padding-bottom: 16px;
+    border-bottom: 1px dashed var(--line);
+  }
+  .section-num {
+    font-family: var(--mono); font-size: 11px;
+    color: var(--ink-mute); letter-spacing: 0.1em;
+  }
+  .section-title { font-size: 24px; font-weight: 600; letter-spacing: -0.01em; }
+  .section-desc {
+    color: var(--ink-dim); font-size: 14px;
+    margin-left: auto; max-width: 480px; line-height: 1.5;
+  }
+
+  .phones {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(310px, 1fr));
+    gap: 40px 32px; justify-items: center;
+  }
+
+  .phone {
+    width: 310px; height: 640px;
+    border-radius: 44px; background: #000;
+    padding: 10px; position: relative;
+    box-shadow:
+      0 0 0 2px #1a1d24, 0 0 0 3px #0a0b0d,
+      0 30px 80px -20px rgba(0,0,0,0.8),
+      0 12px 28px -12px rgba(138,180,255,0.08);
+  }
+  .phone::before {
+    content: ''; position: absolute; top: 22px; left: 50%;
+    transform: translateX(-50%); width: 86px; height: 24px;
+    background: #000; border-radius: 14px; z-index: 20;
+  }
+  .screen {
+    width: 100%; height: 100%;
+    border-radius: 34px; overflow: hidden;
+    position: relative; background: var(--bg);
+  }
+  .statusbar {
+    height: 44px; display: flex; align-items: center;
+    justify-content: space-between; padding: 0 28px;
+    font-family: var(--mono); font-size: 11px; font-weight: 700;
+    color: var(--ink); position: relative; z-index: 10;
+  }
+  .statusbar .icons { display: flex; gap: 5px; align-items: center; }
+  .bar { display: inline-flex; gap: 2px; }
+  .bar i { display: block; width: 2px; background: var(--ink); border-radius: 1px; }
+  .bar i:nth-child(1) { height: 3px; }
+  .bar i:nth-child(2) { height: 5px; }
+  .bar i:nth-child(3) { height: 7px; }
+  .bar i:nth-child(4) { height: 9px; }
+  .batt {
+    width: 22px; height: 10px; border: 1px solid var(--ink);
+    border-radius: 2px; position: relative; padding: 1px;
+  }
+  .batt::after {
+    content: ''; position: absolute; right: -3px; top: 3px;
+    width: 2px; height: 4px; background: var(--ink); border-radius: 0 1px 1px 0;
+  }
+  .batt i { display: block; width: 70%; height: 100%; background: var(--ink); border-radius: 1px; }
+
+  .phone-label {
+    text-align: center; margin-top: 18px;
+    font-family: var(--mono); font-size: 11px;
+    color: var(--ink-mute); letter-spacing: 0.1em;
+  }
+  .phone-label strong {
+    color: var(--ink-dim); display: block;
+    font-weight: 700; margin-bottom: 4px; letter-spacing: 0.14em;
+  }
+  .phone-label em {
+    display: block; font-style: normal; margin-top: 4px;
+    font-family: var(--mono); font-size: 9.5px; color: var(--ink-mute);
+    letter-spacing: 0.08em;
+  }
+
+  /* Brand + top bar (verdict activity) */
+  .top-bar {
+    padding: 0 22px 14px;
+    display: flex; justify-content: space-between; align-items: center;
+    border-bottom: 1px solid var(--line);
+    padding-top: 18px;
+  }
+  .brand { display: flex; align-items: center; gap: 8px; }
+  .brand-mark {
+    width: 18px; height: 18px; border: 1.5px solid var(--accent);
+    border-radius: 4px; position: relative;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .brand-mark::before {
+    content: ''; position: absolute; inset: 3px;
+    border: 1px solid rgba(138,180,255,0.4); border-radius: 1px;
+  }
+  .brand-mark::after {
+    content: ''; width: 4px; height: 4px;
+    background: var(--accent); border-radius: 50%;
+    box-shadow: 0 0 6px var(--accent);
+  }
+  .brand-name {
+    font-family: var(--mono); font-weight: 700;
+    font-size: 12px; letter-spacing: 0.18em; color: var(--ink);
+  }
+  .close-btn, .back-btn {
+    width: 28px; height: 28px; border-radius: 50%;
+    background: var(--panel); display: flex;
+    align-items: center; justify-content: center;
+    color: var(--ink-dim); font-size: 16px; font-weight: 300;
+  }
+  .top-meta {
+    font-family: var(--mono); font-size: 10px;
+    color: var(--ink-mute); letter-spacing: 0.1em;
+  }
+
+  /* === ONBOARDING === */
+  .onboard {
+    height: calc(100% - 44px);
+    padding: 32px 24px 28px;
+    display: flex; flex-direction: column;
+  }
+  .onboard-progress {
+    display: flex; gap: 4px; margin-bottom: 32px;
+  }
+  .onboard-progress .step {
+    flex: 1; height: 3px;
+    background: var(--line);
+    border-radius: 2px;
+  }
+  .onboard-progress .step.active {
+    background: var(--accent);
+    box-shadow: 0 0 6px rgba(138,180,255,0.5);
+  }
+  .onboard-progress .step.done { background: var(--ink-dim); }
+
+  .onboard-hero {
+    flex: 1;
+    display: flex; flex-direction: column; justify-content: center;
+  }
+  .onboard-mark {
+    margin: 0 auto 32px;
+    width: 64px; height: 64px;
+    border: 2px solid var(--accent);
+    border-radius: 14px;
+    position: relative;
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 0 24px rgba(138,180,255,0.25);
+  }
+  .onboard-mark::before {
+    content: ''; position: absolute; inset: 8px;
+    border: 1px solid rgba(138,180,255,0.4); border-radius: 6px;
+  }
+  .onboard-mark::after {
+    content: ''; width: 10px; height: 10px;
+    background: var(--accent); border-radius: 50%;
+    box-shadow: 0 0 14px var(--accent);
+  }
+
+  .onboard-wordmark {
+    text-align: center;
+    font-family: var(--mono); font-weight: 700;
+    font-size: 13px; letter-spacing: 0.3em;
+    color: var(--ink-dim); margin-bottom: 40px;
+  }
+
+  .onboard-headline-1 {
+    font-family: var(--sans); font-weight: 300;
+    font-size: 30px; letter-spacing: -0.02em;
+    line-height: 1.1; color: var(--ink);
+  }
+  .onboard-headline-2 {
+    font-family: var(--sans); font-weight: 800;
+    font-size: 30px; letter-spacing: -0.025em;
+    line-height: 1.1; color: var(--ink);
+    margin-bottom: 20px;
+  }
+  .onboard-sub {
+    font-size: 14px; color: var(--ink-dim);
+    line-height: 1.5;
+  }
+  .onboard-actions {
+    display: flex; flex-direction: column; gap: 8px;
+  }
+  .onboard-btn {
+    padding: 14px 0; text-align: center;
+    border-radius: 12px;
+    font-size: 14px; font-weight: 700;
+    letter-spacing: 0.01em;
+  }
+  .onboard-btn.primary { background: var(--ink); color: var(--bg); }
+  .onboard-btn.secondary {
+    background: transparent; color: var(--ink-dim);
+    padding: 10px 0;
+  }
+  .onboard-btn.ghost {
+    background: var(--panel); color: var(--ink);
+    border: 1px solid var(--line);
+  }
+
+  /* Cards for 2.2 */
+  .value-cards {
+    display: flex; flex-direction: column; gap: 10px;
+    margin: 0 0 auto;
+  }
+  .vcard {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 14px;
+    display: flex; gap: 12px; align-items: flex-start;
+  }
+  .vcard-icon {
+    width: 36px; height: 36px;
+    border-radius: 8px;
+    background: rgba(138,180,255,0.08);
+    border: 1px solid rgba(138,180,255,0.25);
+    flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    color: var(--accent);
+    font-family: var(--mono);
+    font-size: 14px; font-weight: 800;
+  }
+  .vcard-body h4 {
+    font-size: 13px; font-weight: 700;
+    margin-bottom: 3px; letter-spacing: -0.005em;
+  }
+  .vcard-body p {
+    font-size: 11.5px; color: var(--ink-dim);
+    line-height: 1.4;
+  }
+
+  /* 2.3 not-list */
+  .notlist {
+    margin: 20px 0 auto;
+  }
+  .notitem {
+    display: flex; gap: 12px;
+    padding: 12px 0;
+    border-top: 1px solid var(--line);
+  }
+  .notitem:last-child { border-bottom: 1px solid var(--line); }
+  .notitem .num {
+    font-family: var(--mono); font-size: 10px;
+    font-weight: 700; color: var(--ink-mute);
+    padding-top: 2px; flex-shrink: 0;
+  }
+  .notitem .body {
+    font-size: 12px; color: var(--ink-dim);
+    line-height: 1.5;
+  }
+  .notitem .body strong { color: var(--ink); font-weight: 600; }
+
+  /* 2.4 privacy */
+  .privacy-body {
+    font-size: 13px; color: var(--ink-dim);
+    line-height: 1.55;
+    margin: 24px 0 auto;
+  }
+  .privacy-body strong { color: var(--ink); font-weight: 600; }
+  .privacy-link {
+    color: var(--accent);
+    font-weight: 600;
+    margin-top: 14px; display: inline-block;
+    font-size: 12px;
+  }
+  .privacy-icon {
+    margin: 0 auto 20px;
+    width: 52px; height: 52px;
+    border-radius: 14px;
+    background: rgba(63,214,155,0.1);
+    border: 1px solid rgba(63,214,155,0.3);
+    display: flex; align-items: center; justify-content: center;
+    position: relative;
+  }
+  .privacy-icon::before {
+    content: ''; width: 20px; height: 18px;
+    border: 2px solid var(--ok); border-radius: 3px;
+    position: relative; top: 2px;
+  }
+  .privacy-icon::after {
+    content: ''; position: absolute;
+    width: 10px; height: 10px;
+    border: 2px solid var(--ok);
+    border-bottom: none;
+    border-radius: 5px 5px 0 0;
+    top: 10px;
+  }
+
+  /* 2.5 overlay opt-in */
+  .overlay-illust {
+    margin: 8px auto 20px;
+    width: 130px; height: 180px;
+    border: 2px solid var(--line-2);
+    border-radius: 18px;
+    background: linear-gradient(180deg, #1a1d24, #0f1014);
+    position: relative; overflow: hidden;
+  }
+  .overlay-illust::before {
+    content: ''; position: absolute;
+    top: 6px; left: 50%; transform: translateX(-50%);
+    width: 30px; height: 4px;
+    background: #3a3f4d; border-radius: 2px;
+  }
+  .overlay-illust .fake-feed {
+    position: absolute; inset: 18px 10px 20px;
+    background:
+      repeating-linear-gradient(
+        180deg,
+        rgba(255,255,255,0.04) 0,
+        rgba(255,255,255,0.04) 18px,
+        transparent 18px,
+        transparent 32px
+      );
+    border-radius: 8px;
+  }
+  .overlay-illust .mini-bubble {
+    position: absolute;
+    right: 14px; top: 80px;
+    width: 22px; height: 22px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 30%, #1a1d24 0%, #0a0b0d 80%);
+    box-shadow: 0 0 0 1px var(--accent), 0 0 12px rgba(138,180,255,0.6);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .overlay-illust .mini-bubble::after {
+    content: ''; width: 5px; height: 5px; background: var(--accent);
+    border-radius: 50%; box-shadow: 0 0 5px var(--accent);
+  }
+  .overlay-reality {
+    font-size: 11.5px;
+    color: var(--ink-dim);
+    line-height: 1.5;
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-left: 2px solid var(--warn);
+    padding: 10px 12px;
+    border-radius: 8px;
+    margin-bottom: 14px;
+  }
+  .overlay-reality strong { color: var(--ink); font-weight: 600; }
+
+  /* 2.6 notification prebrief */
+  .prebrief-icon {
+    margin: 0 auto 24px;
+    width: 56px; height: 56px;
+    border-radius: 14px;
+    background: rgba(138,180,255,0.08);
+    border: 1px solid rgba(138,180,255,0.3);
+    display: flex; align-items: center; justify-content: center;
+    position: relative;
+  }
+  .prebrief-icon::before {
+    content: ''; width: 22px; height: 26px;
+    border: 2px solid var(--accent); border-radius: 4px 4px 8px 8px;
+  }
+  .prebrief-icon::after {
+    content: ''; position: absolute;
+    width: 8px; height: 8px;
+    background: var(--accent); border-radius: 50%;
+    top: 14px; right: 16px;
+    box-shadow: 0 0 8px var(--accent);
+  }
+
+  /* 2.7 ready */
+  .ready-check {
+    margin: 0 auto 28px;
+    width: 64px; height: 64px;
+    border-radius: 50%;
+    background: rgba(63,214,155,0.12);
+    border: 2px solid var(--ok);
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 0 24px rgba(63,214,155,0.3);
+  }
+  .ready-check::before {
+    content: ''; width: 16px; height: 26px;
+    border: solid var(--ok);
+    border-width: 0 3px 3px 0;
+    transform: rotate(45deg); margin-top: -6px;
+  }
+
+  /* === HOME STATES === */
+  .home-screen {
+    height: calc(100% - 44px);
+    display: flex; flex-direction: column;
+  }
+  .home-hero {
+    padding: 18px 22px 22px;
+    background:
+      radial-gradient(ellipse at 100% 0%, rgba(138,180,255,0.12), transparent 60%),
+      linear-gradient(180deg, rgba(138,180,255,0.04), transparent);
+    border-bottom: 1px solid var(--line);
+  }
+  .home-greet {
+    font-family: var(--mono); font-size: 10px;
+    letter-spacing: 0.15em; color: var(--ink-mute);
+    margin-bottom: 6px;
+  }
+  .home-title {
+    font-weight: 300; font-size: 26px;
+    letter-spacing: -0.02em; line-height: 1.1;
+  }
+  .home-title strong { font-weight: 700; }
+  .home-cta {
+    margin-top: 16px; display: flex; gap: 8px;
+  }
+  .home-cta .btn {
+    flex: 1; text-align: center;
+    padding: 14px 0; border-radius: 12px;
+    background: var(--ink); color: var(--bg);
+    font-weight: 700; font-size: 13px;
+  }
+  .home-cta .btn.ghost {
+    background: var(--panel); color: var(--ink);
+    border: 1px solid var(--line);
+  }
+
+  .recent { padding: 18px 22px 0; flex: 1; }
+  .recent-title {
+    font-family: var(--mono); font-size: 10px;
+    letter-spacing: 0.15em; color: var(--ink-mute);
+    margin-bottom: 12px;
+  }
+  .rec-item {
+    display: flex; align-items: center; gap: 12px;
+    padding: 10px 0; border-bottom: 1px solid var(--line);
+  }
+  .rec-item:last-child { border-bottom: none; }
+  .rec-thumb {
+    width: 44px; height: 44px;
+    border-radius: 10px; flex-shrink: 0;
+    background: linear-gradient(135deg, #2a2f3a, #1a1e28);
+    position: relative; overflow: hidden;
+  }
+  .rec-thumb::after {
+    content: ''; position: absolute; inset: 4px;
+    border-radius: 6px;
+    background: radial-gradient(ellipse at 50% 40%, rgba(255,220,200,0.2), transparent 40%);
+  }
+  .rec-thumb.aud::after {
+    background: repeating-linear-gradient(90deg, var(--ink-mute) 0 1px, transparent 1px 3px);
+    top: 20px; bottom: 20px; opacity: 0.5;
+  }
+  .rec-thumb.img::after {
+    background: linear-gradient(135deg, rgba(138,180,255,0.2), rgba(63,214,155,0.1));
+  }
+  .rec-body { flex: 1; min-width: 0; }
+  .rec-src {
+    font-size: 12px; color: var(--ink-dim);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .rec-time {
+    font-family: var(--mono); font-size: 10px;
+    color: var(--ink-mute); margin-top: 2px;
+  }
+  .rec-verdict {
+    font-family: var(--mono); font-size: 10px;
+    font-weight: 700; letter-spacing: 0.1em;
+    padding: 4px 8px; border-radius: 4px;
+  }
+  .rec-verdict.ok { background: var(--ok-dim); color: var(--ok); }
+  .rec-verdict.warn { background: var(--warn-dim); color: var(--warn); }
+  .rec-verdict.bad { background: var(--bad-dim); color: var(--bad); }
+
+  .nav {
+    display: flex; justify-content: space-around;
+    padding: 12px 0 6px;
+    border-top: 1px solid var(--line);
+    background: var(--bg);
+  }
+  .nav-item {
+    display: flex; flex-direction: column; align-items: center; gap: 3px;
+    font-family: var(--mono); font-size: 9px;
+    letter-spacing: 0.1em; color: var(--ink-mute);
+  }
+  .nav-item.active { color: var(--accent); }
+  .nav-ico {
+    width: 20px; height: 20px;
+    border: 1.3px solid currentColor;
+    border-radius: 4px;
+  }
+  .nav-ico.circ { border-radius: 50%; }
+
+  /* Empty state */
+  .empty-state {
+    margin-top: 32px;
+    padding: 28px 20px;
+    border: 1px dashed var(--line-2);
+    border-radius: 14px;
+    text-align: center;
+  }
+  .empty-state-icon {
+    width: 40px; height: 40px; margin: 0 auto 12px;
+    border: 1.5px dashed var(--line-2);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    color: var(--ink-mute);
+  }
+  .empty-state-icon::before {
+    content: ''; width: 14px; height: 14px;
+    border: 1.5px solid var(--ink-mute);
+    border-radius: 3px;
+  }
+  .empty-state h4 {
+    font-size: 13px; margin-bottom: 4px;
+    color: var(--ink-dim); font-weight: 600;
+  }
+  .empty-state p {
+    font-size: 11px; color: var(--ink-mute);
+    line-height: 1.5;
+  }
+
+  /* Updating state */
+  .update-strip {
+    padding: 8px 22px;
+    display: flex; align-items: center; gap: 10px;
+    font-family: var(--mono); font-size: 10px;
+    color: var(--ink-dim); letter-spacing: 0.08em;
+    border-bottom: 1px solid var(--line);
+    background: rgba(138,180,255,0.03);
+  }
+  .update-bar {
+    flex: 1; height: 2px;
+    background: var(--line); border-radius: 1px;
+    overflow: hidden;
+  }
+  .update-bar-fill {
+    height: 100%; width: 62%;
+    background: var(--accent);
+    box-shadow: 0 0 6px var(--accent);
+  }
+  .update-pct {
+    font-weight: 700; color: var(--ink);
+  }
+
+  /* Update failed banner */
+  .banner {
+    margin: 14px 22px 0;
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-left: 2px solid var(--warn);
+    border-radius: 8px;
+    padding: 10px 12px;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .banner-icon {
+    width: 16px; height: 16px; border-radius: 50%;
+    border: 1.5px solid var(--warn);
+    display: flex; align-items: center; justify-content: center;
+    font-family: var(--mono); font-size: 10px; font-weight: 700;
+    color: var(--warn); flex-shrink: 0;
+  }
+  .banner-text {
+    flex: 1;
+    font-family: var(--mono); font-size: 10px;
+    color: var(--ink-dim); letter-spacing: 0.08em;
+    line-height: 1.4;
+  }
+  .banner-text strong { color: var(--warn); font-weight: 700; }
+  .banner-cta {
+    font-family: var(--mono); font-size: 9px; font-weight: 700;
+    color: var(--ink); letter-spacing: 0.15em;
+    padding: 4px 8px; border: 1px solid var(--line-2);
+    border-radius: 4px;
+  }
+
+  /* === Paste link === */
+  .plink-content {
+    padding: 0 22px; flex: 1;
+    display: flex; flex-direction: column;
+  }
+  .plink-label {
+    font-family: var(--mono); font-size: 10px;
+    letter-spacing: 0.15em; color: var(--ink-mute);
+    margin: 20px 0 10px;
+  }
+  .plink-field {
+    background: var(--panel);
+    border: 1.5px solid var(--accent);
+    border-radius: 10px;
+    padding: 13px 14px;
+    font-family: var(--mono); font-size: 12px;
+    color: var(--ink);
+    box-shadow: 0 0 0 4px rgba(138,180,255,0.1);
+    margin-bottom: 8px;
+  }
+  .plink-field .cursor {
+    display: inline-block;
+    width: 1.5px; height: 14px;
+    background: var(--accent);
+    margin-left: 1px;
+    vertical-align: text-bottom;
+    animation: blink 1s steps(2) infinite;
+  }
+  @keyframes blink { 50% { opacity: 0; } }
+  .plink-hint {
+    font-size: 11px; color: var(--ink-mute);
+    line-height: 1.5; margin-bottom: 20px;
+  }
+  .plink-hint strong { color: var(--ink-dim); font-weight: 600; }
+  .plink-privacy {
+    background: var(--panel); border: 1px solid var(--line);
+    border-radius: 8px; padding: 11px 12px;
+    font-size: 11px; color: var(--ink-dim);
+    line-height: 1.5; margin-bottom: auto;
+  }
+  .plink-actions {
+    padding: 0 0 20px;
+    display: flex; gap: 8px;
+  }
+  .plink-actions .btn {
+    flex: 1; padding: 14px 0; text-align: center;
+    border-radius: 12px;
+    font-weight: 700; font-size: 13px;
+  }
+  .plink-actions .btn.primary { background: var(--ink); color: var(--bg); }
+
+  /* === Bubble capture confirm (scan sweep over whole screen) === */
+  .fake-host {
+    position: absolute; inset: 0;
+    background: linear-gradient(180deg, #1a1d24 0%, #0f1014 100%);
+  }
+  .fake-host-video {
+    position: absolute;
+    inset: 60px 16px 100px 16px;
+    border-radius: 14px;
+    background: radial-gradient(ellipse at 50% 40%, #4a5568 0%, #2d3748 40%, #1a202c 100%);
+    overflow: hidden;
+  }
+  .fake-host-video .face {
+    position: absolute;
+    top: 40%; left: 50%; transform: translate(-50%, -50%);
+    width: 120px; height: 150px; border-radius: 60px / 75px;
+    background:
+      radial-gradient(ellipse at 35% 40%, rgba(255,220,200,0.15), transparent 30%),
+      radial-gradient(ellipse at 65% 40%, rgba(255,220,200,0.15), transparent 30%),
+      linear-gradient(180deg, #8b7355 0%, #6b5940 70%, #4a3d2a 100%);
+    filter: blur(2px); opacity: 0.7;
+  }
+  .sweep-grid {
+    position: absolute; inset: 44px 0 0 0;
+    background-image:
+      linear-gradient(0deg, rgba(138,180,255,0.08) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(138,180,255,0.08) 1px, transparent 1px);
+    background-size: 24px 24px;
+    pointer-events: none; z-index: 10;
+  }
+  .sweep-corners {
+    position: absolute;
+    top: 56px; bottom: 12px; left: 12px; right: 12px;
+    pointer-events: none; z-index: 11;
+  }
+  .sweep-corners::before, .sweep-corners::after {
+    content: ''; position: absolute;
+    width: 20px; height: 20px;
+    border: 2px solid var(--accent);
+  }
+  .sweep-corners::before {
+    top: 0; left: 0;
+    border-right: none; border-bottom: none;
+  }
+  .sweep-corners::after {
+    bottom: 0; right: 0;
+    border-left: none; border-top: none;
+  }
+  .sweep-line {
+    position: absolute; left: 0; right: 0;
+    top: 50%; height: 3px;
+    background: linear-gradient(90deg, transparent, var(--accent), transparent);
+    box-shadow: 0 0 20px var(--accent), 0 0 8px var(--accent);
+    z-index: 12;
+  }
+  .sweep-label {
+    position: absolute;
+    top: 50%; right: 20px; transform: translateY(-24px);
+    font-family: var(--mono); font-size: 9px;
+    font-weight: 700; letter-spacing: 0.18em;
+    color: var(--accent); z-index: 13;
+    text-shadow: 0 0 8px rgba(138,180,255,0.6);
+  }
+
+  /* MediaProjection prompt (system dialog facsimile) */
+  .sysdialog-dim {
+    position: absolute; inset: 0;
+    background: rgba(0,0,0,0.6);
+    backdrop-filter: blur(1px);
+    z-index: 20;
+  }
+  .sysdialog {
+    position: absolute;
+    top: 50%; left: 50%; transform: translate(-50%, -50%);
+    width: 250px;
+    background: #1e2127;
+    border-radius: 22px;
+    padding: 22px 20px 16px;
+    z-index: 21;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.6);
+  }
+  .sysdialog .appline {
+    display: flex; align-items: center; gap: 8px;
+    font-size: 11px; color: #b0b5c0;
+    margin-bottom: 16px;
+    font-family: -apple-system, sans-serif;
+  }
+  .sysdialog .app-icon-mini {
+    width: 16px; height: 16px;
+    border: 1.5px solid var(--accent);
+    border-radius: 3px; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-family: var(--mono); font-size: 9px;
+    font-weight: 800; color: var(--accent);
+  }
+  .sysdialog h3 {
+    font-family: -apple-system, sans-serif;
+    font-size: 17px; font-weight: 500;
+    color: white; margin-bottom: 10px; line-height: 1.3;
+  }
+  .sysdialog p {
+    font-family: -apple-system, sans-serif;
+    font-size: 13px; color: #b0b5c0;
+    line-height: 1.5; margin-bottom: 18px;
+  }
+  .sysdialog .dialog-actions {
+    display: flex; justify-content: flex-end; gap: 14px;
+  }
+  .sysdialog .dialog-btn {
+    font-family: -apple-system, sans-serif;
+    font-size: 13px; font-weight: 600;
+    color: #8ab4ff; padding: 6px 4px;
+    letter-spacing: 0.02em;
+  }
+
+  /* Behind-the-bubble context reused from mockup 1 */
+  .bg-app {
+    position: absolute; inset: 0;
+    background: linear-gradient(180deg, #1a1d24 0%, #0f1014 100%);
+    overflow: hidden;
+  }
+  .bg-app::before {
+    content: ''; position: absolute; inset: 44px 0 80px 0;
+    background: linear-gradient(135deg, #2a2f3a 0%, #1a1e28 60%, #11131a 100%);
+  }
+  .bg-video {
+    position: absolute;
+    inset: 60px 16px 100px 16px;
+    border-radius: 14px;
+    background: radial-gradient(ellipse at 50% 40%, #4a5568 0%, #2d3748 40%, #1a202c 100%);
+    overflow: hidden;
+  }
+  .bg-video .face {
+    position: absolute;
+    top: 40%; left: 50%; transform: translate(-50%, -50%);
+    width: 120px; height: 150px; border-radius: 60px / 75px;
+    background:
+      radial-gradient(ellipse at 35% 40%, rgba(255,220,200,0.15), transparent 30%),
+      radial-gradient(ellipse at 65% 40%, rgba(255,220,200,0.15), transparent 30%),
+      linear-gradient(180deg, #8b7355 0%, #6b5940 70%, #4a3d2a 100%);
+    filter: blur(2px); opacity: 0.7;
+  }
+  .bubble {
+    position: absolute;
+    z-index: 15; width: 52px; height: 52px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 30%, #1a1d24 0%, #0a0b0d 80%);
+    box-shadow:
+      0 0 0 1.5px var(--accent),
+      0 0 24px rgba(138,180,255,0.5),
+      0 8px 20px rgba(0,0,0,0.6);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .bubble::before {
+    content: ''; position: absolute; inset: 5px;
+    border-radius: 50%;
+    border: 1px solid rgba(138,180,255,0.25);
+  }
+  .bubble::after {
+    content: ''; width: 10px; height: 10px;
+    background: var(--accent); border-radius: 50%;
+    box-shadow: 0 0 10px var(--accent);
+  }
+  .bubble-menu {
+    position: absolute; z-index: 16;
+    right: 76px; top: 340px;
+    background: rgba(10,11,13,0.96);
+    backdrop-filter: blur(20px);
+    border: 1px solid var(--line-2);
+    border-radius: 14px;
+    padding: 6px;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.6);
+    width: 180px;
+  }
+  .bubble-menu-item {
+    padding: 10px 12px;
+    font-size: 12px; color: var(--ink);
+    border-radius: 8px;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .bubble-menu-item + .bubble-menu-item {
+    border-top: 1px solid var(--line);
+  }
+  .bubble-menu-item.danger { color: var(--bad); }
+  .bubble-menu-item .mi-ico {
+    width: 14px; height: 14px; flex-shrink: 0;
+    opacity: 0.6;
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div class="masthead">
+    <div>
+      <div class="title">VERITAS · UI STUDY · FILE 2 OF 4</div>
+      <h1>Onboarding, <em>home</em> & capture.</h1>
+    </div>
+    <div class="meta">
+      <span>SCREENS</span> 12 in this file<br>
+      <span>REFS</span> Visual spec §2, §3, §4<br>
+      <span>STYLE</span> Companion to file 1
+    </div>
+  </div>
+
+  <!-- === SECTION 1: ONBOARDING === -->
+  <div class="section">
+    <div class="section-head">
+      <div class="section-num">01 · ONBOARDING</div>
+      <div class="section-title">First launch — seven screens</div>
+      <div class="section-desc">Runs exactly once. Cannot be skipped. Sets accurate expectations before asking for permissions. Every screen has a progress indicator and a clear next action.</div>
+    </div>
+    <div class="phones">
+
+      <!-- 2.1 Welcome -->
+      <div>
+        <div class="phone"><div class="screen">
+          <div class="statusbar">
+            <span>9:41</span>
+            <div class="icons"><div class="bar"><i></i><i></i><i></i><i></i></div><div class="batt"><i></i></div></div>
+          </div>
+          <div class="onboard">
+            <div class="onboard-progress">
+              <div class="step active"></div>
+              <div class="step"></div>
+              <div class="step"></div>
+              <div class="step"></div>
+              <div class="step"></div>
+              <div class="step"></div>
+              <div class="step"></div>
+            </div>
+            <div class="onboard-hero">
+              <div class="onboard-mark"></div>
+              <div class="onboard-wordmark">VERITAS</div>
+              <div class="onboard-headline-1">Before you believe it,</div>
+              <div class="onboard-headline-2">tap Veritas.</div>
+              <div class="onboard-sub">An Android tool that checks if videos, audio, and images are AI-generated. Works offline. Zero tracking.</div>
+            </div>
+            <div class="onboard-actions">
+              <div class="onboard-btn primary">Get started</div>
+              <div class="onboard-btn secondary">How it works</div>
+            </div>
+          </div>
+        </div></div>
+        <div class="phone-label"><strong>2.1 · WELCOME</strong>Value prop in 3 seconds<em>ONBOARDING 1/7</em></div>
+      </div>
+
+      <!-- 2.2 Value cards -->
+      <div>
+        <div class="phone"><div class="screen">
+          <div class="statusbar">
+            <span>9:41</span>
+            <div class="icons"><div class="bar"><i></i><i></i><i></i><i></i></div><div class="batt"><i></i></div></div>
+          </div>
+          <div class="onboard">
+            <div class="onboard-progress">
+              <div class="step done"></div>
+              <div class="step active"></div>
+              <div class="step"></div>
+              <div class="step"></div>
+              <div class="step"></div>
+              <div class="step"></div>
+              <div class="step"></div>
+            </div>
+            <div style="margin-bottom: 24px;">
+              <div class="onboard-headline-2" style="font-size: 24px; margin-bottom: 6px;">What Veritas does</div>
+              <div class="onboard-sub" style="font-size: 13px;">Three things, done well.</div>
+            </div>
+            <div class="value-cards">
+              <div class="vcard">
+                <div class="vcard-icon">⌕</div>
+                <div class="vcard-body">
+                  <h4>Forensic analysis</h4>
+                  <p>Detects AI-generated video, audio, and images using multiple on-device models.</p>
+                </div>
+              </div>
+              <div class="vcard">
+                <div class="vcard-icon">✓</div>
+                <div class="vcard-body">
+                  <h4>Provenance verification</h4>
+                  <p>Reads Content Credentials (C2PA) to confirm content from real cameras and sources.</p>
+                </div>
+              </div>
+              <div class="vcard">
+                <div class="vcard-icon">◉</div>
+                <div class="vcard-body">
+                  <h4>Always on-device</h4>
+                  <p>Your media never leaves your phone. No accounts, no uploads, no tracking.</p>
+                </div>
+              </div>
+            </div>
+            <div class="onboard-actions">
+              <div class="onboard-btn primary">Continue</div>
+            </div>
+          </div>
+        </div></div>
+        <div class="phone-label"><strong>2.2 · CAPABILITIES</strong>Set expectations positively<em>ONBOARDING 2/7</em></div>
+      </div>
+
+      <!-- 2.3 Not-list -->
+      <div>
+        <div class="phone"><div class="screen">
+          <div class="statusbar">
+            <span>9:41</span>
+            <div class="icons"><div class="bar"><i></i><i></i><i></i><i></i></div><div class="batt"><i></i></div></div>
+          </div>
+          <div class="onboard">
+            <div class="onboard-progress">
+              <div class="step done"></div>
+              <div class="step done"></div>
+              <div class="step active"></div>
+              <div class="step"></div>
+              <div class="step"></div>
+              <div class="step"></div>
+              <div class="step"></div>
+            </div>
+            <div style="margin-bottom: 4px;">
+              <div class="onboard-headline-2" style="font-size: 24px; margin-bottom: 6px;">What Veritas is not</div>
+              <div class="onboard-sub" style="font-size: 13px;">Honest about the limits.</div>
+            </div>
+            <div class="notlist">
+              <div class="notitem">
+                <div class="num">01</div>
+                <div class="body"><strong>Not 100% accurate.</strong> Detectors return three verdicts with confidence ranges — Authentic, Synthetic, or Uncertain.</div>
+              </div>
+              <div class="notitem">
+                <div class="num">02</div>
+                <div class="body"><strong>Not a content moderator.</strong> We don't report, flag, or block anything on your behalf.</div>
+              </div>
+              <div class="notitem">
+                <div class="num">03</div>
+                <div class="body"><strong>Not a replacement for judgment.</strong> Use Veritas as one input. Consider the source and context.</div>
+              </div>
+            </div>
+            <div class="onboard-actions">
+              <div class="onboard-btn primary">Makes sense</div>
+            </div>
+          </div>
+        </div></div>
+        <div class="phone-label"><strong>2.3 · LIMITATIONS</strong>Humility as a moat<em>ONBOARDING 3/7</em></div>
+      </div>
+
+      <!-- 2.4 Privacy -->
+      <div>
+        <div class="phone"><div class="screen">
+          <div class="statusbar">
+            <span>9:41</span>
+            <div class="icons"><div class="bar"><i></i><i></i><i></i><i></i></div><div class="batt"><i></i></div></div>
+          </div>
+          <div class="onboard">
+            <div class="onboard-progress">
+              <div class="step done"></div>
+              <div class="step done"></div>
+              <div class="step done"></div>
+              <div class="step active"></div>
+              <div class="step"></div>
+              <div class="step"></div>
+              <div class="step"></div>
+            </div>
+            <div class="onboard-hero">
+              <div class="privacy-icon"></div>
+              <div class="onboard-headline-2" style="font-size: 22px; text-align: center; line-height: 1.15; margin-bottom: 4px;">Your media stays<br>on your phone.</div>
+              <div class="privacy-body">
+                When you verify a video, audio clip, or image, it's processed entirely on your device. <strong>Nothing is uploaded to any server.</strong> No accounts. No tracking SDKs. Files you share with Veritas are deleted automatically 60 seconds after you see the verdict.
+                <div class="privacy-link">Read full privacy policy →</div>
+              </div>
+            </div>
+            <div class="onboard-actions">
+              <div class="onboard-btn primary">Continue</div>
+            </div>
+          </div>
+        </div></div>
+        <div class="phone-label"><strong>2.4 · PRIVACY PROMISE</strong>Before permissions are asked<em>ONBOARDING 4/7</em></div>
+      </div>
+
+      <!-- 2.5 Overlay opt-in -->
+      <div>
+        <div class="phone"><div class="screen">
+          <div class="statusbar">
+            <span>9:41</span>
+            <div class="icons"><div class="bar"><i></i><i></i><i></i><i></i></div><div class="batt"><i></i></div></div>
+          </div>
+          <div class="onboard">
+            <div class="onboard-progress">
+              <div class="step done"></div>
+              <div class="step done"></div>
+              <div class="step done"></div>
+              <div class="step done"></div>
+              <div class="step active"></div>
+              <div class="step"></div>
+              <div class="step"></div>
+            </div>
+            <div style="text-align: center;">
+              <div class="overlay-illust">
+                <div class="fake-feed"></div>
+                <div class="mini-bubble"></div>
+              </div>
+            </div>
+            <div class="onboard-headline-2" style="font-size: 20px; text-align: center; line-height: 1.2; margin-bottom: 10px;">Optional:<br>the floating bubble.</div>
+            <div class="onboard-sub" style="text-align: center; font-size: 12.5px; margin-bottom: 14px;">
+              Tap the bubble while you scroll to verify whatever's on your screen — without switching apps.
+            </div>
+            <div class="overlay-reality">
+              <strong>Needs two extra permissions:</strong> drawing over apps, and screen capture while active. A system notification shows whenever capture is running. Turn off anytime.
+            </div>
+            <div class="onboard-actions">
+              <div class="onboard-btn primary">Enable floating bubble</div>
+              <div class="onboard-btn ghost">Skip — use share menu instead</div>
+            </div>
+          </div>
+        </div></div>
+        <div class="phone-label"><strong>2.5 · OVERLAY OPT-IN</strong>Both paths presented equally<em>ONBOARDING 5/7</em></div>
+      </div>
+
+      <!-- 2.6 Notification pre-brief -->
+      <div>
+        <div class="phone"><div class="screen">
+          <div class="statusbar">
+            <span>9:41</span>
+            <div class="icons"><div class="bar"><i></i><i></i><i></i><i></i></div><div class="batt"><i></i></div></div>
+          </div>
+          <div class="onboard">
+            <div class="onboard-progress">
+              <div class="step done"></div>
+              <div class="step done"></div>
+              <div class="step done"></div>
+              <div class="step done"></div>
+              <div class="step done"></div>
+              <div class="step active"></div>
+              <div class="step"></div>
+            </div>
+            <div class="onboard-hero">
+              <div class="prebrief-icon"></div>
+              <div class="onboard-headline-2" style="font-size: 22px; text-align: center; line-height: 1.15; margin-bottom: 14px;">One more thing.</div>
+              <div class="privacy-body" style="text-align: center;">
+                Veritas uses notifications to let you know when model updates finish. If you use the floating bubble, <strong>Android requires</strong> a small notification while capture is active — this is enforced by the system, not something we can turn off.
+              </div>
+            </div>
+            <div class="onboard-actions">
+              <div class="onboard-btn primary">OK, show the prompt</div>
+            </div>
+          </div>
+        </div></div>
+        <div class="phone-label"><strong>2.6 · NOTIFICATION PREBRIEF</strong>Context before the system asks<em>ONBOARDING 6/7</em></div>
+      </div>
+
+      <!-- 2.7 Ready -->
+      <div>
+        <div class="phone"><div class="screen">
+          <div class="statusbar">
+            <span>9:41</span>
+            <div class="icons"><div class="bar"><i></i><i></i><i></i><i></i></div><div class="batt"><i></i></div></div>
+          </div>
+          <div class="onboard">
+            <div class="onboard-progress">
+              <div class="step done"></div>
+              <div class="step done"></div>
+              <div class="step done"></div>
+              <div class="step done"></div>
+              <div class="step done"></div>
+              <div class="step done"></div>
+              <div class="step active"></div>
+            </div>
+            <div class="onboard-hero">
+              <div class="ready-check"></div>
+              <div class="onboard-headline-2" style="font-size: 32px; text-align: center; line-height: 1; margin-bottom: 16px;">You're ready.</div>
+              <div class="privacy-body" style="text-align: center;">
+                Try it out. Pick any video, audio, or image — or share one to Veritas from another app.
+              </div>
+            </div>
+            <div class="onboard-actions">
+              <div class="onboard-btn primary">Pick a file to verify</div>
+              <div class="onboard-btn secondary">I'll try later</div>
+            </div>
+          </div>
+        </div></div>
+        <div class="phone-label"><strong>2.7 · READY</strong>Concrete first action<em>ONBOARDING 7/7</em></div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- === SECTION 2: HOME STATES === -->
+  <div class="section">
+    <div class="section-head">
+      <div class="section-num">02 · HOME STATES</div>
+      <div class="section-title">The four faces of home</div>
+      <div class="section-desc">Same layout, four contexts. Updating and update-failed are both non-blocking — verification always works, no matter what's happening in the background.</div>
+    </div>
+    <div class="phones">
+
+      <!-- 3.2 Empty -->
+      <div>
+        <div class="phone"><div class="screen">
+          <div class="statusbar">
+            <span>9:41</span>
+            <div class="icons"><div class="bar"><i></i><i></i><i></i><i></i></div><div class="batt"><i></i></div></div>
+          </div>
+          <div class="top-bar" style="border-bottom: none; padding-bottom: 0;">
+            <div class="brand">
+              <div class="brand-mark"></div>
+              <div class="brand-name">VERITAS</div>
+            </div>
+            <div class="top-meta">SETTINGS</div>
+          </div>
+          <div class="home-screen">
+            <div class="home-hero">
+              <div class="home-greet">READY</div>
+              <div class="home-title">Verify <strong>anything</strong><br>on your screen.</div>
+              <div class="home-cta">
+                <div class="btn">Pick a file</div>
+                <div class="btn ghost">Paste link</div>
+              </div>
+            </div>
+            <div class="recent">
+              <div class="recent-title">RECENT</div>
+              <div class="empty-state">
+                <div class="empty-state-icon"></div>
+                <h4>Verified content will appear here</h4>
+                <p>Your history is stored on this device only. We never see it.</p>
+              </div>
+            </div>
+            <div class="nav">
+              <div class="nav-item active">
+                <div class="nav-ico"></div><span>VERIFY</span>
+              </div>
+              <div class="nav-item">
+                <div class="nav-ico circ"></div><span>HISTORY</span>
+              </div>
+              <div class="nav-item">
+                <div class="nav-ico"></div><span>ABOUT</span>
+              </div>
+            </div>
+          </div>
+        </div></div>
+        <div class="phone-label"><strong>3.2 · HOME — EMPTY</strong>Before first verify<em>VISUAL SPEC §3.2</em></div>
+      </div>
+
+      <!-- 3.3 Updating -->
+      <div>
+        <div class="phone"><div class="screen">
+          <div class="statusbar">
+            <span>9:41</span>
+            <div class="icons"><div class="bar"><i></i><i></i><i></i><i></i></div><div class="batt"><i></i></div></div>
+          </div>
+          <div class="top-bar" style="border-bottom: none; padding-bottom: 0;">
+            <div class="brand">
+              <div class="brand-mark"></div>
+              <div class="brand-name">VERITAS</div>
+            </div>
+            <div class="top-meta">SETTINGS</div>
+          </div>
+          <div class="update-strip">
+            UPDATING DETECTION MODELS
+            <div class="update-bar"><div class="update-bar-fill"></div></div>
+            <span class="update-pct">62%</span>
+          </div>
+          <div class="home-screen">
+            <div class="home-hero">
+              <div class="home-greet">READY · USING CURRENT MODELS</div>
+              <div class="home-title">Verify <strong>anything</strong><br>on your screen.</div>
+              <div class="home-cta">
+                <div class="btn">Pick a file</div>
+                <div class="btn ghost">Paste link</div>
+              </div>
+            </div>
+            <div class="recent">
+              <div class="recent-title">RECENT · 2</div>
+              <div class="rec-item">
+                <div class="rec-thumb"></div>
+                <div class="rec-body">
+                  <div class="rec-src">Shared from TikTok</div>
+                  <div class="rec-time">Today · 09:12</div>
+                </div>
+                <div class="rec-verdict bad">SYNTH</div>
+              </div>
+              <div class="rec-item">
+                <div class="rec-thumb aud"></div>
+                <div class="rec-body">
+                  <div class="rec-src">Voice note · WhatsApp</div>
+                  <div class="rec-time">Today · 08:30</div>
+                </div>
+                <div class="rec-verdict ok">AUTH</div>
+              </div>
+            </div>
+            <div class="nav">
+              <div class="nav-item active"><div class="nav-ico"></div><span>VERIFY</span></div>
+              <div class="nav-item"><div class="nav-ico circ"></div><span>HISTORY</span></div>
+              <div class="nav-item"><div class="nav-ico"></div><span>ABOUT</span></div>
+            </div>
+          </div>
+        </div></div>
+        <div class="phone-label"><strong>3.3 · UPDATING</strong>Non-blocking maintenance<em>VISUAL SPEC §3.3</em></div>
+      </div>
+
+      <!-- 3.4 Update failed -->
+      <div>
+        <div class="phone"><div class="screen">
+          <div class="statusbar">
+            <span>9:41</span>
+            <div class="icons"><div class="bar"><i></i><i></i><i></i><i></i></div><div class="batt"><i></i></div></div>
+          </div>
+          <div class="top-bar" style="border-bottom: none; padding-bottom: 0;">
+            <div class="brand">
+              <div class="brand-mark"></div>
+              <div class="brand-name">VERITAS</div>
+            </div>
+            <div class="top-meta">SETTINGS</div>
+          </div>
+          <div class="home-screen">
+            <div class="banner">
+              <div class="banner-icon">!</div>
+              <div class="banner-text">
+                <strong>COULDN'T UPDATE MODELS</strong><br>
+                Using last good version. We'll retry on Wi-Fi.
+              </div>
+              <div class="banner-cta">FIX</div>
+            </div>
+            <div class="home-hero" style="padding-top: 14px;">
+              <div class="home-greet">READY</div>
+              <div class="home-title">Verify <strong>anything</strong><br>on your screen.</div>
+              <div class="home-cta">
+                <div class="btn">Pick a file</div>
+                <div class="btn ghost">Paste link</div>
+              </div>
+            </div>
+            <div class="recent">
+              <div class="recent-title">RECENT · 2</div>
+              <div class="rec-item">
+                <div class="rec-thumb"></div>
+                <div class="rec-body">
+                  <div class="rec-src">Shared from Instagram</div>
+                  <div class="rec-time">Today · 07:45</div>
+                </div>
+                <div class="rec-verdict warn">UNCERT</div>
+              </div>
+              <div class="rec-item">
+                <div class="rec-thumb img"></div>
+                <div class="rec-body">
+                  <div class="rec-src">Image · Gallery</div>
+                  <div class="rec-time">Yesterday</div>
+                </div>
+                <div class="rec-verdict ok">AUTH</div>
+              </div>
+            </div>
+            <div class="nav">
+              <div class="nav-item active"><div class="nav-ico"></div><span>VERIFY</span></div>
+              <div class="nav-item"><div class="nav-ico circ"></div><span>HISTORY</span></div>
+              <div class="nav-item"><div class="nav-ico"></div><span>ABOUT</span></div>
+            </div>
+          </div>
+        </div></div>
+        <div class="phone-label"><strong>3.4 · UPDATE FAILED</strong>Honest, current models still work<em>VISUAL SPEC §3.4</em></div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- === SECTION 3: CAPTURE & INGEST === -->
+  <div class="section">
+    <div class="section-head">
+      <div class="section-num">03 · CAPTURE & INGEST</div>
+      <div class="section-title">Five entry flows</div>
+      <div class="section-desc">Paste-link is the fallback when apps share URLs instead of media. Bubble menu and capture-confirm show the full overlay flow. MediaProjection is system-drawn but our pre-state matters too.</div>
+    </div>
+    <div class="phones">
+
+      <!-- 4.3 Paste link -->
+      <div>
+        <div class="phone"><div class="screen">
+          <div class="statusbar">
+            <span>9:41</span>
+            <div class="icons"><div class="bar"><i></i><i></i><i></i><i></i></div><div class="batt"><i></i></div></div>
+          </div>
+          <div class="top-bar">
+            <div class="brand">
+              <div class="brand-mark"></div>
+              <div class="brand-name">VERITAS</div>
+            </div>
+            <div class="back-btn">×</div>
+          </div>
+          <div class="home-screen">
+            <div class="plink-content">
+              <div class="plink-label">PASTE A URL</div>
+              <div class="plink-field">https://vm.tiktok.com/ZPRxY4e_<span class="cursor"></span></div>
+              <div class="plink-hint">
+                <strong>Works with:</strong> TikTok, Instagram, YouTube Shorts, X, and direct media URLs.
+              </div>
+              <div class="plink-label">PRIVACY NOTE</div>
+              <div class="plink-privacy">
+                The URL is sent to the source platform to retrieve the media. The media itself is then analyzed entirely on your device.
+              </div>
+              <div class="plink-actions">
+                <div class="btn" style="flex: 0 0 auto; padding: 14px 20px; text-align: center; border-radius: 12px; background: var(--panel); color: var(--ink); border: 1px solid var(--line); font-weight: 700; font-size: 13px;">Cancel</div>
+                <div class="btn primary">Fetch & verify</div>
+              </div>
+            </div>
+          </div>
+        </div></div>
+        <div class="phone-label"><strong>4.3 · PASTE LINK</strong>Fallback when apps share URLs<em>VISUAL SPEC §4.3</em></div>
+      </div>
+
+      <!-- 4.4b Bubble long-press menu -->
+      <div>
+        <div class="phone"><div class="screen">
+          <div class="bg-app">
+            <div class="bg-video" style="inset: 60px 16px 60px 16px;">
+              <div class="face"></div>
+            </div>
+          </div>
+          <div class="bubble" style="top: 330px; right: 18px;"></div>
+          <div class="bubble-menu">
+            <div class="bubble-menu-item">
+              <div class="mi-ico" style="border: 1px solid currentColor; border-radius: 2px;"></div>
+              Open Veritas
+            </div>
+            <div class="bubble-menu-item">
+              <div class="mi-ico" style="border: 1px solid currentColor; border-radius: 50%;"></div>
+              Hide for this app
+            </div>
+            <div class="bubble-menu-item danger">
+              <div class="mi-ico" style="border: 1px solid currentColor; position: relative;">
+                <span style="position: absolute; inset: -1px; display: flex; align-items: center; justify-content: center;">×</span>
+              </div>
+              Turn off overlay
+            </div>
+          </div>
+          <div class="statusbar">
+            <span>9:41</span>
+            <div class="icons"><div class="bar"><i></i><i></i><i></i><i></i></div><div class="batt"><i></i></div></div>
+          </div>
+        </div></div>
+        <div class="phone-label"><strong>4.4b · BUBBLE MENU</strong>Long-press controls<em>VISUAL SPEC §4.4</em></div>
+      </div>
+
+      <!-- 4.5 MediaProjection prompt -->
+      <div>
+        <div class="phone"><div class="screen">
+          <div class="bg-app">
+            <div class="bg-video" style="inset: 60px 16px 60px 16px;">
+              <div class="face"></div>
+            </div>
+          </div>
+          <div class="bubble" style="top: 330px; right: 18px;"></div>
+          <div class="sysdialog-dim"></div>
+          <div class="sysdialog">
+            <div class="appline">
+              <div class="app-icon-mini">V</div>
+              Veritas wants to capture screen
+            </div>
+            <h3>Start recording or casting with Veritas?</h3>
+            <p>Veritas will have access to all the information that's visible on your screen or played from your device while recording. This includes information such as passwords, payment details, photos, messages, and audio that you play.</p>
+            <div class="dialog-actions">
+              <div class="dialog-btn" style="color: #8a8f9a;">Cancel</div>
+              <div class="dialog-btn">Start now</div>
+            </div>
+          </div>
+          <div class="statusbar">
+            <span>9:41</span>
+            <div class="icons"><div class="bar"><i></i><i></i><i></i><i></i></div><div class="batt"><i></i></div></div>
+          </div>
+        </div></div>
+        <div class="phone-label"><strong>4.5 · MEDIAPROJECTION PROMPT</strong>System-drawn, per-capture<em>VISUAL SPEC §4.5</em></div>
+      </div>
+
+      <!-- 4.6 Capture sweep confirm -->
+      <div>
+        <div class="phone"><div class="screen">
+          <div class="fake-host">
+            <div class="fake-host-video">
+              <div class="face"></div>
+            </div>
+          </div>
+          <div class="sweep-grid"></div>
+          <div class="sweep-corners"></div>
+          <div class="sweep-line"></div>
+          <div class="sweep-label">CAPTURING</div>
+          <div class="statusbar">
+            <span>9:41</span>
+            <div class="icons"><div class="bar"><i></i><i></i><i></i><i></i></div><div class="batt"><i></i></div></div>
+          </div>
+        </div></div>
+        <div class="phone-label"><strong>4.6 · CAPTURE CONFIRM</strong>800ms visual confirmation<em>VISUAL SPEC §4.6</em></div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Coverage note -->
+  <div style="margin-top: 80px; padding: 32px; border: 1px dashed var(--line); border-radius: 16px; background: var(--panel);">
+    <h3 style="font-family: var(--mono); font-size: 11px; letter-spacing: 0.15em; color: var(--ink-dim); margin-bottom: 18px;">COVERAGE NOTE · FILE 2 OF 4</h3>
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px;">
+      <div>
+        <h4 style="font-size: 13px; margin-bottom: 6px;">This file (12 screens)</h4>
+        <p style="font-size: 12px; color: var(--ink-dim); line-height: 1.55;">
+          Onboarding 2.1–2.7 · Home empty/updating/failed · Paste link · Bubble menu · MediaProjection · Capture sweep
+        </p>
+      </div>
+      <div>
+        <h4 style="font-size: 13px; margin-bottom: 6px;">System-rendered (not mocked)</h4>
+        <p style="font-size: 12px; color: var(--ink-dim); line-height: 1.55;">
+          Share sheet · File picker · Notification permission prompt · Draw-over permission prompt — Android draws these.
+        </p>
+      </div>
+      <div>
+        <h4 style="font-size: 13px; margin-bottom: 6px;">Next files</h4>
+        <p style="font-size: 12px; color: var(--ink-dim); line-height: 1.55;">
+          File 3: all verdict + forensic variants across video / audio / image. File 4: settings tree, history, every error state.
+        </p>
+      </div>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>

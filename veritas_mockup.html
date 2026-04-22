@@ -1,0 +1,1650 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Veritas — UI Mockups</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700;800&family=Manrope:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0b0d;
+    --panel: #111318;
+    --panel-2: #171a21;
+    --line: #22262f;
+    --line-2: #2c3140;
+    --ink: #e9ecf1;
+    --ink-dim: #9ba3b4;
+    --ink-mute: #5c6473;
+    --ok: #3fd69b;
+    --ok-dim: #1f6b4f;
+    --warn: #f5b642;
+    --warn-dim: #7a5a1d;
+    --bad: #ff5a5a;
+    --bad-dim: #7a2828;
+    --accent: #8ab4ff;
+    --mono: 'JetBrains Mono', ui-monospace, monospace;
+    --sans: 'Manrope', system-ui, sans-serif;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html, body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--sans);
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+    background-image:
+      radial-gradient(ellipse at 20% 10%, rgba(138,180,255,0.05), transparent 50%),
+      radial-gradient(ellipse at 80% 90%, rgba(63,214,155,0.04), transparent 50%);
+    background-attachment: fixed;
+  }
+
+  .page {
+    max-width: 1440px;
+    margin: 0 auto;
+    padding: 56px 32px 120px;
+  }
+
+  .masthead {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    padding-bottom: 28px;
+    border-bottom: 1px solid var(--line);
+    margin-bottom: 56px;
+  }
+  .masthead .title {
+    font-family: var(--mono);
+    font-weight: 800;
+    letter-spacing: 0.18em;
+    font-size: 13px;
+    color: var(--ink-dim);
+  }
+  .masthead h1 {
+    font-family: var(--sans);
+    font-weight: 300;
+    font-size: 64px;
+    line-height: 1;
+    letter-spacing: -0.03em;
+    margin-top: 14px;
+  }
+  .masthead h1 em {
+    font-style: normal;
+    font-weight: 700;
+  }
+  .masthead .meta {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--ink-mute);
+    text-align: right;
+    line-height: 1.8;
+  }
+  .masthead .meta span { color: var(--ink-dim); }
+
+  /* Section labels */
+  .section {
+    margin-bottom: 80px;
+  }
+  .section-head {
+    display: flex;
+    align-items: baseline;
+    gap: 20px;
+    margin-bottom: 32px;
+    padding-bottom: 16px;
+    border-bottom: 1px dashed var(--line);
+  }
+  .section-num {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--ink-mute);
+    letter-spacing: 0.1em;
+  }
+  .section-title {
+    font-size: 24px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+  }
+  .section-desc {
+    color: var(--ink-dim);
+    font-size: 14px;
+    margin-left: auto;
+    max-width: 480px;
+    line-height: 1.5;
+  }
+
+  /* Phone grid */
+  .phones {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(310px, 1fr));
+    gap: 40px 32px;
+    justify-items: center;
+  }
+
+  /* Phone frame */
+  .phone {
+    width: 310px;
+    height: 640px;
+    border-radius: 44px;
+    background: #000;
+    padding: 10px;
+    position: relative;
+    box-shadow:
+      0 0 0 2px #1a1d24,
+      0 0 0 3px #0a0b0d,
+      0 30px 80px -20px rgba(0,0,0,0.8),
+      0 12px 28px -12px rgba(138,180,255,0.08);
+  }
+  .phone::before {
+    content: '';
+    position: absolute;
+    top: 22px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 86px;
+    height: 24px;
+    background: #000;
+    border-radius: 14px;
+    z-index: 20;
+  }
+  .screen {
+    width: 100%;
+    height: 100%;
+    border-radius: 34px;
+    overflow: hidden;
+    position: relative;
+    background: var(--bg);
+  }
+
+  /* Status bar */
+  .statusbar {
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 28px 0 28px;
+    font-family: var(--mono);
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--ink);
+    position: relative;
+    z-index: 10;
+  }
+  .statusbar .icons { display: flex; gap: 5px; align-items: center; }
+  .bar { display: inline-flex; gap: 2px; }
+  .bar i { display: block; width: 2px; background: var(--ink); border-radius: 1px; }
+  .bar i:nth-child(1) { height: 3px; }
+  .bar i:nth-child(2) { height: 5px; }
+  .bar i:nth-child(3) { height: 7px; }
+  .bar i:nth-child(4) { height: 9px; }
+  .batt {
+    width: 22px; height: 10px; border: 1px solid var(--ink); border-radius: 2px; position: relative; padding: 1px;
+  }
+  .batt::after {
+    content: ''; position: absolute; right: -3px; top: 3px; width: 2px; height: 4px; background: var(--ink); border-radius: 0 1px 1px 0;
+  }
+  .batt i { display: block; width: 70%; height: 100%; background: var(--ink); border-radius: 1px; }
+
+  .phone-label {
+    text-align: center;
+    margin-top: 18px;
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--ink-mute);
+    letter-spacing: 0.1em;
+  }
+  .phone-label strong {
+    color: var(--ink-dim);
+    display: block;
+    font-weight: 700;
+    margin-bottom: 4px;
+    letter-spacing: 0.14em;
+  }
+
+  /* === SCREEN: behind-the-app context === */
+  .bg-app {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, #1a1d24 0%, #0f1014 100%);
+    overflow: hidden;
+  }
+  .bg-app::before {
+    content: '';
+    position: absolute;
+    inset: 44px 0 80px 0;
+    background:
+      linear-gradient(135deg, #2a2f3a 0%, #1a1e28 60%, #11131a 100%);
+  }
+  .bg-video {
+    position: absolute;
+    inset: 60px 16px 100px 16px;
+    border-radius: 14px;
+    background:
+      radial-gradient(ellipse at 50% 40%, #4a5568 0%, #2d3748 40%, #1a202c 100%);
+    overflow: hidden;
+  }
+  .bg-video::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: repeating-linear-gradient(0deg, transparent 0px, transparent 3px, rgba(255,255,255,0.01) 3px, rgba(255,255,255,0.01) 4px);
+  }
+  .bg-video .face {
+    position: absolute;
+    top: 40%; left: 50%; transform: translate(-50%, -50%);
+    width: 120px; height: 150px;
+    border-radius: 60px / 75px;
+    background:
+      radial-gradient(ellipse at 35% 40%, rgba(255,220,200,0.15), transparent 30%),
+      radial-gradient(ellipse at 65% 40%, rgba(255,220,200,0.15), transparent 30%),
+      linear-gradient(180deg, #8b7355 0%, #6b5940 70%, #4a3d2a 100%);
+    filter: blur(2px);
+    opacity: 0.7;
+  }
+  .bg-caption {
+    position: absolute;
+    bottom: 120px; left: 16px; right: 60px;
+    color: rgba(255,255,255,0.9);
+    font-size: 12px;
+    font-weight: 600;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.8);
+  }
+  .bg-caption .handle { color: #a8c7ff; }
+  .bg-actions {
+    position: absolute;
+    right: 12px;
+    bottom: 130px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    align-items: center;
+  }
+  .bg-actions .act {
+    width: 36px; height: 36px; border-radius: 50%;
+    background: rgba(0,0,0,0.4);
+    display: flex; align-items: center; justify-content: center;
+    color: white; font-size: 16px;
+  }
+
+  /* === Share sheet === */
+  .sheet {
+    position: absolute;
+    left: 0; right: 0; bottom: 0;
+    background: #161922;
+    border-top-left-radius: 22px;
+    border-top-right-radius: 22px;
+    padding: 14px 16px 24px;
+    box-shadow: 0 -20px 40px -10px rgba(0,0,0,0.6);
+    z-index: 5;
+  }
+  .sheet-grab {
+    width: 32px; height: 4px; background: #3a3f4d;
+    border-radius: 2px; margin: 0 auto 14px;
+  }
+  .sheet-title {
+    font-size: 13px; font-weight: 600; margin-bottom: 14px; color: var(--ink-dim);
+    text-align: center;
+  }
+  .apps-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+  }
+  .app {
+    display: flex; flex-direction: column; align-items: center; gap: 6px;
+    padding: 6px 2px;
+    border-radius: 10px;
+  }
+  .app.selected {
+    background: linear-gradient(180deg, rgba(138,180,255,0.12), rgba(138,180,255,0.04));
+    box-shadow: inset 0 0 0 1px rgba(138,180,255,0.3);
+  }
+  .app-icon {
+    width: 44px; height: 44px; border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    font-family: var(--mono); font-weight: 800; font-size: 18px;
+    color: white;
+  }
+  .app-icon.vt {
+    background: linear-gradient(135deg, #0a0b0d 0%, #1a1d24 100%);
+    box-shadow: inset 0 0 0 1px var(--accent), 0 0 12px rgba(138,180,255,0.4);
+    color: var(--accent);
+    position: relative;
+  }
+  .app-icon.vt::after {
+    content: ''; position: absolute; inset: 4px;
+    border: 1px solid rgba(138,180,255,0.2);
+    border-radius: 8px;
+  }
+  .app-icon.tk { background: #000; color: white; font-size: 20px; }
+  .app-icon.ig { background: linear-gradient(45deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888); }
+  .app-icon.wa { background: #25d366; color: white; font-size: 20px; }
+  .app-icon.tg { background: #229ed9; color: white; }
+  .app-icon.mail { background: #3a7bd5; color: white; font-size: 18px; }
+  .app-icon.drive { background: #fbbc04; color: white; }
+  .app-icon.save { background: #2d3748; color: white; }
+  .app-label {
+    font-size: 9.5px;
+    font-weight: 500;
+    color: var(--ink-dim);
+    text-align: center;
+    line-height: 1.2;
+  }
+  .app.selected .app-label { color: var(--ink); }
+
+  /* === Verdict activity === */
+  .verdict-screen {
+    position: absolute;
+    inset: 0;
+    background: var(--bg);
+    display: flex; flex-direction: column;
+    padding: 44px 0 0 0;
+  }
+  .verdict-top {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 18px 22px 14px;
+    border-bottom: 1px solid var(--line);
+  }
+  .brand {
+    display: flex; align-items: center; gap: 8px;
+  }
+  .brand-mark {
+    width: 18px; height: 18px;
+    border: 1.5px solid var(--accent);
+    border-radius: 4px;
+    position: relative;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .brand-mark::before {
+    content: ''; position: absolute; inset: 3px;
+    border: 1px solid rgba(138,180,255,0.4);
+    border-radius: 1px;
+  }
+  .brand-mark::after {
+    content: ''; width: 4px; height: 4px; background: var(--accent); border-radius: 50%;
+    box-shadow: 0 0 6px var(--accent);
+  }
+  .brand-name {
+    font-family: var(--mono);
+    font-weight: 700;
+    font-size: 12px;
+    letter-spacing: 0.18em;
+    color: var(--ink);
+  }
+  .close-btn {
+    width: 28px; height: 28px; border-radius: 50%;
+    background: var(--panel);
+    display: flex; align-items: center; justify-content: center;
+    color: var(--ink-dim);
+    font-size: 16px;
+    font-weight: 300;
+  }
+
+  /* Scanning state */
+  .scan-wrap {
+    flex: 1;
+    display: flex; flex-direction: column;
+    padding: 20px 20px 28px;
+  }
+  .scan-preview {
+    flex: 1;
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    position: relative;
+    overflow: hidden;
+    background: linear-gradient(180deg, #1a1d24 0%, #0f1014 100%);
+  }
+  .scan-preview .face-shape {
+    position: absolute;
+    top: 45%; left: 50%; transform: translate(-50%, -50%);
+    width: 140px; height: 170px;
+    border-radius: 70px / 85px;
+    background:
+      radial-gradient(ellipse at 35% 40%, rgba(255,220,200,0.2), transparent 30%),
+      radial-gradient(ellipse at 65% 40%, rgba(255,220,200,0.2), transparent 30%),
+      linear-gradient(180deg, #8b7355 0%, #6b5940 70%, #4a3d2a 100%);
+    filter: blur(1px);
+    opacity: 0.8;
+  }
+  @keyframes scanline {
+    0% { top: 0; opacity: 0; }
+    10% { opacity: 1; }
+    90% { opacity: 1; }
+    100% { top: 100%; opacity: 0; }
+  }
+  .scan-line {
+    position: absolute;
+    left: 0; right: 0; height: 2px;
+    background: linear-gradient(90deg, transparent, var(--accent), transparent);
+    box-shadow: 0 0 16px var(--accent), 0 0 4px var(--accent);
+    animation: scanline 1.8s linear infinite;
+  }
+  .scan-grid {
+    position: absolute; inset: 0;
+    background-image:
+      linear-gradient(0deg, rgba(138,180,255,0.06) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(138,180,255,0.06) 1px, transparent 1px);
+    background-size: 24px 24px;
+  }
+  .scan-corners {
+    position: absolute; inset: 12px;
+    pointer-events: none;
+  }
+  .scan-corners::before,
+  .scan-corners::after {
+    content: ''; position: absolute;
+    width: 22px; height: 22px;
+    border: 2px solid var(--accent);
+  }
+  .scan-corners::before {
+    top: 0; left: 0;
+    border-right: none; border-bottom: none;
+  }
+  .scan-corners::after {
+    bottom: 0; right: 0;
+    border-left: none; border-top: none;
+  }
+  .scan-status {
+    margin-top: 16px;
+    display: flex; flex-direction: column; gap: 10px;
+  }
+  .scan-status .label {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    color: var(--ink-mute);
+  }
+  .scan-step {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 12px;
+    background: var(--panel);
+    border-radius: 8px;
+    border: 1px solid var(--line);
+    font-size: 12px;
+    color: var(--ink-dim);
+  }
+  .scan-step.active { color: var(--ink); border-color: var(--accent); }
+  .scan-step.done { opacity: 0.6; }
+  .scan-step .dot {
+    width: 8px; height: 8px; border-radius: 50%; background: var(--line-2);
+    flex-shrink: 0;
+  }
+  .scan-step.active .dot {
+    background: var(--accent);
+    box-shadow: 0 0 8px var(--accent);
+    animation: pulse 1.2s infinite;
+  }
+  .scan-step.done .dot { background: var(--ok); }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+  }
+  .scan-step .step-meta {
+    margin-left: auto;
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--ink-mute);
+  }
+
+  /* === Verdict card: shared === */
+  .vx {
+    flex: 1;
+    padding: 20px 20px 24px;
+    display: flex;
+    flex-direction: column;
+  }
+  .vx-tag {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    color: var(--ink-mute);
+    margin-bottom: 12px;
+  }
+  .vx-verdict {
+    font-family: var(--sans);
+    font-weight: 800;
+    font-size: 36px;
+    line-height: 0.95;
+    letter-spacing: -0.025em;
+    margin-bottom: 14px;
+  }
+  .vx.ok .vx-verdict { color: var(--ok); }
+  .vx.warn .vx-verdict { color: var(--warn); }
+  .vx.bad .vx-verdict { color: var(--bad); }
+
+  .vx-confidence {
+    display: flex; align-items: center; gap: 10px;
+    margin-bottom: 20px;
+  }
+  .vx-confidence .bar-wrap {
+    flex: 1;
+    height: 6px;
+    background: var(--panel);
+    border-radius: 3px;
+    overflow: hidden;
+    position: relative;
+  }
+  .vx-confidence .bar-wrap .range {
+    position: absolute;
+    height: 100%;
+    border-radius: 3px;
+  }
+  .vx.ok .bar-wrap .range { background: var(--ok); }
+  .vx.warn .bar-wrap .range { background: var(--warn); }
+  .vx.bad .bar-wrap .range { background: var(--bad); }
+  .vx-confidence .num {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--ink-dim);
+    font-weight: 700;
+  }
+
+  .vx-summary {
+    font-size: 14px;
+    line-height: 1.5;
+    color: var(--ink-dim);
+    margin-bottom: 22px;
+  }
+  .vx-summary strong { color: var(--ink); font-weight: 600; }
+
+  .vx-evidence {
+    display: flex; flex-direction: column;
+    gap: 8px;
+    margin-bottom: 18px;
+  }
+  .vx-ev {
+    display: flex; gap: 10px;
+    padding: 11px 12px;
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    font-size: 12px;
+    line-height: 1.4;
+  }
+  .vx-ev .code {
+    font-family: var(--mono);
+    font-size: 9.5px;
+    letter-spacing: 0.1em;
+    color: var(--ink-mute);
+    white-space: nowrap;
+    padding-top: 1px;
+  }
+  .vx-ev .desc { color: var(--ink-dim); }
+  .vx-ev.plus { border-color: var(--ok-dim); }
+  .vx-ev.plus .code { color: var(--ok); }
+  .vx-ev.minus { border-color: var(--bad-dim); }
+  .vx-ev.minus .code { color: var(--bad); }
+  .vx-ev.mixed { border-color: var(--warn-dim); }
+  .vx-ev.mixed .code { color: var(--warn); }
+
+  .vx-actions {
+    margin-top: auto;
+    display: flex;
+    gap: 8px;
+  }
+  .vx-btn {
+    flex: 1;
+    padding: 13px 0;
+    text-align: center;
+    border-radius: 10px;
+    font-size: 12.5px;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+  }
+  .vx-btn.primary {
+    background: var(--ink);
+    color: var(--bg);
+  }
+  .vx-btn.secondary {
+    background: var(--panel);
+    color: var(--ink-dim);
+    border: 1px solid var(--line);
+  }
+
+  /* === Forensic expanded view === */
+  .fx {
+    flex: 1;
+    padding: 14px 0 0;
+    display: flex; flex-direction: column;
+    overflow: hidden;
+  }
+  .fx-header {
+    padding: 0 20px 14px;
+    display: flex; align-items: baseline; gap: 10px;
+    border-bottom: 1px solid var(--line);
+  }
+  .fx-header .pill {
+    font-family: var(--mono);
+    font-size: 9px;
+    letter-spacing: 0.15em;
+    padding: 3px 7px;
+    border-radius: 3px;
+    background: var(--bad-dim);
+    color: var(--bad);
+    font-weight: 700;
+  }
+  .fx-header .title {
+    font-size: 13px;
+    font-weight: 600;
+  }
+
+  .heatmap {
+    margin: 14px 20px 0;
+    border-radius: 12px;
+    border: 1px solid var(--line);
+    overflow: hidden;
+    position: relative;
+    aspect-ratio: 4 / 3;
+    background: #0f1014;
+  }
+  .heatmap .base {
+    position: absolute; inset: 0;
+    background:
+      radial-gradient(ellipse at 50% 45%, rgba(255,220,200,0.15), transparent 35%),
+      linear-gradient(180deg, #2a2a33 0%, #1a1a22 100%);
+  }
+  .heatmap .face-shape2 {
+    position: absolute;
+    top: 42%; left: 50%; transform: translate(-50%, -50%);
+    width: 110px; height: 140px;
+    border-radius: 55px / 70px;
+    background:
+      radial-gradient(ellipse at 35% 35%, rgba(255,230,210,0.2), transparent 25%),
+      radial-gradient(ellipse at 65% 35%, rgba(255,230,210,0.2), transparent 25%),
+      linear-gradient(180deg, #8b7355 0%, #5a4a35 100%);
+    filter: blur(1px);
+  }
+  .heat-blob {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(12px);
+    mix-blend-mode: screen;
+  }
+  .heat-blob.red {
+    width: 60px; height: 45px;
+    background: radial-gradient(circle, rgba(255,80,80,0.8), transparent 70%);
+  }
+  .heat-blob.amber {
+    width: 40px; height: 35px;
+    background: radial-gradient(circle, rgba(255,180,60,0.7), transparent 70%);
+  }
+  .heat-label {
+    position: absolute;
+    font-family: var(--mono);
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    padding: 3px 6px;
+    border-radius: 3px;
+    background: rgba(10,11,13,0.85);
+    color: var(--bad);
+    border: 1px solid var(--bad-dim);
+    white-space: nowrap;
+  }
+  .heat-label::before {
+    content: '';
+    position: absolute;
+    width: 1px;
+    background: var(--bad);
+  }
+
+  .timeline {
+    margin: 14px 20px 0;
+    padding: 10px 12px;
+    border: 1px solid var(--line);
+    background: var(--panel);
+    border-radius: 10px;
+  }
+  .timeline-label {
+    display: flex; justify-content: space-between;
+    font-family: var(--mono);
+    font-size: 9px;
+    color: var(--ink-mute);
+    letter-spacing: 0.1em;
+    margin-bottom: 8px;
+  }
+  .timeline-bar {
+    height: 24px;
+    background: var(--bg);
+    border-radius: 4px;
+    display: flex;
+    overflow: hidden;
+    position: relative;
+  }
+  .timeline-bar .tseg {
+    flex: 1;
+    border-right: 1px solid rgba(0,0,0,0.4);
+  }
+  .timeline-bar .tseg:last-child { border-right: none; }
+  .tseg.t-ok { background: var(--ok-dim); }
+  .tseg.t-mid { background: var(--warn-dim); }
+  .tseg.t-bad { background: var(--bad-dim); }
+  .tseg.t-bad-strong { background: var(--bad); }
+  .timeline-ticks {
+    display: flex; justify-content: space-between;
+    margin-top: 4px;
+    font-family: var(--mono);
+    font-size: 9px;
+    color: var(--ink-mute);
+  }
+
+  .fx-reasons {
+    margin-top: 14px;
+    padding: 0 20px;
+    overflow-y: auto;
+  }
+  .fx-reasons .label {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    color: var(--ink-mute);
+    margin-bottom: 10px;
+  }
+  .reason {
+    padding: 11px 12px;
+    border-left: 2px solid var(--line-2);
+    margin-bottom: 10px;
+    background: rgba(255,255,255,0.01);
+    border-radius: 0 8px 8px 0;
+  }
+  .reason.high { border-left-color: var(--bad); }
+  .reason.mid { border-left-color: var(--warn); }
+  .reason.low { border-left-color: var(--ok); }
+  .reason .head {
+    display: flex; justify-content: space-between; align-items: baseline;
+    margin-bottom: 4px;
+  }
+  .reason .rcode {
+    font-family: var(--mono);
+    font-size: 9.5px;
+    letter-spacing: 0.08em;
+    color: var(--ink-dim);
+    font-weight: 700;
+  }
+  .reason .rweight {
+    font-family: var(--mono);
+    font-size: 9px;
+    color: var(--ink-mute);
+  }
+  .reason .rdesc {
+    font-size: 12px;
+    line-height: 1.45;
+    color: var(--ink-dim);
+  }
+
+  .fx-footer {
+    padding: 12px 20px 18px;
+    border-top: 1px solid var(--line);
+    margin-top: 12px;
+    display: flex; gap: 8px;
+  }
+
+  /* === Overlay mode === */
+  .bubble {
+    position: absolute;
+    z-index: 15;
+    top: 350px;
+    right: 18px;
+    width: 54px; height: 54px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 30%, #1a1d24 0%, #0a0b0d 80%);
+    box-shadow:
+      0 0 0 1.5px var(--accent),
+      0 0 24px rgba(138,180,255,0.5),
+      0 8px 20px rgba(0,0,0,0.6);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .bubble::before {
+    content: '';
+    position: absolute; inset: 5px;
+    border-radius: 50%;
+    border: 1px solid rgba(138,180,255,0.25);
+  }
+  .bubble::after {
+    content: '';
+    position: absolute;
+    width: 10px; height: 10px;
+    background: var(--accent);
+    border-radius: 50%;
+    box-shadow: 0 0 10px var(--accent);
+  }
+
+  /* Mini verdict toast (overlay mode output) */
+  .toast {
+    position: absolute;
+    z-index: 14;
+    left: 14px; right: 14px;
+    bottom: 80px;
+    background: rgba(10,11,13,0.96);
+    backdrop-filter: blur(20px);
+    border: 1px solid var(--line-2);
+    border-radius: 18px;
+    padding: 14px 16px;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.6);
+  }
+  .toast-top {
+    display: flex; align-items: center; gap: 10px;
+    margin-bottom: 8px;
+  }
+  .toast-dot {
+    width: 10px; height: 10px; border-radius: 50%;
+    background: var(--bad);
+    box-shadow: 0 0 10px var(--bad);
+  }
+  .toast.warn .toast-dot { background: var(--warn); box-shadow: 0 0 10px var(--warn); }
+  .toast.ok .toast-dot { background: var(--ok); box-shadow: 0 0 10px var(--ok); }
+  .toast-verdict {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.18em;
+    font-weight: 700;
+    color: var(--bad);
+  }
+  .toast.warn .toast-verdict { color: var(--warn); }
+  .toast.ok .toast-verdict { color: var(--ok); }
+  .toast-conf {
+    margin-left: auto;
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--ink-mute);
+  }
+  .toast-line {
+    font-size: 13px;
+    color: var(--ink);
+    line-height: 1.4;
+    font-weight: 500;
+  }
+  .toast-line span {
+    color: var(--ink-dim);
+    font-weight: 400;
+  }
+  .toast-actions {
+    display: flex; gap: 8px;
+    margin-top: 12px;
+  }
+  .toast-btn {
+    flex: 1; text-align: center;
+    padding: 8px 0;
+    font-size: 11px;
+    font-weight: 600;
+    border-radius: 8px;
+    background: rgba(255,255,255,0.06);
+    color: var(--ink-dim);
+    border: 1px solid var(--line);
+  }
+  .toast-btn.primary {
+    background: var(--ink);
+    color: var(--bg);
+    border-color: var(--ink);
+  }
+
+  /* === Home screen === */
+  .home {
+    flex: 1;
+    padding: 0 0 20px;
+    display: flex; flex-direction: column;
+  }
+  .home-hero {
+    padding: 18px 22px 22px;
+    background:
+      radial-gradient(ellipse at 100% 0%, rgba(138,180,255,0.12), transparent 60%),
+      linear-gradient(180deg, rgba(138,180,255,0.04), transparent);
+    border-bottom: 1px solid var(--line);
+  }
+  .home-greet {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    color: var(--ink-mute);
+    margin-bottom: 6px;
+  }
+  .home-title {
+    font-weight: 300;
+    font-size: 26px;
+    letter-spacing: -0.02em;
+    line-height: 1.1;
+  }
+  .home-title strong { font-weight: 700; }
+  .home-cta {
+    margin-top: 16px;
+    display: flex; gap: 8px;
+  }
+  .home-cta .btn {
+    flex: 1;
+    text-align: center;
+    padding: 14px 0;
+    border-radius: 12px;
+    background: var(--ink);
+    color: var(--bg);
+    font-weight: 700;
+    font-size: 13px;
+  }
+  .home-cta .btn.ghost {
+    background: var(--panel);
+    color: var(--ink);
+    border: 1px solid var(--line);
+  }
+
+  .recent {
+    padding: 18px 22px 0;
+  }
+  .recent-title {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    color: var(--ink-mute);
+    margin-bottom: 12px;
+  }
+  .rec-item {
+    display: flex; align-items: center; gap: 12px;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--line);
+  }
+  .rec-item:last-child { border-bottom: none; }
+  .rec-thumb {
+    width: 44px; height: 44px;
+    border-radius: 10px;
+    flex-shrink: 0;
+    background: linear-gradient(135deg, #2a2f3a, #1a1e28);
+    position: relative;
+    overflow: hidden;
+  }
+  .rec-thumb::after {
+    content: '';
+    position: absolute;
+    inset: 4px;
+    border-radius: 6px;
+    background: radial-gradient(ellipse at 50% 40%, rgba(255,220,200,0.2), transparent 40%);
+  }
+  .rec-body {
+    flex: 1; min-width: 0;
+  }
+  .rec-src {
+    font-size: 12px;
+    color: var(--ink-dim);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .rec-time {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--ink-mute);
+    margin-top: 2px;
+  }
+  .rec-verdict {
+    font-family: var(--mono);
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    padding: 4px 8px;
+    border-radius: 4px;
+  }
+  .rec-verdict.ok { background: var(--ok-dim); color: var(--ok); }
+  .rec-verdict.warn { background: var(--warn-dim); color: var(--warn); }
+  .rec-verdict.bad { background: var(--bad-dim); color: var(--bad); }
+
+  /* Nav bar */
+  .nav {
+    display: flex;
+    justify-content: space-around;
+    padding: 12px 0 6px;
+    border-top: 1px solid var(--line);
+    background: var(--bg);
+  }
+  .nav-item {
+    display: flex; flex-direction: column; align-items: center; gap: 3px;
+    font-family: var(--mono);
+    font-size: 9px;
+    letter-spacing: 0.1em;
+    color: var(--ink-mute);
+  }
+  .nav-item.active { color: var(--accent); }
+  .nav-ico {
+    width: 20px; height: 20px;
+    border: 1.3px solid currentColor;
+    border-radius: 4px;
+  }
+  .nav-ico.circ { border-radius: 50%; }
+  .nav-ico.tri { border: none; width: 0; height: 0;
+    border-left: 8px solid transparent;
+    border-right: 8px solid transparent;
+    border-bottom: 14px solid currentColor;
+  }
+
+  /* Key/legend */
+  .key {
+    margin-top: 80px;
+    padding: 32px;
+    border: 1px dashed var(--line);
+    border-radius: 16px;
+    background: var(--panel);
+  }
+  .key h3 {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.15em;
+    color: var(--ink-dim);
+    margin-bottom: 18px;
+  }
+  .key-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 20px;
+  }
+  .key-item {
+    display: flex;
+    gap: 14px;
+    align-items: flex-start;
+  }
+  .key-sw {
+    width: 10px; height: 10px; border-radius: 50%;
+    flex-shrink: 0;
+    margin-top: 5px;
+  }
+  .key-sw.ok { background: var(--ok); box-shadow: 0 0 8px var(--ok); }
+  .key-sw.warn { background: var(--warn); box-shadow: 0 0 8px var(--warn); }
+  .key-sw.bad { background: var(--bad); box-shadow: 0 0 8px var(--bad); }
+  .key-item h4 {
+    font-size: 13px;
+    margin-bottom: 4px;
+    letter-spacing: -0.01em;
+  }
+  .key-item p {
+    font-size: 12px;
+    color: var(--ink-dim);
+    line-height: 1.5;
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- Masthead -->
+  <div class="masthead">
+    <div>
+      <div class="title">VERITAS · UI STUDY · VISUAL SPEC v0.1</div>
+      <h1>Screens <em>before code.</em></h1>
+    </div>
+    <div class="meta">
+      <span>PLATFORM</span> Android 14+<br>
+      <span>DENSITY</span> 310 × 640 @ 3x<br>
+      <span>MODE</span> Dark primary · Light deferred
+    </div>
+  </div>
+
+  <!-- SECTION 1: Entry -->
+  <div class="section">
+    <div class="section-head">
+      <div class="section-num">01 · ENTRY</div>
+      <div class="section-title">How Veritas starts</div>
+      <div class="section-desc">The user is mid-scroll in another app. Veritas has to insert itself without stealing focus. Two paths: share-sheet (default) and overlay bubble (opt-in).</div>
+    </div>
+    <div class="phones">
+
+      <!-- Share sheet -->
+      <div>
+        <div class="phone"><div class="screen">
+          <div class="bg-app">
+            <div class="bg-video">
+              <div class="face"></div>
+            </div>
+            <div class="bg-caption">
+              <span class="handle">@journalist_live</span> · 2h<br>
+              Breaking footage from the press conference...
+            </div>
+            <div class="bg-actions">
+              <div class="act">♡</div>
+              <div class="act">💬</div>
+              <div class="act">↗</div>
+            </div>
+          </div>
+          <div class="statusbar">
+            <span>9:41</span>
+            <div class="icons">
+              <div class="bar"><i></i><i></i><i></i><i></i></div>
+              <div class="batt"><i></i></div>
+            </div>
+          </div>
+          <div class="sheet">
+            <div class="sheet-grab"></div>
+            <div class="sheet-title">Share video</div>
+            <div class="apps-row">
+              <div class="app selected">
+                <div class="app-icon vt">V</div>
+                <div class="app-label">Verify with<br>Veritas</div>
+              </div>
+              <div class="app"><div class="app-icon wa">✓</div><div class="app-label">WhatsApp</div></div>
+              <div class="app"><div class="app-icon tg">✈</div><div class="app-label">Telegram</div></div>
+              <div class="app"><div class="app-icon mail">@</div><div class="app-label">Gmail</div></div>
+              <div class="app"><div class="app-icon ig"></div><div class="app-label">Instagram</div></div>
+              <div class="app"><div class="app-icon drive">▲</div><div class="app-label">Drive</div></div>
+              <div class="app"><div class="app-icon save">↓</div><div class="app-label">Save</div></div>
+              <div class="app"><div class="app-icon" style="background:var(--panel);color:var(--ink-dim);border:1px solid var(--line);">···</div><div class="app-label">More</div></div>
+            </div>
+          </div>
+        </div></div>
+        <div class="phone-label"><strong>SHARE SHEET</strong>One tap from any social app</div>
+      </div>
+
+      <!-- Overlay bubble -->
+      <div>
+        <div class="phone"><div class="screen">
+          <div class="bg-app">
+            <div class="bg-video" style="inset: 60px 16px 60px 16px;">
+              <div class="face"></div>
+            </div>
+            <div class="bg-caption" style="bottom: 80px;">
+              <span class="handle">@viral_account</span> · 15m<br>
+              You won't BELIEVE what he just said
+            </div>
+            <div class="bg-actions" style="bottom: 100px;">
+              <div class="act">♡</div>
+              <div class="act">💬</div>
+              <div class="act">↗</div>
+            </div>
+          </div>
+          <div class="bubble"></div>
+          <div class="statusbar">
+            <span>9:41</span>
+            <div class="icons">
+              <div class="bar"><i></i><i></i><i></i><i></i></div>
+              <div class="batt"><i></i></div>
+            </div>
+          </div>
+        </div></div>
+        <div class="phone-label"><strong>FLOATING BUBBLE</strong>Power-user mode · opt-in</div>
+      </div>
+
+      <!-- Scanning state -->
+      <div>
+        <div class="phone"><div class="screen">
+          <div class="verdict-screen">
+            <div class="statusbar" style="position:absolute; top:0; left:0; right:0;">
+              <span>9:41</span>
+              <div class="icons">
+                <div class="bar"><i></i><i></i><i></i><i></i></div>
+                <div class="batt"><i></i></div>
+              </div>
+            </div>
+            <div class="verdict-top">
+              <div class="brand">
+                <div class="brand-mark"></div>
+                <div class="brand-name">VERITAS</div>
+              </div>
+              <div class="close-btn">×</div>
+            </div>
+            <div class="scan-wrap">
+              <div class="scan-preview">
+                <div class="scan-grid"></div>
+                <div class="face-shape"></div>
+                <div class="scan-corners"></div>
+                <div class="scan-line"></div>
+              </div>
+              <div class="scan-status">
+                <div class="label">ANALYSIS · 3 OF 5 STAGES</div>
+                <div class="scan-step done">
+                  <div class="dot"></div>
+                  <span>C2PA manifest check</span>
+                  <span class="step-meta">NONE</span>
+                </div>
+                <div class="scan-step done">
+                  <div class="dot"></div>
+                  <span>Watermark scan (SynthID)</span>
+                  <span class="step-meta">NONE</span>
+                </div>
+                <div class="scan-step active">
+                  <div class="dot"></div>
+                  <span>Temporal consistency</span>
+                  <span class="step-meta">0.8s</span>
+                </div>
+                <div class="scan-step">
+                  <div class="dot"></div>
+                  <span>Facial artifact model</span>
+                  <span class="step-meta">QUEUED</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div></div>
+        <div class="phone-label"><strong>SCANNING</strong>Transparent about what's running</div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- SECTION 2: Verdicts -->
+  <div class="section">
+    <div class="section-head">
+      <div class="section-num">02 · VERDICTS</div>
+      <div class="section-title">The three outcomes</div>
+      <div class="section-desc">Never a binary. "Uncertain" is a first-class verdict — designed to look calm, not scary. Confidence is always a range, never a false-precision point.</div>
+    </div>
+    <div class="phones">
+
+      <!-- AUTHENTIC -->
+      <div>
+        <div class="phone"><div class="screen">
+          <div class="verdict-screen">
+            <div class="statusbar" style="position:absolute; top:0; left:0; right:0;">
+              <span>9:41</span>
+              <div class="icons">
+                <div class="bar"><i></i><i></i><i></i><i></i></div>
+                <div class="batt"><i></i></div>
+              </div>
+            </div>
+            <div class="verdict-top">
+              <div class="brand">
+                <div class="brand-mark"></div>
+                <div class="brand-name">VERITAS</div>
+              </div>
+              <div class="close-btn">×</div>
+            </div>
+            <div class="vx ok">
+              <div class="vx-tag">VERDICT · VIDEO · 0:47</div>
+              <div class="vx-verdict">Likely<br>authentic.</div>
+              <div class="vx-confidence">
+                <div class="bar-wrap">
+                  <div class="range" style="left: 78%; right: 6%;"></div>
+                </div>
+                <div class="num">78–94%</div>
+              </div>
+              <div class="vx-summary">
+                Signed by a verified camera. Content Credentials match a <strong>Sony α7 IV</strong> recording from 22 Apr 2026.
+              </div>
+              <div class="vx-evidence">
+                <div class="vx-ev plus">
+                  <div class="code">C2PA ✓</div>
+                  <div class="desc">Signature chain valid. Issued by Sony Imaging, countersigned by press agency.</div>
+                </div>
+                <div class="vx-ev plus">
+                  <div class="code">rPPG ✓</div>
+                  <div class="desc">Natural blood-flow signal detected in facial region (1.1 Hz).</div>
+                </div>
+                <div class="vx-ev plus">
+                  <div class="code">CODEC ✓</div>
+                  <div class="desc">Compression artifacts consistent with single-pass camera encode.</div>
+                </div>
+              </div>
+              <div class="vx-actions">
+                <div class="vx-btn primary">See details</div>
+                <div class="vx-btn secondary">Done</div>
+              </div>
+            </div>
+          </div>
+        </div></div>
+        <div class="phone-label"><strong>LIKELY AUTHENTIC</strong>Provenance verified via C2PA</div>
+      </div>
+
+      <!-- UNCERTAIN -->
+      <div>
+        <div class="phone"><div class="screen">
+          <div class="verdict-screen">
+            <div class="statusbar" style="position:absolute; top:0; left:0; right:0;">
+              <span>9:41</span>
+              <div class="icons">
+                <div class="bar"><i></i><i></i><i></i><i></i></div>
+                <div class="batt"><i></i></div>
+              </div>
+            </div>
+            <div class="verdict-top">
+              <div class="brand">
+                <div class="brand-mark"></div>
+                <div class="brand-name">VERITAS</div>
+              </div>
+              <div class="close-btn">×</div>
+            </div>
+            <div class="vx warn">
+              <div class="vx-tag">VERDICT · VIDEO · 0:12</div>
+              <div class="vx-verdict">Uncertain.</div>
+              <div class="vx-confidence">
+                <div class="bar-wrap">
+                  <div class="range" style="left: 34%; right: 35%;"></div>
+                </div>
+                <div class="num">31–65%</div>
+              </div>
+              <div class="vx-summary">
+                Heavy compression and low resolution prevent a confident read. Detectors disagree.
+                <strong>Don't trust or dismiss this — seek a higher-quality source.</strong>
+              </div>
+              <div class="vx-evidence">
+                <div class="vx-ev mixed">
+                  <div class="code">QUALITY</div>
+                  <div class="desc">144p source, 3 re-encodes detected. Signal is degraded below reliability threshold.</div>
+                </div>
+                <div class="vx-ev mixed">
+                  <div class="code">DISAGREE</div>
+                  <div class="desc">Spatial detector: authentic. Temporal detector: suspect. No consensus.</div>
+                </div>
+                <div class="vx-ev mixed">
+                  <div class="code">NO SIG</div>
+                  <div class="desc">No C2PA manifest present — neither confirms nor refutes authenticity.</div>
+                </div>
+              </div>
+              <div class="vx-actions">
+                <div class="vx-btn primary">Find original</div>
+                <div class="vx-btn secondary">Done</div>
+              </div>
+            </div>
+          </div>
+        </div></div>
+        <div class="phone-label"><strong>UNCERTAIN</strong>First-class verdict · calm, not alarming</div>
+      </div>
+
+      <!-- SYNTHETIC -->
+      <div>
+        <div class="phone"><div class="screen">
+          <div class="verdict-screen">
+            <div class="statusbar" style="position:absolute; top:0; left:0; right:0;">
+              <span>9:41</span>
+              <div class="icons">
+                <div class="bar"><i></i><i></i><i></i><i></i></div>
+                <div class="batt"><i></i></div>
+              </div>
+            </div>
+            <div class="verdict-top">
+              <div class="brand">
+                <div class="brand-mark"></div>
+                <div class="brand-name">VERITAS</div>
+              </div>
+              <div class="close-btn">×</div>
+            </div>
+            <div class="vx bad">
+              <div class="vx-tag">VERDICT · VIDEO · 0:23</div>
+              <div class="vx-verdict">Likely<br>synthetic.</div>
+              <div class="vx-confidence">
+                <div class="bar-wrap">
+                  <div class="range" style="left: 82%; right: 4%;"></div>
+                </div>
+                <div class="num">82–96%</div>
+              </div>
+              <div class="vx-summary">
+                Multiple detectors agree this is AI-generated. Lip-sync drift and absent physiological signal are the strongest indicators.
+              </div>
+              <div class="vx-evidence">
+                <div class="vx-ev minus">
+                  <div class="code">LIP SYNC</div>
+                  <div class="desc">Audio-visual misalignment of 60–120 ms at three points in the clip.</div>
+                </div>
+                <div class="vx-ev minus">
+                  <div class="code">rPPG ✗</div>
+                  <div class="desc">No blood-flow pulse detected. Real faces show a 1 Hz color oscillation.</div>
+                </div>
+                <div class="vx-ev minus">
+                  <div class="code">SPECTRAL</div>
+                  <div class="desc">Frequency-domain signature matches recent video-diffusion model family.</div>
+                </div>
+              </div>
+              <div class="vx-actions">
+                <div class="vx-btn primary">See heatmap</div>
+                <div class="vx-btn secondary">Done</div>
+              </div>
+            </div>
+          </div>
+        </div></div>
+        <div class="phone-label"><strong>LIKELY SYNTHETIC</strong>Ensemble agreement · reasons shown</div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- SECTION 3: Forensic + Overlay output -->
+  <div class="section">
+    <div class="section-head">
+      <div class="section-num">03 · DEPTH</div>
+      <div class="section-title">Forensic view & overlay output</div>
+      <div class="section-desc">For the user who wants to see why. Heatmap, per-second timeline, and machine-readable reason codes. And the compact toast that appears over the host app in bubble mode.</div>
+    </div>
+    <div class="phones">
+
+      <!-- Forensic / heatmap view -->
+      <div>
+        <div class="phone"><div class="screen">
+          <div class="verdict-screen">
+            <div class="statusbar" style="position:absolute; top:0; left:0; right:0;">
+              <span>9:41</span>
+              <div class="icons">
+                <div class="bar"><i></i><i></i><i></i><i></i></div>
+                <div class="batt"><i></i></div>
+              </div>
+            </div>
+            <div class="verdict-top">
+              <div class="brand">
+                <div class="brand-mark"></div>
+                <div class="brand-name">FORENSIC</div>
+              </div>
+              <div class="close-btn">×</div>
+            </div>
+            <div class="fx">
+              <div class="fx-header">
+                <div class="pill">SYNTHETIC</div>
+                <div class="title">Frame 127 · 0:04.2</div>
+              </div>
+              <div class="heatmap">
+                <div class="base"></div>
+                <div class="face-shape2"></div>
+                <div class="heat-blob red" style="top:32%; left:38%;"></div>
+                <div class="heat-blob red" style="top:55%; left:55%;"></div>
+                <div class="heat-blob amber" style="top:25%; left:62%;"></div>
+                <div class="heat-label" style="top:22%; left:16%;">EAR ⟶</div>
+                <div class="heat-label" style="top:60%; right:10%;">← MOUTH</div>
+              </div>
+              <div class="timeline">
+                <div class="timeline-label">
+                  <span>TEMPORAL CONFIDENCE</span>
+                  <span>0:23 TOTAL</span>
+                </div>
+                <div class="timeline-bar">
+                  <div class="tseg t-mid"></div>
+                  <div class="tseg t-mid"></div>
+                  <div class="tseg t-bad"></div>
+                  <div class="tseg t-bad"></div>
+                  <div class="tseg t-bad-strong"></div>
+                  <div class="tseg t-bad-strong"></div>
+                  <div class="tseg t-bad"></div>
+                  <div class="tseg t-mid"></div>
+                </div>
+                <div class="timeline-ticks">
+                  <span>0:00</span><span>0:05</span><span>0:11</span><span>0:17</span><span>0:23</span>
+                </div>
+              </div>
+              <div class="fx-reasons">
+                <div class="label">REASON CODES · 4 FLAGS</div>
+                <div class="reason high">
+                  <div class="head">
+                    <div class="rcode">LIP_SYNC_DRIFT</div>
+                    <div class="rweight">weight 0.38</div>
+                  </div>
+                  <div class="rdesc">Phoneme onset misaligned with lip motion at 0:04, 0:09, 0:17.</div>
+                </div>
+                <div class="reason high">
+                  <div class="head">
+                    <div class="rcode">RPPG_ABSENT</div>
+                    <div class="rweight">weight 0.29</div>
+                  </div>
+                  <div class="rdesc">No detectable blood-flow pulse over facial region across 5s window.</div>
+                </div>
+                <div class="reason mid">
+                  <div class="head">
+                    <div class="rcode">EAR_GEOMETRY</div>
+                    <div class="rweight">weight 0.18</div>
+                  </div>
+                  <div class="rdesc">Left ear changes shape between frames 80–140.</div>
+                </div>
+              </div>
+              <div class="fx-footer">
+                <div class="vx-btn secondary" style="flex:0 0 auto; padding: 13px 16px;">Export</div>
+                <div class="vx-btn primary">Back to verdict</div>
+              </div>
+            </div>
+          </div>
+        </div></div>
+        <div class="phone-label"><strong>FORENSIC VIEW</strong>Heatmap · timeline · reason codes</div>
+      </div>
+
+      <!-- Overlay toast output -->
+      <div>
+        <div class="phone"><div class="screen">
+          <div class="bg-app">
+            <div class="bg-video" style="inset: 60px 16px 60px 16px;">
+              <div class="face"></div>
+            </div>
+            <div class="bg-caption" style="bottom: 340px;">
+              <span class="handle">@viral_account</span> · 15m<br>
+              You won't BELIEVE what he just said
+            </div>
+          </div>
+          <div class="bubble" style="top: 270px;"></div>
+          <div class="toast">
+            <div class="toast-top">
+              <div class="toast-dot"></div>
+              <div class="toast-verdict">LIKELY SYNTHETIC</div>
+              <div class="toast-conf">82–96%</div>
+            </div>
+            <div class="toast-line">
+              AI-generated video. <span>Lip-sync drift and no physiological signal detected.</span>
+            </div>
+            <div class="toast-actions">
+              <div class="toast-btn primary">Why?</div>
+              <div class="toast-btn">Dismiss</div>
+            </div>
+          </div>
+          <div class="statusbar">
+            <span>9:41</span>
+            <div class="icons">
+              <div class="bar"><i></i><i></i><i></i><i></i></div>
+              <div class="batt"><i></i></div>
+            </div>
+          </div>
+        </div></div>
+        <div class="phone-label"><strong>OVERLAY RESULT</strong>Toast appears over host app · doesn't steal focus</div>
+      </div>
+
+      <!-- Home screen -->
+      <div>
+        <div class="phone"><div class="screen">
+          <div class="verdict-screen">
+            <div class="statusbar" style="position:absolute; top:0; left:0; right:0;">
+              <span>9:41</span>
+              <div class="icons">
+                <div class="bar"><i></i><i></i><i></i><i></i></div>
+                <div class="batt"><i></i></div>
+              </div>
+            </div>
+            <div class="verdict-top">
+              <div class="brand">
+                <div class="brand-mark"></div>
+                <div class="brand-name">VERITAS</div>
+              </div>
+              <div style="font-family: var(--mono); font-size: 10px; color: var(--ink-mute); letter-spacing: 0.1em;">SETTINGS</div>
+            </div>
+            <div class="home">
+              <div class="home-hero">
+                <div class="home-greet">READY</div>
+                <div class="home-title">Verify <strong>anything</strong><br>on your screen.</div>
+                <div class="home-cta">
+                  <div class="btn">Pick a file</div>
+                  <div class="btn ghost">Paste link</div>
+                </div>
+              </div>
+              <div class="recent">
+                <div class="recent-title">RECENT · 3</div>
+                <div class="rec-item">
+                  <div class="rec-thumb"></div>
+                  <div class="rec-body">
+                    <div class="rec-src">Shared from TikTok</div>
+                    <div class="rec-time">Today · 09:38</div>
+                  </div>
+                  <div class="rec-verdict bad">SYNTH</div>
+                </div>
+                <div class="rec-item">
+                  <div class="rec-thumb"></div>
+                  <div class="rec-body">
+                    <div class="rec-src">Shared from WhatsApp</div>
+                    <div class="rec-time">Today · 08:12</div>
+                  </div>
+                  <div class="rec-verdict warn">UNCERT</div>
+                </div>
+                <div class="rec-item">
+                  <div class="rec-thumb"></div>
+                  <div class="rec-body">
+                    <div class="rec-src">Shared from Instagram</div>
+                    <div class="rec-time">Yesterday</div>
+                  </div>
+                  <div class="rec-verdict ok">AUTH</div>
+                </div>
+              </div>
+            </div>
+            <div class="nav">
+              <div class="nav-item active">
+                <div class="nav-ico"></div>
+                <span>VERIFY</span>
+              </div>
+              <div class="nav-item">
+                <div class="nav-ico circ"></div>
+                <span>HISTORY</span>
+              </div>
+              <div class="nav-item">
+                <div class="nav-ico"></div>
+                <span>ABOUT</span>
+              </div>
+            </div>
+          </div>
+        </div></div>
+        <div class="phone-label"><strong>APP HOME</strong>Entry point for direct-open flow</div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Key -->
+  <div class="key">
+    <h3>VERDICT LANGUAGE · DESIGN RULES</h3>
+    <div class="key-grid">
+      <div class="key-item">
+        <div class="key-sw ok"></div>
+        <div>
+          <h4>Likely authentic</h4>
+          <p>Green reserved for when provenance actually confirms something, not for "we didn't detect a fake." Absence of evidence is never authenticity.</p>
+        </div>
+      </div>
+      <div class="key-item">
+        <div class="key-sw warn"></div>
+        <div>
+          <h4>Uncertain</h4>
+          <p>Not a failure. Amber is calm, not alarming. The card explains <em>why</em> — low quality, disagreement, missing signal — and suggests a next step.</p>
+        </div>
+      </div>
+      <div class="key-item">
+        <div class="key-sw bad"></div>
+        <div>
+          <h4>Likely synthetic</h4>
+          <p>Red only when ensemble agrees. Every red verdict ships with at least two independent reasons. Never red on a single detector's vote.</p>
+        </div>
+      </div>
+      <div class="key-item">
+        <div class="key-sw" style="background:var(--accent); box-shadow: 0 0 8px var(--accent);"></div>
+        <div>
+          <h4>Confidence is a range</h4>
+          <p>Display <code style="font-family:var(--mono); font-size:11px;">78–94%</code>, never <code style="font-family:var(--mono); font-size:11px;">86%</code>. False precision is the fastest way to lose the user's trust when we're wrong.</p>
+        </div>
+      </div>
+      <div class="key-item">
+        <div class="key-sw" style="background:var(--ink-dim);"></div>
+        <div>
+          <h4>Never color alone</h4>
+          <p>Every verdict carries an icon, a code, and a label. ~8% of users don't reliably distinguish red/green. The layout must read the same in grayscale.</p>
+        </div>
+      </div>
+      <div class="key-item">
+        <div class="key-sw" style="background: var(--ink);"></div>
+        <div>
+          <h4>Return path matters</h4>
+          <p>Every verdict screen has a single dominant action and a "Done" that sends the user back to the app they came from. Veritas is an interrupt, not a destination.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>

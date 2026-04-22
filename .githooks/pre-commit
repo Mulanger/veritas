@@ -1,0 +1,12 @@
+#!/bin/sh
+
+if [ -n "$JAVA_HOME" ]; then
+  unset JAVA_HOME
+fi
+
+if ! command -v java >/dev/null 2>&1; then
+  echo "java not found on PATH" >&2
+  exit 1
+fi
+
+./gradlew precommitCheck
