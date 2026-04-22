@@ -1,12 +1,14 @@
 # Veritas
 
+![Android CI](https://github.com/Mulanger/veritas/actions/workflows/android.yml/badge.svg?branch=codex%2Fphase%2F0-scaffold&event=push)
+
 Veritas is an Android app for on-device forensic media verification. Phase 0 establishes the project scaffold only: a multi-module Kotlin project that compiles, installs, launches, and shows a placeholder screen.
 
 ## CI
 
 Workflow definition: [`.github/workflows/android.yml`](./.github/workflows/android.yml)
 
-The repo currently has no configured Git remote, so a live GitHub Actions badge cannot be verified yet. After the project is pushed to GitHub, update this section with the real badge URL for that repository.
+The badge above tracks the current Phase 0 branch, `codex/phase/0-scaffold`. After Phase 0 is signed off and merged, switch the badge to the long-term default branch.
 
 ## Requirements
 
