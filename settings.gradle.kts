@@ -23,5 +23,6 @@ include(
     ":data-detection",
     ":domain-detection",
     ":feature-home",
+    ":feature-history",
+    ":feature-settings",
 )
-

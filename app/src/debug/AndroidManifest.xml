@@ -4,5 +4,9 @@
             android:name="com.veritas.app.debug.gallery.GalleryActivity"
             android:exported="true"
             android:label="Veritas Gallery" />
+        <activity
+            android:name="com.veritas.app.debug.testing.Phase2TestActivity"
+            android:exported="false"
+            android:label="Veritas Phase 2 Test" />
     </application>
 </manifest>

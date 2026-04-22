@@ -250,6 +250,26 @@ The agent adds entries here whenever it makes a decision during build that:
 **Reversal cost:** low â€” dependency and SDK alignment live in the version catalog and module Gradle files, so this can be changed in one pass later if needed.
 **Approved by human:** pending checkpoint, 2026-04-22
 
+### D-022 · Phase 2 bottom nav keeps the mockup label "ABOUT" while routing to Settings
+**Phase:** 2
+**Date:** 2026-04-22
+**Context:** The Phase 2 plan described the third top-level destination as `Settings (5.1)`, while the visual spec and home mockup label the third bottom-nav item as `ABOUT` and keep a separate `SETTINGS` action in the home header.
+**Decision:** Implement the third typed destination as the Settings screen, but keep the bottom-nav label as `ABOUT` to match the mockup and visual spec. The home header `SETTINGS` action routes to the same destination.
+**Alternatives considered:** Rename the bottom-nav item to `SETTINGS`; introduce a separate About screen before Phase 11.
+**Reasoning:** UI wording follows the visual spec first, while the destination itself still satisfies the plan's Phase 2 Settings stub requirement. Creating a second stub destination here would add scope and route churn for no Phase 2 product value.
+**Reversal cost:** low - the label and route mapping are isolated to the app shell and can be split later when the full settings/about tree is implemented.
+**Approved by human:** pending checkpoint, 2026-04-22
+
+### D-023 · Home recent-state toggle lives behind a debug-only READY long-press
+**Phase:** 2
+**Date:** 2026-04-22
+**Context:** Phase 2 acceptance required both empty and populated recent-history states to render, toggled either by a dev menu or BuildConfig.
+**Decision:** Start from a BuildConfig-driven initial recent mode and expose a debug-only long-press menu on the `READY` tag to switch between empty and mock-history states on device.
+**Alternatives considered:** Add a separate debug settings screen; rely only on a compile-time BuildConfig toggle with no runtime switch.
+**Reasoning:** The long-press keeps the production home screen visually unchanged, gives fast on-device QA access to both states, and avoids introducing a separate debug screen purely for one phase-specific toggle.
+**Reversal cost:** low - the toggle is isolated to the debug path in `feature-home` and can be removed once real persisted history lands in Phase 11.
+**Approved by human:** pending checkpoint, 2026-04-22
+
 ---
 
 ## Part 4 — Open questions

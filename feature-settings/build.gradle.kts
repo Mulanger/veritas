@@ -4,7 +4,7 @@ plugins {
 }
 
 android {
-    namespace = "com.veritas.feature.home"
+    namespace = "com.veritas.feature.settings"
     compileSdk = 36
 
     defaultConfig {
@@ -35,9 +35,6 @@ dependencies {
     implementation(libs.androidx.compose.material3)
     implementation(libs.androidx.compose.ui)
     implementation(libs.androidx.compose.ui.tooling.preview)
-    implementation(libs.androidx.lifecycle.viewmodel.compose)
-    implementation(libs.coil.compose)
-    implementation(libs.kotlinx.coroutines.core)
 
     testImplementation(libs.junit)
 
