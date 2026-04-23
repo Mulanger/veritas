@@ -18,13 +18,14 @@
 - Added connected and local Phase 5 test coverage for verdict routing, cancellation, forensic navigation, and reason-sheet dismissal, while keeping Phase 4 ingestion coverage green against the new scan flow
 - Updated `docs/05_GLOSSARY_AND_DECISIONS.md` with `D-031` through `D-033`
 - Wrote `docs/phase_reports/phase_5.md`
+- Pushed `codex/phase/5-detection-pipeline-stub` to `origin`
 - Full local gates passed with `C:\Program Files\Java\jdk-21`: `.\gradlew.bat assembleDebug test precommitCheck --warning-mode all --console=plain --no-daemon`
 - Targeted connected Phase 4 and Phase 5 flows passed on `veritas_api35`: `.\gradlew.bat :app:connectedDebugAndroidTest "-Pandroid.testInstrumentationRunnerArguments.class=com.veritas.app.Phase4MediaIngestionTest,com.veritas.app.Phase5DetectionFlowTest" --warning-mode all --console=plain --no-daemon`
 - Installed and launched `com.veritas.app.debug/com.veritas.app.MainActivity` on `veritas_api35`
 
 ## Not yet done
 - Human Phase 5 checkpoint review and sign-off
-- Push `codex/phase/5-detection-pipeline-stub`, open the Phase 5 PR, and merge it into `main` without squashing once review is complete
+- Open the Phase 5 PR from the pushed branch and merge it into `main` without squashing once review is complete
 - Wait for explicit human go-ahead before starting Phase 6
 
 ## Open questions for next session
@@ -33,4 +34,4 @@
 ## Recommended starting point
 - Review `docs/phase_reports/phase_5.md`
 - Use the demo filenames listed in that report to walk `_authentic`, `_authentic_c2pa`, `_uncertain`, and `_synthetic` through the installed debug build
-- If approved, push this branch, open the non-squash PR into `main`, merge it, and only then prepare the Phase 6 provenance-layer branch
+- If approved, open the non-squash PR from `codex/phase/5-detection-pipeline-stub` into `main`, merge it, and only then prepare the Phase 6 provenance-layer branch
