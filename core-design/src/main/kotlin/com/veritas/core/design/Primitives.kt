@@ -1,4 +1,4 @@
-@file:Suppress("FunctionName", "MagicNumber", "TooManyFunctions")
+@file:Suppress("FunctionName", "LongParameterList", "MagicNumber", "TooManyFunctions")
 
 package com.veritas.core.design
 
@@ -203,6 +203,7 @@ fun VeritasButton(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     variant: VeritasButtonVariant = VeritasButtonVariant.Primary,
+    enabled: Boolean = true,
     testTag: String? = null,
 ) {
     val backgroundColor =
@@ -224,17 +225,21 @@ fun VeritasButton(
             VeritasButtonVariant.Ghost,
             -> VeritasColors.line
         }
+    val surfaceAlpha = if (enabled) 1f else 0.42f
 
     Box(
         modifier =
             modifier
                 .clip(RoundedCornerShape(VeritasRadius.md))
-                .background(backgroundColor)
+                .background(backgroundColor.copy(alpha = surfaceAlpha))
                 .border(
-                    BorderStroke(1.dp, borderColor),
+                    BorderStroke(1.dp, borderColor.copy(alpha = surfaceAlpha)),
                     RoundedCornerShape(VeritasRadius.md),
                 )
-                .clickable(onClick = onClick)
+                .clickable(
+                    enabled = enabled,
+                    onClick = onClick,
+                )
                 .then(
                     if (testTag == null) {
                         Modifier
@@ -252,7 +257,7 @@ fun VeritasButton(
             text = text,
             style =
                 VeritasType.bodyMd.copy(
-                    color = textColor,
+                    color = textColor.copy(alpha = surfaceAlpha),
                     fontWeight = FontWeight.W600,
                     fontSize = 13.sp,
                 ),

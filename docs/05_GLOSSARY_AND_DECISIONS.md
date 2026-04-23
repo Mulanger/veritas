@@ -302,6 +302,46 @@ The agent adds entries here whenever it makes a decision during build that:
 **Reversal cost:** low - the parameter is optional and localized to the design primitive and its callers.
 **Approved by human:** pending checkpoint, 2026-04-23
 
+### D-027 · Phase 4 paste-link remains a UI-only failure stub
+**Phase:** 4
+**Date:** 2026-04-23
+**Context:** The home visual spec describes a real fetch flow for pasted links, but the Phase 4 plan and planning decision D-005 explicitly defer URL resolution to v1.1.
+**Decision:** Implement the paste-link sheet as validation plus a deterministic fetch-failed stub for any accepted URL, without network resolution or media download.
+**Alternatives considered:** Hide the paste-link action entirely until v1.1; add partial platform-specific resolvers now.
+**Reasoning:** The phase requires the UI surface to exist without expanding scope into network, scraping, or Terms-of-Service work. Showing the flow and failing honestly keeps the UX aligned with the plan and makes the deferral explicit.
+**Reversal cost:** low - the sheet is isolated to app-level home-entry code and can be swapped to a real resolver later without changing the rest of ingestion.
+**Approved by human:** pending checkpoint, 2026-04-23
+
+### D-028 · Incoming media validation trusts copied bytes, not declared MIME alone
+**Phase:** 4
+**Date:** 2026-04-23
+**Context:** Shared content can arrive with missing or misleading MIME types, and Phase 4 acceptance requires correct handling for unsupported or corrupt files.
+**Decision:** Copy the incoming URI into app-private storage first, then classify by container sniffing plus `MediaMetadataRetriever` and `BitmapFactory` metadata instead of relying only on the incoming declared MIME type.
+**Alternatives considered:** Gate strictly on the source intent MIME type; trust file extensions after copy.
+**Reasoning:** Byte-level sniffing plus decode-time metadata catches mislabeled inputs and corrupt files more reliably, which maps better to the Phase 4 error screens and keeps later pipeline stages from inheriting bad assumptions.
+**Reversal cost:** medium - the validation path sits at the center of all share and picker ingestion flows, but remains contained inside `data-detection`.
+**Approved by human:** pending checkpoint, 2026-04-23
+
+### D-029 · `ACTION_SEND_MULTIPLE` ingests the first shared item only in Phase 4
+**Phase:** 4
+**Date:** 2026-04-23
+**Context:** Android shares can provide multiple URIs at once, but Phase 4 defines a single-item scan handoff and the rest of the app has no batch-scan UX yet.
+**Decision:** Accept `ACTION_SEND_MULTIPLE`, extract the first URI, and route only that item through the Phase 4 stub scan flow.
+**Alternatives considered:** Reject multi-item shares entirely; add batch ingest and queue UI in Phase 4.
+**Reasoning:** Using the first item preserves share-sheet compatibility without inventing queue semantics, history behavior, or multi-result UI ahead of later phases.
+**Reversal cost:** low - the extraction logic is isolated to `ShareTargetActivity` and can be replaced once batch UX exists.
+**Approved by human:** pending checkpoint, 2026-04-23
+
+### D-030 · Auto-purge starts at stub-scan handoff and survives activity teardown
+**Phase:** 4
+**Date:** 2026-04-23
+**Context:** The privacy model requires copied media to be deleted 60 seconds after verdict display or sooner if the user leaves the scan or verdict flow.
+**Decision:** Schedule a unique WorkManager purge job when `ScanStubActivity` receives accepted media, and also delete immediately when that activity finishes.
+**Alternatives considered:** Start a coroutine timer in the activity lifecycle only; purge only on explicit Done.
+**Reasoning:** WorkManager survives process and activity teardown, while the immediate delete on finish shortens retention whenever the user exits early. The combination satisfies the privacy requirement without keeping long-lived UI-bound timers.
+**Reversal cost:** medium - purge timing is part of the privacy contract, but the implementation is still localized to the ingestion coordinator and stub scan activity.
+**Approved by human:** pending checkpoint, 2026-04-23
+
 ## Part 4 — Open questions
 
 Questions that remain unresolved at start of build. The agent should revisit these at the relevant phase and either resolve (add to decision log) or escalate to human.

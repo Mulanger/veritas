@@ -28,10 +28,12 @@ dependencies {
     implementation(project(":core-common"))
     implementation(project(":domain-detection"))
 
+    implementation(libs.androidx.work.runtime.ktx)
     implementation(libs.androidx.room.ktx)
     implementation(libs.androidx.room.runtime)
     implementation(libs.hilt.android)
     implementation(libs.kotlinx.coroutines.core)
+    implementation(libs.kotlinx.datetime)
 
     ksp(libs.androidx.room.compiler)
     ksp(libs.hilt.compiler)
