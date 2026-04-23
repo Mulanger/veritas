@@ -61,7 +61,7 @@ class Phase4MediaIngestionTest {
         composeRule.onNodeWithTag(HOME_PICK_FILE_TAG).performClick()
         composeRule.onNodeWithTag(MEDIA_PICKER_VISUAL_TAG).performClick()
 
-        assertTagCount(SCAN_STUB_SCREEN_TAG, 1)
+        assertScanFlowReached()
         composeRule.runOnIdle {
             assertTrue(ingestedFiles().single().exists())
         }
@@ -75,11 +75,11 @@ class Phase4MediaIngestionTest {
                 setClass(ApplicationProvider.getApplicationContext(), ShareTargetActivity::class.java)
                 type = "video/mp4"
                 putExtra(Intent.EXTRA_STREAM, sharedUri)
-            }
+        }
 
         scenario = ActivityScenario.launch<ShareTargetActivity>(intent)
 
-        assertTagCount(SCAN_STUB_SCREEN_TAG, 1)
+        assertScanFlowReached()
         composeRule.runOnIdle {
             assertTrue(ingestedFiles().single().exists())
         }
@@ -125,12 +125,13 @@ class Phase4MediaIngestionTest {
         composeRule.onNodeWithTag(HOME_PICK_FILE_TAG).performClick()
         composeRule.onNodeWithTag(MEDIA_PICKER_VISUAL_TAG).performClick()
 
-        assertTagCount(SCAN_STUB_SCREEN_TAG, 1)
+        assertScanFlowReached()
         val ingestedFile = ingestedFiles().single()
+        val mediaId = ingestedFile.nameWithoutExtension.substringBefore('_')
         val workManager = WorkManager.getInstance(targetContext())
         val workInfos =
             workManager
-                .getWorkInfosForUniqueWork("purge-scanned-media-${ingestedFile.nameWithoutExtension}")
+                .getWorkInfosForUniqueWork("purge-scanned-media-$mediaId")
                 .get(5, TimeUnit.SECONDS)
         val workId = workInfos.single().id
 
@@ -160,6 +161,13 @@ class Phase4MediaIngestionTest {
         assertTrue(
             composeRule.onAllNodesWithText(text, useUnmergedTree = true).fetchSemanticsNodes().isNotEmpty(),
         )
+    }
+
+    private fun assertScanFlowReached() {
+        composeRule.waitUntil(timeoutMillis = 6_000) {
+            composeRule.onAllNodesWithTag(SCAN_STUB_SCREEN_TAG, useUnmergedTree = true).fetchSemanticsNodes().isNotEmpty() ||
+                composeRule.onAllNodesWithTag(VERDICT_SCREEN_TAG, useUnmergedTree = true).fetchSemanticsNodes().isNotEmpty()
+        }
     }
 
     private fun copyAssetToTempFile(assetName: String): File {

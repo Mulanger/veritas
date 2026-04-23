@@ -11,7 +11,7 @@ import androidx.compose.runtime.setValue
 import com.veritas.app.BuildConfig
 import com.veritas.app.VeritasHomeEntryHost
 import com.veritas.app.buildIngestionErrorIntent
-import com.veritas.app.buildScanStubIntent
+import com.veritas.app.buildScanIntent
 import com.veritas.app.toErrorScreen
 import com.veritas.core.design.VeritasTheme
 import com.veritas.data.detection.MediaIngestionCoordinator
@@ -69,7 +69,7 @@ class Phase4TestActivity : ComponentActivity() {
     private fun routeResult(result: MediaIngestionResult) {
         val nextIntent =
             when (result) {
-                is MediaIngestionResult.Success -> buildScanStubIntent(result.media)
+                is MediaIngestionResult.Success -> buildScanIntent(result.media)
                 is MediaIngestionResult.Failure -> buildIngestionErrorIntent(result.error.toErrorScreen())
             }
         startActivity(nextIntent)

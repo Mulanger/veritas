@@ -16,27 +16,21 @@ import com.veritas.core.design.VeritasTheme
 import com.veritas.data.detection.MediaIngestionCoordinator
 import com.veritas.data.detection.MediaIngestionRequest
 import com.veritas.data.detection.MediaIngestionResult
-import com.veritas.domain.detection.DetectionPipeline
 import com.veritas.domain.detection.MediaSource
 import com.veritas.feature.home.HomeRecentMode
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
 import kotlinx.coroutines.launch
-import timber.log.Timber
 
 const val EXTRA_INITIAL_PASTE_LINK = "extra_initial_paste_link"
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
     @Inject
-    lateinit var detectionPipeline: DetectionPipeline
-
-    @Inject
     lateinit var mediaIngestionCoordinator: MediaIngestionCoordinator
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        Timber.i("Launching shell with %s", detectionPipeline.label)
 
         setContent {
             val scope = rememberCoroutineScope()
@@ -44,7 +38,6 @@ class MainActivity : ComponentActivity() {
 
             fun ingestPickedUri(uri: android.net.Uri?) {
                 if (uri == null) {
-                    Timber.i("Picker dismissed")
                     return
                 }
 
@@ -80,7 +73,6 @@ class MainActivity : ComponentActivity() {
                                 Intent.FLAG_GRANT_READ_URI_PERMISSION,
                             )
                         } catch (_: SecurityException) {
-                            Timber.d("No persistable permission grant available for %s", uri)
                         }
                     }
                     ingestPickedUri(uri)
@@ -113,7 +105,7 @@ class MainActivity : ComponentActivity() {
     private fun routeIngestionResult(result: MediaIngestionResult) {
         val nextIntent =
             when (result) {
-                is MediaIngestionResult.Success -> buildScanStubIntent(result.media)
+                is MediaIngestionResult.Success -> buildScanIntent(result.media)
                 is MediaIngestionResult.Failure -> buildIngestionErrorIntent(result.error.toErrorScreen())
             }
         startActivity(nextIntent)

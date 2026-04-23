@@ -69,7 +69,7 @@ class ShareTargetActivity : ComponentActivity() {
     private fun routeResult(result: MediaIngestionResult) {
         val nextIntent =
             when (result) {
-                is MediaIngestionResult.Success -> buildScanStubIntent(result.media)
+                is MediaIngestionResult.Success -> buildScanIntent(result.media)
                 is MediaIngestionResult.Failure -> buildIngestionErrorIntent(result.error.toErrorScreen())
             }
         startActivity(nextIntent)

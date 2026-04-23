@@ -7,8 +7,19 @@ import com.veritas.domain.detection.MediaType
 import com.veritas.domain.detection.ScannedMedia
 import kotlinx.serialization.json.Json
 
-const val SCAN_STUB_SCREEN_TAG = "scan_stub_screen"
+const val SCAN_SCREEN_TAG = "scan_screen"
+const val SCAN_STUB_SCREEN_TAG = SCAN_SCREEN_TAG
 const val SCAN_STUB_DONE_TAG = "scan_stub_done"
+const val SCAN_CLOSE_BUTTON_TAG = "scan_close_button"
+const val VERDICT_SCREEN_TAG = "verdict_screen"
+const val VERDICT_PRIMARY_ACTION_TAG = "verdict_primary_action"
+const val VERDICT_DONE_ACTION_TAG = "verdict_done_action"
+const val FORENSIC_SCREEN_TAG = "forensic_screen"
+const val FORENSIC_REASON_TAG_PREFIX = "forensic_reason_"
+const val FORENSIC_BACK_TO_VERDICT_TAG = "forensic_back_to_verdict"
+const val REASON_DETAIL_SHEET_TAG = "reason_detail_sheet"
+const val REASON_DETAIL_CLOSE_TAG = "reason_detail_close"
+const val FIND_ORIGINAL_SHEET_TAG = "find_original_sheet"
 const val INGESTION_ERROR_SCREEN_TAG = "ingestion_error_screen"
 const val INGESTION_ERROR_PRIMARY_TAG = "ingestion_error_primary"
 const val INGESTION_ERROR_SECONDARY_TAG = "ingestion_error_secondary"
@@ -27,13 +38,15 @@ enum class IngestionErrorScreen {
 
 private val ingestionJson = Json { ignoreUnknownKeys = true }
 
-fun Context.buildScanStubIntent(media: ScannedMedia): Intent =
-    Intent(this, ScanStubActivity::class.java).apply {
+fun Context.buildScanIntent(media: ScannedMedia): Intent =
+    Intent(this, ScanActivity::class.java).apply {
         putExtra(EXTRA_SCANNED_MEDIA_JSON, ingestionJson.encodeToString(ScannedMedia.serializer(), media))
     }
 
+fun Context.buildScanStubIntent(media: ScannedMedia): Intent = buildScanIntent(media)
+
 fun Context.buildIngestionErrorIntent(error: IngestionErrorScreen): Intent =
-    Intent(this, ScanStubActivity::class.java).apply {
+    Intent(this, ScanActivity::class.java).apply {
         putExtra(EXTRA_INGESTION_ERROR, error.name)
     }
 
