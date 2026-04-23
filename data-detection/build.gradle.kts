@@ -25,7 +25,6 @@ kotlin {
 }
 
 dependencies {
-    implementation(project(":core-common"))
     implementation(project(":domain-detection"))
 
     implementation(libs.androidx.work.runtime.ktx)

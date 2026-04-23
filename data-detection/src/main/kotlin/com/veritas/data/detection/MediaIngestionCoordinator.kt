@@ -17,6 +17,7 @@ import android.content.Context
 import android.graphics.BitmapFactory
 import android.media.MediaMetadataRetriever
 import android.net.Uri
+import android.provider.OpenableColumns
 import androidx.work.CoroutineWorker
 import androidx.work.Data
 import androidx.work.ExistingWorkPolicy
@@ -30,6 +31,7 @@ import com.veritas.domain.detection.ScannedMedia
 import dagger.hilt.android.qualifiers.ApplicationContext
 import java.io.File
 import java.io.IOException
+import java.util.Locale
 import java.util.UUID
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
@@ -84,7 +86,8 @@ class MediaIngestionCoordinator
         suspend fun ingest(request: MediaIngestionRequest): MediaIngestionResult =
             withContext(Dispatchers.IO) {
                 val destinationDirectory = File(context.cacheDir, INGESTION_CACHE_DIR).apply { mkdirs() }
-                val destinationFile = File(destinationDirectory, "${UUID.randomUUID()}.bin")
+                val scanId = UUID.randomUUID().toString()
+                val destinationFile = File(destinationDirectory, "$scanId.bin")
                 val inputStream =
                     openIncomingStream(request.uri)
                         ?: return@withContext MediaIngestionResult.Failure(MediaIngestionFailure.CorruptedFile)
@@ -126,18 +129,25 @@ class MediaIngestionCoordinator
                     }
 
                     val scannedMedia =
-                        ScannedMedia(
-                            id = destinationFile.nameWithoutExtension,
-                            uri = Uri.fromFile(destinationFile).toString(),
-                            mediaType = descriptor.mediaType,
+                        renameScopedCopy(
+                            file = destinationFile,
+                            scanId = scanId,
+                            sourceUri = request.uri,
                             mimeType = descriptor.mimeType,
-                            sizeBytes = copiedSize,
-                            durationMs = descriptor.durationMs,
-                            widthPx = descriptor.widthPx,
-                            heightPx = descriptor.heightPx,
-                            source = request.source,
-                            ingestedAt = Clock.System.now(),
-                        )
+                        ).let { finalizedFile ->
+                            ScannedMedia(
+                                id = scanId,
+                                uri = Uri.fromFile(finalizedFile).toString(),
+                                mediaType = descriptor.mediaType,
+                                mimeType = descriptor.mimeType,
+                                sizeBytes = copiedSize,
+                                durationMs = descriptor.durationMs,
+                                widthPx = descriptor.widthPx,
+                                heightPx = descriptor.heightPx,
+                                source = request.source,
+                                ingestedAt = Clock.System.now(),
+                            )
+                        }
 
                     MediaIngestionResult.Success(scannedMedia)
                 } catch (_: FileTooLargeException) {
@@ -190,6 +200,73 @@ class MediaIngestionCoordinator
                 ContentResolver.SCHEME_CONTENT -> context.contentResolver.openInputStream(uri)
                 ContentResolver.SCHEME_FILE -> File(requireNotNull(uri.path)).inputStream()
                 else -> context.contentResolver.openInputStream(uri)
+            }
+
+        private fun renameScopedCopy(
+            file: File,
+            scanId: String,
+            sourceUri: Uri,
+            mimeType: String,
+        ): File {
+            val safeStem = sanitizeStem(resolveOriginalFileName(sourceUri)?.substringBeforeLast('.')) ?: return file
+            val extension = extensionForMimeType(mimeType)
+            val target = File(file.parentFile, "${scanId}_${safeStem}.$extension")
+            if (file.absolutePath == target.absolutePath) {
+                return file
+            }
+
+            return if (file.renameTo(target)) {
+                target
+            } else {
+                file
+            }
+        }
+
+        private fun resolveOriginalFileName(uri: Uri): String? =
+            when (uri.scheme) {
+                ContentResolver.SCHEME_CONTENT ->
+                    runCatching {
+                        context.contentResolver.query(
+                            uri,
+                            arrayOf(OpenableColumns.DISPLAY_NAME),
+                            null,
+                            null,
+                            null,
+                        )
+                    }.getOrNull()?.use { cursor ->
+                        if (cursor.moveToFirst()) {
+                            cursor.getString(0)
+                        } else {
+                            null
+                        }
+                    }
+
+                ContentResolver.SCHEME_FILE -> uri.path?.let(::File)?.name
+                else -> uri.lastPathSegment
+            }
+
+        private fun sanitizeStem(rawStem: String?): String? =
+            rawStem
+                ?.lowercase(Locale.US)
+                ?.replace(Regex("[^a-z0-9_-]+"), "_")
+                ?.replace(Regex("_+"), "_")
+                ?.trim('_')
+                ?.take(64)
+                ?.takeIf(String::isNotBlank)
+
+        private fun extensionForMimeType(mimeType: String): String =
+            when (mimeType) {
+                "video/mp4" -> "mp4"
+                "video/webm" -> "webm"
+                "audio/mpeg" -> "mp3"
+                "audio/aac" -> "aac"
+                "audio/wav" -> "wav"
+                "audio/mp4" -> "m4a"
+                "image/jpeg" -> "jpg"
+                "image/png" -> "png"
+                "image/webp" -> "webp"
+                "image/heic" -> "heic"
+                else -> "bin"
             }
 
         private fun extractMediaDescriptor(file: File): MediaDescriptor? {
