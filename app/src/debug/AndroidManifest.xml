@@ -8,5 +8,9 @@
             android:name="com.veritas.app.debug.testing.Phase2TestActivity"
             android:exported="false"
             android:label="Veritas Phase 2 Test" />
+        <activity
+            android:name="com.veritas.app.debug.testing.Phase3TestActivity"
+            android:exported="false"
+            android:label="Veritas Phase 3 Test" />
     </application>
 </manifest>

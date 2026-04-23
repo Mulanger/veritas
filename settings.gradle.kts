@@ -24,5 +24,6 @@ include(
     ":domain-detection",
     ":feature-home",
     ":feature-history",
+    ":feature-onboarding",
     ":feature-settings",
 )

@@ -65,6 +65,7 @@ dependencies {
     implementation(project(":domain-detection"))
     implementation(project(":feature-history"))
     implementation(project(":feature-home"))
+    implementation(project(":feature-onboarding"))
     implementation(project(":feature-settings"))
 
     implementation(platform(libs.androidx.compose.bom))

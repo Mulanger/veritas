@@ -40,6 +40,7 @@ tasks.register("precommitCheck") {
         ":domain-detection:ktlintCheck",
         ":feature-history:ktlintCheck",
         ":feature-home:ktlintCheck",
+        ":feature-onboarding:ktlintCheck",
         ":feature-settings:ktlintCheck",
         ":app:detekt",
         ":core-common:detekt",
@@ -49,6 +50,7 @@ tasks.register("precommitCheck") {
         ":domain-detection:detekt",
         ":feature-history:detekt",
         ":feature-home:detekt",
+        ":feature-onboarding:detekt",
         ":feature-settings:detekt",
     )
 }
@@ -64,6 +66,7 @@ tasks.register("test") {
         ":domain-detection:test",
         ":feature-history:testDebugUnitTest",
         ":feature-home:testDebugUnitTest",
+        ":feature-onboarding:testDebugUnitTest",
         ":feature-settings:testDebugUnitTest",
     )
 }

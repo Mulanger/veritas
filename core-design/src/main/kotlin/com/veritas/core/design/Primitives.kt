@@ -29,6 +29,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -202,6 +203,7 @@ fun VeritasButton(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     variant: VeritasButtonVariant = VeritasButtonVariant.Primary,
+    testTag: String? = null,
 ) {
     val backgroundColor =
         when (variant) {
@@ -233,6 +235,13 @@ fun VeritasButton(
                     RoundedCornerShape(VeritasRadius.md),
                 )
                 .clickable(onClick = onClick)
+                .then(
+                    if (testTag == null) {
+                        Modifier
+                    } else {
+                        Modifier.testTag(testTag)
+                    },
+                )
                 .padding(
                     horizontal = VeritasSpacing.space16,
                     vertical = 13.dp,

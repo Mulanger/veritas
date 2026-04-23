@@ -272,6 +272,36 @@ The agent adds entries here whenever it makes a decision during build that:
 
 ---
 
+### D-024 · Phase 3 onboarding copy follows the written visual spec over the older HTML mockup
+**Phase:** 3
+**Date:** 2026-04-23
+**Context:** The onboarding copy and sequencing in `docs/02_VISUAL_SPEC.md` section 2 do not fully match the older `veritas_mockup_2_onboarding_home.html` file that was used as a visual reference.
+**Decision:** Treat the written visual spec as the source of truth for onboarding copy, screen order, and permission language, while using the HTML mockup only for layout and atmosphere.
+**Alternatives considered:** Follow the older HTML copy where it conflicted with the written spec; rewrite copy ad hoc to reconcile both sources.
+**Reasoning:** The phase plan explicitly requires exact copy, and the written spec is the maintained product document. Using the HTML file as a copy source would silently drift away from the current approved wording.
+**Reversal cost:** low - the copy lives in `feature-onboarding` composables and can be revised in one pass if the human updates the spec later.
+**Approved by human:** pending checkpoint, 2026-04-23
+
+### D-025 · Phase 3 permission-flow tests use a debug-only harness activity
+**Phase:** 3
+**Date:** 2026-04-23
+**Context:** Phase 3 required end-to-end UI tests for overlay and notifications flows, including denied and return-from-settings branches, across Android 11, 13, 14, and 15.
+**Decision:** Add a debug-only `Phase3TestActivity` plus `Phase3TestHarness` with fake permission callbacks and an in-memory onboarding store for connected tests, while keeping production onboarding wired to the real platform launchers.
+**Alternatives considered:** Drive system Settings and runtime permission dialogs directly in connected tests; cover these branches only in unit tests.
+**Reasoning:** The harness keeps the production path honest while making the required UI branches deterministic across API levels. Driving real Settings UIs in instrumentation would be much flakier and would not improve product code quality enough to justify the added brittleness.
+**Reversal cost:** low - the harness is isolated to `app/src/debug` and `app/src/androidTest` and can be removed when a different end-to-end strategy is preferred later.
+**Approved by human:** pending checkpoint, 2026-04-23
+
+### D-026 · VeritasButton exposes an optional internal test tag for clickable semantics
+**Phase:** 3
+**Date:** 2026-04-23
+**Context:** The onboarding connected tests needed stable click targets on custom button variants, but external modifier tagging was attaching semantics to child content instead of the clickable node.
+**Decision:** Add an optional `testTag` parameter to `VeritasButton` and apply it inside the primitive on the clickable container.
+**Alternatives considered:** Use text-based selectors in tests; attach custom semantics wrappers at every onboarding call site.
+**Reasoning:** Putting the tag on the primitive yields stable instrumentation behavior without changing production visuals or duplicating semantics plumbing across every screen that uses the shared button.
+**Reversal cost:** low - the parameter is optional and localized to the design primitive and its callers.
+**Approved by human:** pending checkpoint, 2026-04-23
+
 ## Part 4 — Open questions
 
 Questions that remain unresolved at start of build. The agent should revisit these at the relevant phase and either resolve (add to decision log) or escalate to human.
