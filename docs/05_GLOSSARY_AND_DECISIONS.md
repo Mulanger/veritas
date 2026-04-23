@@ -342,7 +342,39 @@ The agent adds entries here whenever it makes a decision during build that:
 **Reversal cost:** medium - purge timing is part of the privacy contract, but the implementation is still localized to the ingestion coordinator and stub scan activity.
 **Approved by human:** pending checkpoint, 2026-04-23
 
-## Part 4 — Open questions
+## Part 3 - Decision log (continued)
+
+### D-031 · Phase 5 scan stages follow the latest build guidance as the source of truth
+**Phase:** 5
+**Date:** 2026-04-23
+**Context:** The written architecture and earlier contracts still described a generic five-step pipeline ending with fusion, while the Phase 5 execution brief narrowed the stub scanning UI to concrete detector-style rows for each media type and explicitly set the canonical video order to `C2PA manifest check`, `Watermark scan`, `Temporal consistency`, `Spatial artifact model`, and `Facial physiological check (rPPG)`.
+**Decision:** Model scan progress as a `ScanStage` sealed class plus media-aware `PipelineStage` sealed objects, and treat the newer Phase 5 guidance as the source of truth for the stage lists shown by the stub pipeline and UI.
+**Alternatives considered:** Keep the older fusion-oriented stage sequence for Phase 5; introduce an enum with a single shared stage list for all media types.
+**Reasoning:** The Phase 5 deliverable is primarily a progressive UI contract for later real detectors. Using the latest explicit phase guidance avoids building the wrong UX, while sealed classes keep room for stage-specific metadata and future detector outputs without re-breaking the API in Phases 6-9.
+**Reversal cost:** medium - the contract is confined to `domain-detection`, `data-detection`, and the scan UI, but later detectors will build on it.
+**Approved by human:** pending checkpoint, 2026-04-23
+
+### D-032 · Fake-scan cancellation is pipeline-owned, not activity-timer-owned
+**Phase:** 5
+**Date:** 2026-04-23
+**Context:** The Phase 5 pitfall list requires clean Flow cancellation when the user closes the scan mid-run, and the fake pipeline simulates per-stage delays that would otherwise outlive the screen if cancellation lived only in UI scope.
+**Decision:** Give `DetectionPipeline` an explicit `cancel()` hook and let `FakeDetectionPipeline` own the active scan handle so the scan Flow can terminate with `ScanStage.Cancelled` and stop emitting as soon as the user exits.
+**Alternatives considered:** Rely only on cancelling the activity coroutine scope; poll UI-owned cancellation flags inside the screen layer.
+**Reasoning:** Cancellation is a pipeline concern because real detectors in later phases will also need to stop in-flight work cleanly. Keeping the control point in the pipeline avoids leaking fake or real detector work across activity teardown and preserves the Flow-based contract expected by the scan UI.
+**Reversal cost:** medium - the interface will be implemented by all later pipeline variants, but the behavior is localized and test-covered.
+**Approved by human:** pending checkpoint, 2026-04-23
+
+### D-033 · Scoped copies keep filename routing tokens while `ScannedMedia.id` stays opaque
+**Phase:** 5
+**Date:** 2026-04-23
+**Context:** The fake verdict harness routes outcomes from filename substrings such as `_authentic` and `_synthetic`, but Phase 4 named copied files only by UUID, which stripped those tokens after scoped-storage ingestion.
+**Decision:** Preserve a sanitized form of the original filename stem in the copied private file name, while keeping the canonical `ScannedMedia.id` as the generated opaque scan UUID used for purge and routing.
+**Alternatives considered:** Route fake verdicts from `ScannedMedia.id`; bypass scoped-storage renaming and trust the source file path; add a separate debug-only metadata field just for filename routing.
+**Reasoning:** Keeping the original stem in the private filename makes the Phase 5 QA harness usable through real share and picker flows without weakening identity semantics or exposing the app to unstable external paths. The UUID remains the durable internal handle, while the copied filename carries only the minimal testing signal the fake pipeline needs.
+**Reversal cost:** low - the naming logic is isolated to ingestion and can be changed once real detectors no longer depend on filename tokens.
+**Approved by human:** pending checkpoint, 2026-04-23
+
+## Part 4 - Open questions
 
 Questions that remain unresolved at start of build. The agent should revisit these at the relevant phase and either resolve (add to decision log) or escalate to human.
 
