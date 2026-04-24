@@ -4,6 +4,7 @@ import android.content.Context
 import android.util.Log
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.core.app.ApplicationProvider
+import androidx.test.platform.app.InstrumentationRegistry
 import com.veritas.data.detection.C2PADetector
 import com.veritas.domain.detection.C2PAOutcome
 import com.veritas.domain.detection.C2PAResult
@@ -24,6 +25,19 @@ class Phase6C2PAVerificationTest {
 
     private val appContext: Context
         get() = ApplicationProvider.getApplicationContext()
+
+    private val testContext: Context
+        get() = InstrumentationRegistry.getInstrumentation().context
+
+    private fun copyFixtureToCache(fileName: String): File {
+        val dest = File(appContext.cacheDir, "c2pa_fixtures/$fileName")
+        if (dest.exists()) return dest
+        dest.parentFile?.mkdirs()
+        appContext.assets.open("test_fixtures/$fileName").use { input ->
+            dest.outputStream().use { output -> input.copyTo(output) }
+        }
+        return dest
+    }
 
     @Test
     fun c2paExtraction_adobeSignedImage_extractsIssuerAndGenerator() = runBlocking {
@@ -100,6 +114,8 @@ class Phase6C2PAVerificationTest {
         result as C2PAResult.Present
         assertNotNull("instanceId should not be null", result.instanceId)
         assertNotNull("issuerName should not be null", result.issuerName)
+        assertTrue("issuerName should contain 'Truepic', got: ${result.issuerName}",
+            result.issuerName!!.contains("Truepic", ignoreCase = true))
         assertEquals("C2PA_VALID", C2PAOutcome.VALID.name, result.outcome.name)
     }
 
@@ -119,14 +135,37 @@ class Phase6C2PAVerificationTest {
             C2PAOutcome.NOT_PRESENT, result.outcome)
     }
 
-    private fun copyFixtureToCache(fileName: String): File {
-        val dest = File(appContext.cacheDir, "c2pa_fixtures/$fileName")
-        if (dest.exists()) return dest
-        dest.parentFile?.mkdirs()
-        appContext.assets.open("test_fixtures/$fileName").use { input ->
-            dest.outputStream().use { output -> input.copyTo(output) }
+    @Test
+    fun c2paValidation_tamperedImage_returnsInvalid() = runBlocking {
+        val detector = C2PADetector(appContext)
+        val original = copyFixtureToCache("adobe-20220124-CA.jpg")
+
+        val tampered = File(appContext.cacheDir, "adobe-20220124-CA_tampered.jpg").apply {
+            val bytes = original.readBytes()
+            bytes[5000] = (bytes[5000].toInt() xor 0xFF).toByte()
+            writeBytes(bytes)
         }
-        return dest
+
+        val result = detector.detect(tampered)
+
+        Log.d(TAG, "=== C2PA Validation: Tampered Image ===")
+        Log.d(TAG, "Result: ${result.javaClass.simpleName} | outcome: ${result.outcome}")
+        if (result is C2PAResult.Invalid) {
+            Log.d(TAG, "Invalid reason: ${result.reason}")
+        }
+
+        assertTrue("Tampered content should return C2PAResult.Invalid, got ${result.javaClass.simpleName}",
+            result is C2PAResult.Invalid)
+        assertEquals("Tampered content should return INVALID outcome",
+            C2PAOutcome.INVALID, result.outcome)
+        assertTrue("Invalid reason should mention signature/validation failure, got: ${(result as? C2PAResult.Invalid)?.reason}",
+            (result as? C2PAResult.Invalid)?.reason?.let { reason ->
+                reason.contains("signature", ignoreCase = true) ||
+                reason.contains("invalid", ignoreCase = true) ||
+                reason.contains("validation", ignoreCase = true) ||
+                reason.contains("integrity", ignoreCase = true) ||
+                reason.contains("corrupt", ignoreCase = true)
+            } ?: false)
     }
 
     private val UNSIGNED_JPEG = byteArrayOf(

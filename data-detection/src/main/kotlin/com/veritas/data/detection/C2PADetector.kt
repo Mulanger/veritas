@@ -1,23 +1,27 @@
 @file:Suppress(
-    "CyclomaticComplexMethod",
     "ReturnCount",
     "MagicNumber",
     "TooGenericExceptionCaught",
     "SwallowedException",
+    "CyclomaticComplexMethod",
+    "LongMethod",
+    "NestedBlockDepth",
     "UnusedPrivateProperty",
 )
 
 package com.veritas.data.detection
 
 import android.util.JsonReader
+import android.util.JsonToken
 import android.util.Log
 import com.veritas.domain.detection.C2PAOutcome
 import com.veritas.domain.detection.C2PAResult
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import org.contentauth.c2pa.C2PA
 import org.contentauth.c2pa.C2PAError
+import org.contentauth.c2pa.FileStream
+import org.contentauth.c2pa.Reader
 import java.io.StringReader
 import java.time.Instant
 import java.time.OffsetDateTime
@@ -31,25 +35,66 @@ class C2PADetector @Inject constructor(
 ) {
     companion object {
         private const val TAG = "C2PADetector"
+        private val NOT_PRESENT_ERROR_PATTERNS = listOf("no manifest", "not found", "parsed", "io")
+        private const val MAX_FILE_SIZE_BYTES = 150L * 1024 * 1024 // 150 MB
     }
 
     suspend fun detect(file: java.io.File): C2PAResult = withContext(Dispatchers.IO) {
+
+        if (file.length() > MAX_FILE_SIZE_BYTES) {
+            Log.w(TAG, "File too large for in-memory C2PA parse: ${file.length()} bytes")
+            return@withContext C2PAResult.NotPresent
+        }
+
+        val mimeType = when (file.extension.lowercase()) {
+            in setOf("jpg", "jpeg") -> "image/jpeg"
+            "png" -> "image/png"
+            "mp4" -> "video/mp4"
+            "webp" -> "image/webp"
+            else -> {
+                Log.w(TAG, "Unsupported C2PA media type for: ${file.name}")
+                return@withContext C2PAResult.NotPresent
+            }
+        }
+
+        val stream = FileStream(file, FileStream.Mode.READ, false)
+
+        var reader: Reader? = null
         try {
-            val manifestJson = C2PA.readFile(file.absolutePath)
-            parseManifest(manifestJson)
+            reader = Reader.fromStream(mimeType, stream)
+            val detailedJson = reader.detailedJson()
+
+            if (detailedJson.isBlank() || detailedJson == "{}" || detailedJson == "{\"manifests\":{}}") {
+                Log.w(TAG, "C2PA returned blank/empty JSON for ${file.name}")
+                return@withContext C2PAResult.NotPresent
+            }
+
+            val result = parseManifest(detailedJson)
+            val outcomeStr = when (result) {
+                is C2PAResult.Present -> "issuer=${result.issuerName}, generator=${result.claimGenerator}"
+                is C2PAResult.Invalid -> "INVALID: ${result.reason}"
+                is C2PAResult.Revoked -> "REVOKED: ${result.reason}"
+                C2PAResult.NotPresent -> "NOT_PRESENT"
+            }
+            Log.i(TAG, "C2PA parse OK: $outcomeStr")
+            result
         } catch (e: C2PAError) {
             val msg = e.message ?: ""
-            if (msg.contains("no manifest", ignoreCase = true) ||
-                msg.contains("not found", ignoreCase = true) ||
-                msg.contains("invalid", ignoreCase = true)
-            ) {
+            Log.e(TAG, "C2PAError for ${file.absolutePath}: $msg", e)
+            val isNotPresentError = NOT_PRESENT_ERROR_PATTERNS.any { pattern ->
+                msg.contains(pattern, ignoreCase = true)
+            }
+            if (isNotPresentError) {
                 C2PAResult.NotPresent
             } else {
                 C2PAResult.Invalid(reason = msg)
             }
         } catch (e: Exception) {
-            Log.w(TAG, "C2PA detection failed for ${file.absolutePath}", e)
+            Log.e(TAG, "C2PA detection failed for ${file.absolutePath}", e)
             C2PAResult.NotPresent
+        } finally {
+            try { reader?.close() } catch (e: Exception) { /* ignore */ }
+            try { stream.close() } catch (e: Exception) { /* ignore */ }
         }
     }
 
@@ -61,10 +106,14 @@ class C2PADetector @Inject constructor(
         return try {
             val reader = JsonReader(StringReader(json))
             reader.isLenient = true
-            val manifestData = readActiveManifest(reader)
+            val manifestData = readDetailedManifest(reader)
 
             if (manifestData.instanceId == null && manifestData.claimGenerator == null) {
                 return C2PAResult.NotPresent
+            }
+
+            if (manifestData.validationErrors.isNotEmpty()) {
+                return C2PAResult.Invalid(reason = manifestData.validationErrors.joinToString("; ") { it })
             }
 
             C2PAResult.Present(
@@ -87,16 +136,70 @@ class C2PADetector @Inject constructor(
         var issuerName: String? = null,
         var signedAt: String? = null,
         val actions: MutableList<String> = mutableListOf(),
+        val validationErrors: MutableList<String> = mutableListOf(),
     )
 
-    private fun readActiveManifest(reader: JsonReader): ManifestData {
+    private fun readDetailedManifest(reader: JsonReader): ManifestData {
         val data = ManifestData()
+        var activeManifestKey: String? = null
+        var inValidationStatus = false
+
         reader.beginObject()
         while (reader.hasNext()) {
-            when (reader.nextName()) {
-                "active_manifest" -> readManifestObject(reader, data)
-                "manifests" -> skipJsonObject(reader)
-                else -> reader.skipValue()
+            val name = reader.nextName()
+            when {
+                name == "validation_status" -> {
+                    inValidationStatus = true
+                    reader.beginArray()
+                    while (reader.hasNext()) {
+                        reader.beginObject()
+                        var code: String? = null
+                        var explanation: String? = null
+                        while (reader.hasNext()) {
+                            val fieldName = reader.nextName()
+                            when (fieldName) {
+                                "code" -> code = reader.nextString()
+                                "explanation" -> explanation = reader.nextString()
+                                else -> reader.skipValue()
+                            }
+                        }
+                        reader.endObject()
+                        if (code != null && !code.startsWith("assertion.")) {
+                            data.validationErrors.add(explanation ?: code)
+                        }
+                    }
+                    reader.endArray()
+                    inValidationStatus = false
+                }
+                name == "active_manifest" -> {
+                    val value = reader.peek()
+                    if (value == JsonToken.STRING) {
+                        activeManifestKey = reader.nextString()
+                    } else {
+                        readManifestObject(reader, data)
+                    }
+                }
+                name == activeManifestKey -> {
+                    readManifestObject(reader, data)
+                }
+                name == "manifests" -> {
+                    reader.beginObject()
+                    while (reader.hasNext()) {
+                        val manifestKey = reader.nextName()
+                        if (manifestKey == activeManifestKey) {
+                            readManifestObject(reader, data)
+                        } else {
+                            skipJsonObject(reader)
+                        }
+                    }
+                    reader.endObject()
+                }
+                name == "validation_results" -> {
+                    reader.skipValue()
+                }
+                else -> {
+                    reader.skipValue()
+                }
             }
         }
         reader.endObject()

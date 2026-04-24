@@ -49,6 +49,11 @@
 - SynthID: Confirm if v1.1 should use Gemini API via Play Services or wait for dedicated SDK.
 - Trust list: Current `C2PA-TRUST-LIST.pem` is a placeholder. Real trust list delivery deferred to Phase 13.
 
+## Known Limitations
+
+- **Revoked certificate handling exists in code path but is not exercised by automated tests — defer to v1.1.** Revoked-cert testing requires a fixture signed with a cert that's now in a revocation list, plus the library having a current CRL/OCSP lookup. This is more work than it looks; for v1 we accept this gap and document it as a known limitation.
+- **Large file limit at 150 MB.** Files over 150 MB are rejected with `C2PAResult.NotPresent`. Phase 9 will implement streaming approach for large files.
+
 ## Ready for Phase 7?
 
 Yes — Phase 6 provenance layer is complete. C2PA detection is real (not a stub), pipeline design is validated, APK builds.
