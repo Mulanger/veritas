@@ -3,7 +3,7 @@ package com.veritas.app
 import android.content.Context
 import android.util.Log
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import androidx.test.platform.app.ContextRegistry
+import androidx.test.core.app.ApplicationProvider
 import com.veritas.data.detection.C2PADetector
 import com.veritas.domain.detection.C2PAOutcome
 import com.veritas.domain.detection.C2PAResult
@@ -23,7 +23,7 @@ class Phase6C2PAVerificationTest {
     }
 
     private val appContext: Context
-        get() = ContextRegistry.getApplicationContext()
+        get() = ApplicationProvider.getApplicationContext()
 
     @Test
     fun c2paExtraction_adobeSignedImage_extractsIssuerAndGenerator() = runBlocking {
