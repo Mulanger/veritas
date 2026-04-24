@@ -103,6 +103,11 @@ sealed class ReasonEvidence {
     ) : ReasonEvidence()
 
     @Serializable
+    data class SynthIDDetected(
+        val generatorName: String,
+    ) : ReasonEvidence()
+
+    @Serializable
     data class Temporal(
         val timestampsMs: List<Long>,
     ) : ReasonEvidence()

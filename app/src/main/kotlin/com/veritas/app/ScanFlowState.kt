@@ -282,6 +282,8 @@ fun reasonDescription(reason: Reason): String =
     when (val evidence = reason.evidence) {
         is ReasonEvidence.C2PAVerified ->
             "Signature chain is valid. Issued by ${evidence.issuerName}${evidence.deviceName?.let { " for $it" } ?: ""}."
+        is ReasonEvidence.SynthIDDetected ->
+            "A known AI generator watermark (${evidence.generatorName}) was detected in this content."
         is ReasonEvidence.Temporal ->
             "Flagged at ${evidence.timestampsMs.joinToString(separator = ", ") { formatScanDuration(it) }}."
         is ReasonEvidence.Region ->

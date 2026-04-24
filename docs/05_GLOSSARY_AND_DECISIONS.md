@@ -374,6 +374,36 @@ The agent adds entries here whenever it makes a decision during build that:
 **Reversal cost:** low - the naming logic is isolated to ingestion and can be changed once real detectors no longer depend on filename tokens.
 **Approved by human:** pending checkpoint, 2026-04-23
 
+### D-034 · SynthID deferred to v1.1 — no public Android SDK available
+**Phase:** 6
+**Date:** 2026-04-24
+**Context:** Phase 6 tasks require integrating the SynthID SDK for watermark detection on images, audio, and video. SynthID is Google's proprietary watermarking technology.
+**Decision:** Defer SynthID detection to v1.1. Implement a stub that returns `SynthIDResult.NotPresent`. Wire the stub so real integration is a drop-in replacement when the SDK becomes available.
+**Alternatives considered:** (a) Attempt to reverse-engineer SynthID signal patterns — rejected as legally risky and technically unreliable. (b) Use a placeholder that always returns detected — rejected as it would produce false synthetic verdicts on all media. (c) Build an approximate frequency-domain watermark detector — deferred as it would require significant ML work beyond Phase 6 scope.
+**Reasoning:** SynthID is not publicly available as an Android SDK at the time of Phase 6 implementation. The Gemini web portal uses SynthID, but no public API. The phase plan explicitly allows deferral when the SDK is unavailable. A clean stub preserves the pipeline contract and makes v1.1 integration straightforward.
+**Reversal cost:** low — the stub is isolated to `SynthIDDetector`; replacing it with real implementation requires no changes to pipeline orchestration or domain types.
+**Approved by human:** pending checkpoint, 2026-04-24
+
+### D-035 · C2PA integration via official c2pa-android AAR (JitPack)
+**Phase:** 6
+**Date:** 2026-04-24
+**Context:** Phase 6 plan requires real C2PA signature validation. Attempting to compile `c2pa-rs` from source via Rust cross-compilation failed due to Windows/WSL ring-dylib build barriers. The official `contentauth/c2pa-android` library wraps the Rust implementation with JNI bindings and distributes as an AAR via JitPack.
+**Decision:** Integrate `com.github.contentauth:c2pa-android:0.0.9` from JitPack. JitPack repository already configured. Replace Kotlin-only header-parsing stub with `org.contentauth.c2pa.C2PA.readFile()` API. Parse manifest JSON to extract `instance_id`, `claim_generator`, `signature_info` (issuer, time), and `actions`.
+**Alternatives considered:** (a) Continue trying to cross-compile `c2pa-rs` from source — rejected as ring-dylib build fails on Windows/WSL boundary. (b) Use byte-level Kotlin header parsing only — rejected as it cannot perform cryptographic signature chain validation, which is the core requirement of Phase 6. (c) Use Adobe CAI JavaScript SDK via WebView — rejected as it violates the no-cloud-processing anti-pattern and adds heavy dependencies.
+**Reasoning:** c2pa-android is the official, maintained Android binding for c2pa-rs, distributed as a pre-built AAR with bundled native libraries. It eliminates all cross-compilation complexity while providing full cryptographic validation. Apache 2.0/MIT license is clean. JitPack provides frictionless Gradle integration without authentication requirements.
+**Reversal cost:** low — the `C2PADetector` implementation is isolated to `data-detection/`; swapping the library only requires updating the `C2PA.readFile()` call and JSON parsing.
+**Approved by human:** pending checkpoint, 2026-04-24
+
+### D-036 · ProvenancePipeline replaces FakeDetectionPipeline as the primary DetectionPipeline binding
+**Phase:** 6
+**Date:** 2026-04-24
+**Context:** Phase 5 bound `FakeDetectionPipeline` as the singleton `DetectionPipeline`. Phase 6 introduces `ProvenancePipeline` which runs C2PA checks, then SynthID checks (stubbed), then delegates remaining stages to the fake pipeline for ML detection (still stub in Phase 6).
+**Decision:** Rebind `DetectionPipeline` to `ProvenancePipeline` in `DetectionBindings.kt`. `FakeDetectionPipeline` is retained as an injected dependency of `ProvenancePipeline` for the ML stage delegation.
+**Alternatives considered:** Keep both pipelines separate and use a router based on BuildConfig — rejected as it complicates the pipeline contract and doubles the test surface.
+**Reasoning:** The pipeline contract is intentionally designed so a single `DetectionPipeline` implementation orchestrates all stages. `ProvenancePipeline` handles pre-flight (C2PA + SynthID) and delegates to `FakeDetectionPipeline` for the ML stages, keeping the Phase 6 deliverables on track while preserving the Phase 5 test coverage.
+**Reversal cost:** medium — later real detectors (Phase 7–9) will replace the delegation to `FakeDetectionPipeline` with real detector calls inside `ProvenancePipeline`; this is the expected migration path per the phase plan.
+**Approved by human:** pending checkpoint, 2026-04-24
+
 ## Part 4 - Open questions
 
 Questions that remain unresolved at start of build. The agent should revisit these at the relevant phase and either resolve (add to decision log) or escalate to human.

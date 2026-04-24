@@ -13,6 +13,6 @@ abstract class DetectionBindings {
     @Binds
     @Singleton
     abstract fun bindDetectionPipeline(
-        fakeDetectionPipeline: FakeDetectionPipeline,
+        provenancePipeline: ProvenancePipeline,
     ): DetectionPipeline
 }

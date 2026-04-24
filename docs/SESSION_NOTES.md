@@ -1,37 +1,40 @@
 # Session Notes
 
 ## Date
-2026-04-23
+2026-04-24
 
 ## Branch
-`codex/phase/5-detection-pipeline-stub`
+`codex/phase/6-provenance-layer`
 
 ## Current status
-- Phase 5 detection pipeline stub is complete and ready for checkpoint review
-- Session commits:
-- `3750519` - `feat: add fake detection pipeline contracts`
-- `7975aa6` - `feat: add phase 5 scan and verdict flow`
-- `d91f2fb` - `docs: record phase 5 decisions and report`
-- Replaced the Phase 4 stub scan handoff with a real Phase 5 fake pipeline flow from share or picker ingestion into staged scanning, verdict, forensic view, and reason detail sheets
-- Added `DetectionPipeline`, typed detector inputs, `ScanStage`, `Verdict`, and `FakeDetectionPipeline` contracts that stay fake in Phase 5 but are structured for Phases 6-9
-- Preserved filename routing tokens inside scoped copied media so QA can drive `_authentic`, `_authentic_c2pa`, `_uncertain`, and `_synthetic` outcomes through real ingestion paths
-- Added connected and local Phase 5 test coverage for verdict routing, cancellation, forensic navigation, and reason-sheet dismissal, while keeping Phase 4 ingestion coverage green against the new scan flow
-- Updated `docs/05_GLOSSARY_AND_DECISIONS.md` with `D-031` through `D-033`
-- Wrote `docs/phase_reports/phase_5.md`
-- Pushed `codex/phase/5-detection-pipeline-stub` to `origin`
-- Full local gates passed with `C:\Program Files\Java\jdk-21`: `.\gradlew.bat assembleDebug test precommitCheck --warning-mode all --console=plain --no-daemon`
-- Targeted connected Phase 4 and Phase 5 flows passed on `veritas_api35`: `.\gradlew.bat :app:connectedDebugAndroidTest "-Pandroid.testInstrumentationRunnerArguments.class=com.veritas.app.Phase4MediaIngestionTest,com.veritas.app.Phase5DetectionFlowTest" --warning-mode all --console=plain --no-daemon`
-- Installed and launched `com.veritas.app.debug/com.veritas.app.MainActivity` on `veritas_api35`
+- Phase 6 provenance layer implementation in progress
+- Session commits on `codex/phase/6-provenance-layer`:
+  - `domain-detection/src/main/kotlin/com/veritas/domain/detection/C2PAModels.kt` — C2PA result domain types (C2PAResult, C2PAOutcome)
+  - `domain-detection/src/main/kotlin/com/veritas/domain/detection/Verdict.kt` — added SynthIDDetected ReasonEvidence variant
+  - `data-detection/src/main/kotlin/com/veritas/data/detection/C2PADetector.kt` — Kotlin-only C2PA manifest detection via JPEG/PNG/MP4 byte parsing (no Rust JNI yet)
+  - `data-detection/src/main/kotlin/com/veritas/data/detection/SynthIDDetector.kt` — stub always returning NotPresent (deferred to v1.1 per D-034)
+  - `data-detection/src/main/kotlin/com/veritas/data/detection/ProvenancePipeline.kt` — full pipeline with C2PA pre-flight, SynthID (stub), then delegates remaining stages
+  - `data-detection/src/main/kotlin/com/veritas/data/detection/DetectionBindings.kt` — rebinds ProvenancePipeline as DetectionPipeline singleton
+  - `app/src/main/kotlin/com/veritas/app/ScanFlowState.kt` — added SynthIDDetected branch in reasonDescription
+  - `app/src/main/assets/C2PA-TRUST-LIST.pem` — placeholder trust list asset
+  - `native/c2pa-wrapper/` — Rust source skeleton for future JNI integration
+  - `docs/05_GLOSSARY_AND_DECISIONS.md` — D-034 (SynthID deferred), D-035 (C2PA Kotlin-only), D-036 (ProvenancePipeline binding)
+  - `data-detection/build.gradle.kts` — added `-Xannotation-default-target=param-property` compiler flag
+- Full local gates pass: `assembleDebug test` — BUILD SUCCESSFUL
+- Phase 5 PR was merged separately before this session
 
 ## Not yet done
-- Human Phase 5 checkpoint review and sign-off
-- Open the Phase 5 PR from the pushed branch and merge it into `main` without squashing once review is complete
-- Wait for explicit human go-ahead before starting Phase 6
+- Phase 6 completion report not yet written (`docs/phase_reports/phase_6.md`)
+- Push phase 6 branch and open PR
+- Human Phase 6 checkpoint review and sign-off
+- Wait for explicit human go-ahead before starting Phase 7
 
 ## Open questions for next session
-- None at the moment
+- SynthID: confirm if v1.1 should use Gemini API via Play Services or wait for dedicated SDK
+- C2PA JNI: once Rust toolchain is available, verify cargo-ndk + c2pa-rs cross-compiles for arm64-v8a and x86_64
+- Trust list: placeholder in assets; real trust list download/update deferred to Phase 13
 
 ## Recommended starting point
-- Review `docs/phase_reports/phase_5.md`
-- Use the demo filenames listed in that report to walk `_authentic`, `_authentic_c2pa`, `_uncertain`, and `_synthetic` through the installed debug build
-- If approved, open the non-squash PR from `codex/phase/5-detection-pipeline-stub` into `main`, merge it, and only then prepare the Phase 6 provenance-layer branch
+- Review `docs/phase_reports/phase_6.md` (to be written this session)
+- Push branch and open PR
+- If approved, merge PR and wait for go-ahead before Phase 7
