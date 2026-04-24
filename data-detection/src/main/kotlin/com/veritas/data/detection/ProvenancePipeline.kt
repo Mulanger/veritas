@@ -8,6 +8,8 @@
     "SwallowedException",
     "UnusedPrivateProperty",
     "UnusedParameter",
+    "TooManyFunctions",
+    "MaxLineLength",
 )
 
 package com.veritas.data.detection

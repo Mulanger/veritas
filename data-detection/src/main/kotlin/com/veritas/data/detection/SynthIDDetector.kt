@@ -1,3 +1,5 @@
+@file:Suppress("MaxLineLength", "UnusedParameter", "UnusedPrivateProperty")
+
 package com.veritas.data.detection
 
 import android.content.Context
@@ -25,9 +27,10 @@ class SynthIDDetector @Inject constructor(
         private const val TAG = "SynthIDDetector"
     }
 
+    @Suppress("UNUSED_PARAMETER")
     suspend fun detect(file: File, mediaType: com.veritas.domain.detection.MediaType): SynthIDResult =
         withContext(Dispatchers.IO) {
-            Log.w(TAG, "SynthID detection deferred to v1.1 — no public SDK available at Phase 6 build time. See OQ-006 in glossary.")
+            Log.w(TAG, "SynthID detection deferred to v1.1")
             SynthIDResult.NotPresent
         }
 }

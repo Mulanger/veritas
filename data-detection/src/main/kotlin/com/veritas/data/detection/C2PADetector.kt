@@ -4,6 +4,7 @@
     "MagicNumber",
     "TooGenericExceptionCaught",
     "SwallowedException",
+    "UnusedPrivateProperty",
 )
 
 package com.veritas.data.detection
@@ -21,7 +22,6 @@ import java.io.StringReader
 import java.time.Instant
 import java.time.OffsetDateTime
 import java.time.format.DateTimeFormatter
-import java.util.Locale
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -61,86 +61,96 @@ class C2PADetector @Inject constructor(
         return try {
             val reader = JsonReader(StringReader(json))
             reader.isLenient = true
-            var instanceId: String? = null
-            var claimGenerator: String? = null
-            var issuerName: String? = null
-            var signedAtStr: String? = null
-            val actions = mutableListOf<String>()
+            val manifestData = readActiveManifest(reader)
 
-            reader.beginObject()
-            while (reader.hasNext()) {
-                val name = reader.nextName()
-                when (name) {
-                    "active_manifest" -> {
-                        reader.beginObject()
-                        while (reader.hasNext()) {
-                            val fieldName = reader.nextName()
-                            when (fieldName) {
-                                "instance_id" -> instanceId = reader.nextString()
-                                "claim_generator" -> claimGenerator = reader.nextString()
-                                "signature_info" -> {
-                                    reader.beginObject()
-                                    while (reader.hasNext()) {
-                                        val sigName = reader.nextName()
-                                        when (sigName) {
-                                            "issuer" -> issuerName = reader.nextString()
-                                            "time" -> signedAtStr = reader.nextString()
-                                            else -> reader.skipValue()
-                                        }
-                                    }
-                                    reader.endObject()
-                                }
-                                "actions" -> {
-                                    reader.beginArray()
-                                    while (reader.hasNext()) {
-                                        reader.beginObject()
-                                        while (reader.hasNext()) {
-                                            val actionName = reader.nextName()
-                                            if (actionName == "action") {
-                                                actions.add(reader.nextString())
-                                            } else {
-                                                reader.skipValue()
-                                            }
-                                        }
-                                        reader.endObject()
-                                    }
-                                    reader.endArray()
-                                }
-                                else -> reader.skipValue()
-                            }
-                        }
-                        reader.endObject()
-                    }
-                    "manifests" -> {
-                        reader.beginObject()
-                        while (reader.hasNext()) {
-                            reader.skipValue()
-                        }
-                        reader.endObject()
-                    }
-                    else -> reader.skipValue()
-                }
-            }
-            reader.endObject()
-
-            if (instanceId == null && claimGenerator == null) {
+            if (manifestData.instanceId == null && manifestData.claimGenerator == null) {
                 return C2PAResult.NotPresent
             }
 
-            val signedAt = signedAtStr?.let { parseIso8601(it) }
-
             C2PAResult.Present(
-                instanceId = instanceId,
-                issuerName = issuerName,
-                deviceName = extractDeviceName(claimGenerator),
-                signedAt = signedAt,
-                claimGenerator = claimGenerator,
-                actions = actions,
+                instanceId = manifestData.instanceId,
+                issuerName = manifestData.issuerName,
+                deviceName = extractDeviceName(manifestData.claimGenerator),
+                signedAt = manifestData.signedAt?.let { parseIso8601(it) },
+                claimGenerator = manifestData.claimGenerator,
+                actions = manifestData.actions,
             )
         } catch (e: Exception) {
             Log.w(TAG, "Failed to parse C2PA manifest JSON", e)
             C2PAResult.Invalid(reason = "Malformed manifest: ${e.message}")
         }
+    }
+
+    private data class ManifestData(
+        var instanceId: String? = null,
+        var claimGenerator: String? = null,
+        var issuerName: String? = null,
+        var signedAt: String? = null,
+        val actions: MutableList<String> = mutableListOf(),
+    )
+
+    private fun readActiveManifest(reader: JsonReader): ManifestData {
+        val data = ManifestData()
+        reader.beginObject()
+        while (reader.hasNext()) {
+            when (reader.nextName()) {
+                "active_manifest" -> readManifestObject(reader, data)
+                "manifests" -> skipJsonObject(reader)
+                else -> reader.skipValue()
+            }
+        }
+        reader.endObject()
+        return data
+    }
+
+    private fun readManifestObject(reader: JsonReader, data: ManifestData) {
+        reader.beginObject()
+        while (reader.hasNext()) {
+            when (reader.nextName()) {
+                "instance_id" -> data.instanceId = reader.nextString()
+                "claim_generator" -> data.claimGenerator = reader.nextString()
+                "signature_info" -> readSignatureInfo(reader, data)
+                "actions" -> readActions(reader, data)
+                else -> reader.skipValue()
+            }
+        }
+        reader.endObject()
+    }
+
+    private fun readSignatureInfo(reader: JsonReader, data: ManifestData) {
+        reader.beginObject()
+        while (reader.hasNext()) {
+            when (reader.nextName()) {
+                "issuer" -> data.issuerName = reader.nextString()
+                "time" -> data.signedAt = reader.nextString()
+                else -> reader.skipValue()
+            }
+        }
+        reader.endObject()
+    }
+
+    private fun readActions(reader: JsonReader, data: ManifestData) {
+        reader.beginArray()
+        while (reader.hasNext()) {
+            reader.beginObject()
+            while (reader.hasNext()) {
+                if (reader.nextName() == "action") {
+                    data.actions.add(reader.nextString())
+                } else {
+                    reader.skipValue()
+                }
+            }
+            reader.endObject()
+        }
+        reader.endArray()
+    }
+
+    private fun skipJsonObject(reader: JsonReader) {
+        reader.beginObject()
+        while (reader.hasNext()) {
+            reader.skipValue()
+        }
+        reader.endObject()
     }
 
     private fun parseIso8601(dateStr: String): kotlinx.datetime.Instant? {
