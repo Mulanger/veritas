@@ -37,6 +37,7 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.flow
 import kotlinx.datetime.Clock
 import java.io.File
@@ -52,6 +53,7 @@ class ProvenancePipeline @Inject constructor(
     @ApplicationContext private val appContext: Context,
     private val c2paDetector: C2PADetector,
     private val synthIDDetector: SynthIDDetector,
+    private val fakeDetectionPipeline: FakeDetectionPipeline,
 ) : DetectionPipeline {
     private val activeScan = AtomicReference<ActiveScan?>()
     private val clock = Clock.System
@@ -71,6 +73,15 @@ class ProvenancePipeline @Inject constructor(
             val synthIDResult = computeSynthIDResult(c2paResult, media, mediaFile)
             if (session.cancelRequested.get()) { emit(ScanStage.Cancelled); return@flow }
             val verdict = buildVerdict(media, c2paResult, synthIDResult, startTime)
+
+            if (verdict == null) {
+                fakeDetectionPipeline.scan(media).collect { stage ->
+                    if (stage !is ScanStage.Started) {
+                        emit(stage)
+                    }
+                }
+                return@flow
+            }
 
             for (i in stages.indices) {
                 val stage = stages[i]
@@ -95,6 +106,7 @@ class ProvenancePipeline @Inject constructor(
 
     override fun cancel() {
         activeScan.get()?.cancelRequested?.set(true)
+        fakeDetectionPipeline.cancel()
     }
 
     private suspend fun computeC2PAResult(media: ScannedMedia, mediaFile: File?): C2PAResult {
@@ -134,7 +146,7 @@ class ProvenancePipeline @Inject constructor(
         c2paResult: C2PAResult,
         synthIDResult: SynthIDResult,
         startTime: kotlinx.datetime.Instant,
-    ): Verdict {
+    ): Verdict? {
         return when (val result = c2paResult) {
             is C2PAResult.Present -> buildVerifiedAuthenticVerdict(media, result, startTime)
             is C2PAResult.Invalid -> buildInvalidC2PAVerdict(media, result)
@@ -213,7 +225,7 @@ class ProvenancePipeline @Inject constructor(
         media: ScannedMedia,
         synthIDResult: SynthIDResult,
         startTime: kotlinx.datetime.Instant,
-    ): Verdict {
+    ): Verdict? {
         return when (synthIDResult) {
             is SynthIDResult.Detected -> Verdict(
                 id = UUID.randomUUID().toString(),
@@ -232,32 +244,8 @@ class ProvenancePipeline @Inject constructor(
                 inferenceHardware = InferenceHardware.CPU_XNNPACK,
                 elapsedMs = 0L,
             )
-            SynthIDResult.NotPresent -> buildLikelyAuthenticVerdict(media, startTime)
+            SynthIDResult.NotPresent -> null
         }
-    }
-
-    private fun buildLikelyAuthenticVerdict(media: ScannedMedia, startTime: kotlinx.datetime.Instant): Verdict {
-        val summary = when (media.mediaType) {
-            MediaType.VIDEO -> "No signs of AI generation across the active detectors. No Content Credentials are attached, so authenticity is not confirmed."
-            MediaType.AUDIO -> "No signs of AI generation across the active detectors. No Content Credentials are attached."
-            MediaType.IMAGE -> "No signs of AI generation across the active detectors. No Content Credentials are attached, so authenticity is not confirmed."
-        }
-        return Verdict(
-            id = UUID.randomUUID().toString(),
-            mediaId = media.id,
-            mediaType = media.mediaType,
-            outcome = VerdictOutcome.LIKELY_AUTHENTIC,
-            confidence = ConfidenceRange(lowPct = 68, highPct = 88),
-            summary = summary,
-            reasons = listOf(
-                Reason(ReasonCode.CODEC_CONSISTENT, 0.62f, Severity.POSITIVE, ReasonEvidence.Qualitative("Codec behavior stays consistent across the sampled content.")),
-                Reason(ReasonCode.CODEC_CONSISTENT, 0.38f, Severity.POSITIVE, ReasonEvidence.Qualitative("No synthetic signal detected in the available provenance checks.")),
-            ),
-            modelVersions = buildModelVersions(media.mediaType),
-            scannedAt = startTime,
-            inferenceHardware = InferenceHardware.CPU_XNNPACK,
-            elapsedMs = 0L,
-        )
     }
 
     private fun buildModelVersions(mediaType: MediaType): Map<String, String> = buildMap {

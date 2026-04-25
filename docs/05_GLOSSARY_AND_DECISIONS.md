@@ -388,9 +388,9 @@ The agent adds entries here whenever it makes a decision during build that:
 **Phase:** 6
 **Date:** 2026-04-24
 **Context:** Phase 6 plan requires real C2PA signature validation. Attempting to compile `c2pa-rs` from source via Rust cross-compilation failed due to Windows/WSL ring-dylib build barriers. The official `contentauth/c2pa-android` library wraps the Rust implementation with JNI bindings and distributes as an AAR via JitPack.
-**Decision:** Integrate `com.github.contentauth:c2pa-android:0.0.9` from JitPack. JitPack repository already configured. Replace Kotlin-only header-parsing stub with `org.contentauth.c2pa.C2PA.readFile()` API. Parse manifest JSON to extract `instance_id`, `claim_generator`, `signature_info` (issuer, time), and `actions`.
+**Decision:** Integrate `com.github.contentauth:c2pa-android:0.0.9` from JitPack. JitPack repository already configured. Replace Kotlin-only header-parsing stub with `Reader.fromStream(mimeType, ByteArrayStream(file.readBytes()))` so the app parses bytes loaded through Java I/O instead of relying on native file access. Parse manifest JSON to extract `instance_id`/`instanceID`, `claim_generator`, signature issuer/time, and actions.
 **Alternatives considered:** (a) Continue trying to cross-compile `c2pa-rs` from source — rejected as ring-dylib build fails on Windows/WSL boundary. (b) Use byte-level Kotlin header parsing only — rejected as it cannot perform cryptographic signature chain validation, which is the core requirement of Phase 6. (c) Use Adobe CAI JavaScript SDK via WebView — rejected as it violates the no-cloud-processing anti-pattern and adds heavy dependencies.
-**Reasoning:** c2pa-android is the official, maintained Android binding for c2pa-rs, distributed as a pre-built AAR with bundled native libraries. It eliminates all cross-compilation complexity while providing full cryptographic validation. Apache 2.0/MIT license is clean. JitPack provides frictionless Gradle integration without authentication requirements.
+**Reasoning:** c2pa-android is the official, maintained Android binding for c2pa-rs, distributed as a pre-built AAR with bundled native libraries. It eliminates all cross-compilation complexity while providing C2PA manifest parsing and integrity validation. Credential trust and expiry findings are evaluated by the explicit Veritas C2PA trust policy introduced in D-037. Apache 2.0/MIT license is clean. JitPack provides frictionless Gradle integration without authentication requirements.
 **Reversal cost:** low — the `C2PADetector` implementation is isolated to `data-detection/`; swapping the library only requires updating the `C2PA.readFile()` call and JSON parsing.
 **Approved by human:** pending checkpoint, 2026-04-24
 
@@ -403,6 +403,16 @@ The agent adds entries here whenever it makes a decision during build that:
 **Reasoning:** The pipeline contract is intentionally designed so a single `DetectionPipeline` implementation orchestrates all stages. `ProvenancePipeline` handles pre-flight (C2PA + SynthID) and delegates to `FakeDetectionPipeline` for the ML stages, keeping the Phase 6 deliverables on track while preserving the Phase 5 test coverage.
 **Reversal cost:** medium — later real detectors (Phase 7–9) will replace the delegation to `FakeDetectionPipeline` with real detector calls inside `ProvenancePipeline`; this is the expected migration path per the phase plan.
 **Approved by human:** pending checkpoint, 2026-04-24
+
+### D-037 · C2PA issuer allowlist gates credential trust
+**Phase:** 6
+**Date:** 2026-04-25
+**Context:** Phase 6 requires signature-chain validation against a bundled trust list. The first Phase 6 implementation parsed C2PA integrity failures but treated `signingCredential.untrusted` and `signingCredential.expired` as non-fatal, which allowed extraction tests to pass without proving trust enforcement.
+**Decision:** Add an explicit `C2PATrustPolicy` loaded from bundled app asset `c2pa_trusted_issuers.txt`. A manifest is valid only when its issuer is trusted and its validation issues do not contain fatal integrity, revocation, or disallowed credential-expiry findings. Instrumented tests use a fixture policy for public sample media and strict policies to prove untrusted and expired credentials return `C2PAResult.Invalid`.
+**Alternatives considered:** Treat all c2pa-android extraction as valid; keep credential trust deferred to Phase 13; bundle a placeholder PEM file without enforcing it.
+**Reasoning:** C2PA provenance is only meaningful if the signer is trusted. Phase 13 still owns signed trust-list delivery and update mechanics, but Phase 6 must already have the runtime enforcement seam and bundled initial trust asset.
+**Reversal cost:** medium — the policy is isolated to `data-detection`, but changing trust semantics affects every verified-authentic verdict.
+**Approved by human:** pending checkpoint, 2026-04-25
 
 ## Part 4 - Open questions
 

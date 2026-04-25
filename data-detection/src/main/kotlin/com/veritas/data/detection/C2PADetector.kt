@@ -7,6 +7,7 @@
     "LongMethod",
     "NestedBlockDepth",
     "UnusedPrivateProperty",
+    "TooManyFunctions",
 )
 
 package com.veritas.data.detection
@@ -14,13 +15,12 @@ package com.veritas.data.detection
 import android.util.JsonReader
 import android.util.JsonToken
 import android.util.Log
-import com.veritas.domain.detection.C2PAOutcome
 import com.veritas.domain.detection.C2PAResult
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import org.contentauth.c2pa.ByteArrayStream
 import org.contentauth.c2pa.C2PAError
-import org.contentauth.c2pa.FileStream
 import org.contentauth.c2pa.Reader
 import java.io.StringReader
 import java.time.Instant
@@ -33,9 +33,28 @@ import javax.inject.Singleton
 class C2PADetector @Inject constructor(
     @ApplicationContext private val appContext: android.content.Context,
 ) {
+    private var trustPolicyOverride: C2PATrustPolicy? = null
+    private val assetTrustPolicy by lazy { C2PATrustPolicy.fromAssets(appContext.assets) }
+
+    constructor(
+        appContext: android.content.Context,
+        trustPolicy: C2PATrustPolicy,
+    ) : this(appContext) {
+        trustPolicyOverride = trustPolicy
+    }
+
     companion object {
         private const val TAG = "C2PADetector"
-        private val NOT_PRESENT_ERROR_PATTERNS = listOf("no manifest", "not found", "parsed", "io")
+        private val NOT_PRESENT_ERROR_PATTERNS = listOf(
+            "no manifest",
+            "not found",
+            "could not parse",
+            "could not be parsed",
+            "error parsing",
+            "invalid file signature",
+            "invalid bmff structure",
+            "io",
+        )
         private const val MAX_FILE_SIZE_BYTES = 150L * 1024 * 1024 // 150 MB
     }
 
@@ -57,12 +76,13 @@ class C2PADetector @Inject constructor(
             }
         }
 
-        val stream = FileStream(file, FileStream.Mode.READ, false)
+        val stream = ByteArrayStream(file.readBytes())
 
         var reader: Reader? = null
         try {
             reader = Reader.fromStream(mimeType, stream)
             val detailedJson = reader.detailedJson()
+            Log.d(TAG, "C2PA detailed JSON for ${file.name}: $detailedJson")
 
             if (detailedJson.isBlank() || detailedJson == "{}" || detailedJson == "{\"manifests\":{}}") {
                 Log.w(TAG, "C2PA returned blank/empty JSON for ${file.name}")
@@ -94,7 +114,6 @@ class C2PADetector @Inject constructor(
             C2PAResult.NotPresent
         } finally {
             try { reader?.close() } catch (e: Exception) { /* ignore */ }
-            try { stream.close() } catch (e: Exception) { /* ignore */ }
         }
     }
 
@@ -112,8 +131,18 @@ class C2PADetector @Inject constructor(
                 return C2PAResult.NotPresent
             }
 
-            if (manifestData.validationErrors.isNotEmpty()) {
-                return C2PAResult.Invalid(reason = manifestData.validationErrors.joinToString("; ") { it })
+            val validationFailures = (trustPolicyOverride ?: assetTrustPolicy).evaluate(
+                issuerName = manifestData.issuerName,
+                validationIssues = manifestData.validationIssues,
+            )
+
+            if (validationFailures.isNotEmpty()) {
+                val reason = validationFailures.joinToString("; ")
+                return if ((trustPolicyOverride ?: assetTrustPolicy).hasRevocationFailure(validationFailures)) {
+                    C2PAResult.Revoked(reason = reason)
+                } else {
+                    C2PAResult.Invalid(reason = reason)
+                }
             }
 
             C2PAResult.Present(
@@ -136,20 +165,18 @@ class C2PADetector @Inject constructor(
         var issuerName: String? = null,
         var signedAt: String? = null,
         val actions: MutableList<String> = mutableListOf(),
-        val validationErrors: MutableList<String> = mutableListOf(),
+        val validationIssues: MutableList<C2PAValidationIssue> = mutableListOf(),
     )
 
     private fun readDetailedManifest(reader: JsonReader): ManifestData {
         val data = ManifestData()
         var activeManifestKey: String? = null
-        var inValidationStatus = false
 
         reader.beginObject()
         while (reader.hasNext()) {
             val name = reader.nextName()
             when {
                 name == "validation_status" -> {
-                    inValidationStatus = true
                     reader.beginArray()
                     while (reader.hasNext()) {
                         reader.beginObject()
@@ -164,12 +191,11 @@ class C2PADetector @Inject constructor(
                             }
                         }
                         reader.endObject()
-                        if (code != null && !code.startsWith("assertion.")) {
-                            data.validationErrors.add(explanation ?: code)
+                        if (code != null) {
+                            data.validationIssues.add(C2PAValidationIssue(code, explanation))
                         }
                     }
                     reader.endArray()
-                    inValidationStatus = false
                 }
                 name == "active_manifest" -> {
                     val value = reader.peek()
@@ -195,7 +221,7 @@ class C2PADetector @Inject constructor(
                     reader.endObject()
                 }
                 name == "validation_results" -> {
-                    reader.skipValue()
+                    readValidationResults(reader, data)
                 }
                 else -> {
                     reader.skipValue()
@@ -211,9 +237,26 @@ class C2PADetector @Inject constructor(
         while (reader.hasNext()) {
             when (reader.nextName()) {
                 "instance_id" -> data.instanceId = reader.nextString()
+                "instanceID" -> data.instanceId = reader.nextString()
                 "claim_generator" -> data.claimGenerator = reader.nextString()
                 "signature_info" -> readSignatureInfo(reader, data)
+                "signature" -> readSignatureInfo(reader, data)
+                "claim" -> readClaim(reader, data)
                 "actions" -> readActions(reader, data)
+                "assertion_store" -> readAssertionStore(reader, data)
+                else -> reader.skipValue()
+            }
+        }
+        reader.endObject()
+    }
+
+    private fun readClaim(reader: JsonReader, data: ManifestData) {
+        reader.beginObject()
+        while (reader.hasNext()) {
+            when (reader.nextName()) {
+                "instance_id" -> data.instanceId = reader.nextString()
+                "instanceID" -> data.instanceId = reader.nextString()
+                "claim_generator" -> data.claimGenerator = reader.nextString()
                 else -> reader.skipValue()
             }
         }
@@ -244,6 +287,84 @@ class C2PADetector @Inject constructor(
                 }
             }
             reader.endObject()
+        }
+        reader.endArray()
+    }
+
+    private fun readAssertionStore(reader: JsonReader, data: ManifestData) {
+        reader.beginObject()
+        while (reader.hasNext()) {
+            if (reader.nextName() == "c2pa.actions") {
+                reader.beginObject()
+                while (reader.hasNext()) {
+                    if (reader.nextName() == "actions") {
+                        readActions(reader, data)
+                    } else {
+                        reader.skipValue()
+                    }
+                }
+                reader.endObject()
+            } else {
+                reader.skipValue()
+            }
+        }
+        reader.endObject()
+    }
+
+    private fun readValidationResults(reader: JsonReader, data: ManifestData) {
+        reader.beginObject()
+        while (reader.hasNext()) {
+            when (reader.nextName()) {
+                "activeManifest" -> readValidationResultGroup(reader, data)
+                "ingredientDeltas" -> {
+                    reader.beginArray()
+                    while (reader.hasNext()) {
+                        reader.beginObject()
+                        while (reader.hasNext()) {
+                            if (reader.nextName() == "validationDeltas") {
+                                readValidationResultGroup(reader, data)
+                            } else {
+                                reader.skipValue()
+                            }
+                        }
+                        reader.endObject()
+                    }
+                    reader.endArray()
+                }
+                else -> reader.skipValue()
+            }
+        }
+        reader.endObject()
+    }
+
+    private fun readValidationResultGroup(reader: JsonReader, data: ManifestData) {
+        reader.beginObject()
+        while (reader.hasNext()) {
+            when (reader.nextName()) {
+                "failure" -> readValidationFailures(reader, data)
+                else -> reader.skipValue()
+            }
+        }
+        reader.endObject()
+    }
+
+    private fun readValidationFailures(reader: JsonReader, data: ManifestData) {
+        reader.beginArray()
+        while (reader.hasNext()) {
+            reader.beginObject()
+            var code: String? = null
+            var explanation: String? = null
+            while (reader.hasNext()) {
+                when (reader.nextName()) {
+                    "code" -> code = reader.nextString()
+                    "explanation" -> explanation = reader.nextString()
+                    else -> reader.skipValue()
+                }
+            }
+            reader.endObject()
+            if (code != null) {
+                data.validationIssues.add(C2PAValidationIssue(code, explanation))
+            }
         }
         reader.endArray()
     }
