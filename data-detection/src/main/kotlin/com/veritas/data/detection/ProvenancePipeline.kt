@@ -324,6 +324,7 @@ class ProvenancePipeline @Inject constructor(
                     com.veritas.domain.detection.FallbackLevel.NONE -> InferenceHardware.CPU_XNNPACK
                 },
             elapsedMs = detectorResult.elapsedMs,
+            forensicEvidence = detectorResult.forensicEvidence,
         )
     }
 
@@ -368,6 +369,7 @@ class ProvenancePipeline @Inject constructor(
                     com.veritas.domain.detection.FallbackLevel.NONE -> InferenceHardware.CPU_XNNPACK
                 },
             elapsedMs = detectorResult.elapsedMs,
+            forensicEvidence = detectorResult.forensicEvidence,
         )
     }
 
@@ -412,6 +414,7 @@ class ProvenancePipeline @Inject constructor(
                     com.veritas.domain.detection.FallbackLevel.NONE -> InferenceHardware.CPU_XNNPACK
                 },
             elapsedMs = detectorResult.elapsedMs,
+            forensicEvidence = detectorResult.forensicEvidence,
         )
     }
 

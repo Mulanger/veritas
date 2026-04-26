@@ -7,6 +7,8 @@ import com.veritas.domain.detection.BasicDetectorResult
 import com.veritas.domain.detection.ConfidenceInterval
 import com.veritas.domain.detection.Detector
 import com.veritas.domain.detection.FallbackLevel
+import com.veritas.domain.detection.ForensicEvidence
+import com.veritas.domain.detection.ForensicEvidenceFactory
 import com.veritas.domain.detection.Reason
 import com.veritas.domain.detection.ReasonCode
 import com.veritas.domain.detection.ReasonEvidence
@@ -70,11 +72,15 @@ class VideoDetector @Inject constructor(
             )
             Log.i(TAG, "phase9_stage_timing=$lastTiming")
 
+            val frameScores = extracted.frames.mapIndexed { index, frame ->
+                frame.timestampMs to (spatialScores.getOrNull(index / SPATIAL_FRAME_STRIDE) ?: spatialMean)
+            }
+            val reasons = reasonsFor(spatialScores, temporalScore.driftScore, faceScore, uncertainReasons)
             BasicDetectorResult(
                 detectorId = DETECTOR_ID,
                 syntheticScore = fusedScore,
                 confidence = (confidenceInterval.high - confidenceInterval.low).let { 1f - it }.coerceIn(0f, 0.95f),
-                reasons = reasonsFor(spatialScores, temporalScore.driftScore, faceScore, uncertainReasons),
+                reasons = reasons,
                 elapsedMs = elapsedMs,
                 confidenceInterval = confidenceInterval,
                 subScores = mapOf(
@@ -84,6 +90,19 @@ class VideoDetector @Inject constructor(
                 ),
                 uncertainReasons = uncertainReasons,
                 fallbackUsed = fallback,
+                forensicEvidence =
+                    ForensicEvidence.Video(
+                        heatmap = ForensicEvidenceFactory.videoHeatmap(
+                            syntheticScore = fusedScore,
+                            frameScores = frameScores,
+                            reasons = reasons,
+                        ),
+                        temporalConfidence = ForensicEvidenceFactory.temporalConfidence(
+                            durationMs = extracted.metadata.durationMs,
+                            scores = frameScores,
+                            fallbackScore = fusedScore,
+                        ),
+                    ),
             )
         } finally {
             extracted.frames.forEach { it.bitmap.recycle() }

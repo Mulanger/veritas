@@ -6,6 +6,8 @@ import com.veritas.data.detection.ml.fusion.Calibrator
 import com.veritas.domain.detection.BasicDetectorResult
 import com.veritas.domain.detection.Detector
 import com.veritas.domain.detection.FallbackLevel
+import com.veritas.domain.detection.ForensicEvidence
+import com.veritas.domain.detection.ForensicEvidenceFactory
 import com.veritas.domain.detection.Reason
 import com.veritas.domain.detection.ReasonCode
 import com.veritas.domain.detection.ReasonEvidence
@@ -50,11 +52,12 @@ class AudioDetector @Inject constructor(
         val uncertainReasons = uncertaintyReasons(signals, fusedScore, modelScore.fallbackLevel)
         val elapsedMs = Clock.System.now().toEpochMilliseconds() - startedAt.toEpochMilliseconds()
 
+        val reasons = reasonsFor(modelScore.syntheticScore, signals)
         return BasicDetectorResult(
             detectorId = DETECTOR_ID,
             syntheticScore = fusedScore,
             confidence = (confidenceInterval.high - confidenceInterval.low).let { 1f - it }.coerceIn(0f, 0.95f),
-            reasons = reasonsFor(modelScore.syntheticScore, signals),
+            reasons = reasons,
             elapsedMs = elapsedMs,
             confidenceInterval = confidenceInterval,
             subScores = mapOf(
@@ -63,6 +66,19 @@ class AudioDetector @Inject constructor(
             ),
             uncertainReasons = uncertainReasons,
             fallbackUsed = modelScore.fallbackLevel,
+            forensicEvidence =
+                ForensicEvidence.Audio(
+                    waveform = ForensicEvidenceFactory.waveform(
+                        durationMs = input.media.durationMs,
+                        score = fusedScore,
+                        reasons = reasons,
+                    ),
+                    temporalConfidence = ForensicEvidenceFactory.temporalConfidence(
+                        durationMs = input.media.durationMs,
+                        scores = emptyList(),
+                        fallbackScore = fusedScore,
+                    ),
+                ),
         )
     }
 

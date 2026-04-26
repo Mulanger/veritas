@@ -594,6 +594,36 @@ The agent adds entries here whenever it makes a decision during build that:
 **Reversal cost:** medium - assembling and licensing a real video set takes time, but the detector contract and harness are already in place.
 **Approved by human:** pending checkpoint, 2026-04-26
 
+### D-056 - Phase 10 forensic evidence is session-only detector output
+**Phase:** 10
+**Date:** 2026-04-26
+**Context:** Phase 10 needs heatmaps, timelines, waveform flags, and reason detail sheets without writing media-derived tensors to disk.
+**Decision:** Add `ForensicEvidence` to `DetectorResult`/`Verdict` as in-memory session data with `HeatmapData`, `TemporalConfidence`, and `WaveformData`. Detectors populate it from their real scores, reasons, timestamps, and quality signals; the UI renders it directly and does not persist it.
+**Alternatives considered:** Store scan artifacts under cache for UI reload; rejected because the data contracts say heatmaps are not persisted and are discarded on activity destroy. Keep generating UI placeholders; rejected because Phase 10 requires real detector evidence.
+**Reasoning:** This keeps the privacy contract intact while giving the forensic view a typed data surface for all three media types.
+**Reversal cost:** medium - history reuse in Phase 11 would need separate persisted summaries, not raw forensic tensors.
+**Approved by human:** pending checkpoint, 2026-04-26
+
+### D-057 - Phase 10 uses 64 by 64 heatmap bins
+**Phase:** 10
+**Date:** 2026-04-26
+**Context:** Compose Canvas heatmap rendering must avoid full-resolution overlays during scroll and scrubbing.
+**Decision:** Render heatmap evidence as deterministic `64 x 64` bins and upscale in Canvas with `BlendMode.Screen`; labels and callouts are drawn over the reduced tensor.
+**Alternatives considered:** Full display-resolution heatmap cells; rejected because the Phase 10 pitfalls explicitly call out Canvas performance risk. `128 x 128`; deferred until profiling proves the extra detail is useful on device.
+**Reasoning:** `64 x 64` matches the low-resolution attention/Grad-CAM style output expected by the plan, keeps the render cost bounded, and is deterministic for unit tests.
+**Reversal cost:** low - the bin constant is isolated in `ForensicEvidenceFactory`.
+**Approved by human:** pending checkpoint, 2026-04-26
+
+### D-058 - Reason-code detail copy is resource-backed with generic fallback
+**Phase:** 10
+**Date:** 2026-04-26
+**Context:** Phase 10 requires reason-code copy to be translation-ready and stored in resources.
+**Decision:** Move high-value Phase 10 reason templates into `strings.xml` and keep a resource-backed generic fallback for less common codes.
+**Alternatives considered:** Keep the Phase 5 hardcoded placeholder dictionary; rejected because it blocks localization. Add exhaustive bespoke copy for every enum in this pass; deferred because several legacy/provenance codes need product copy review.
+**Reasoning:** The UI no longer hardcodes template bodies, and the common image/audio/video detector codes have specific plain-English explanations now.
+**Reversal cost:** low - adding bespoke strings for the remaining codes is additive.
+**Approved by human:** pending checkpoint, 2026-04-26
+
 ## Part 4 - Open questions
 
 Questions that remain unresolved at start of build. The agent should revisit these at the relevant phase and either resolve (add to decision log) or escalate to human.

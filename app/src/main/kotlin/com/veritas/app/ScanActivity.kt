@@ -33,8 +33,11 @@ class ScanActivity : ComponentActivity() {
     private var scanUiState by mutableStateOf(ScanUiState())
     private var scanJob: Job? = null
 
+    @Suppress("DEPRECATION")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        window.statusBarColor = android.graphics.Color.BLACK
+        window.navigationBarColor = android.graphics.Color.BLACK
 
         scannedMedia?.let { media ->
             mediaIngestionCoordinator.schedulePurge(media)

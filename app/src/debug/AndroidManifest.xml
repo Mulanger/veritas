@@ -16,5 +16,9 @@
             android:name="com.veritas.app.debug.testing.Phase4TestActivity"
             android:exported="false"
             android:label="Veritas Phase 4 Test" />
+        <activity
+            android:name="com.veritas.app.Phase10ForensicDemoActivity"
+            android:exported="true"
+            android:label="Veritas Phase 10 Forensic Demo" />
     </application>
 </manifest>

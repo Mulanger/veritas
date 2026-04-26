@@ -46,6 +46,8 @@ sealed interface DetectorResult {
         get() = emptyList()
     val fallbackUsed: FallbackLevel
         get() = FallbackLevel.NONE
+    val forensicEvidence: ForensicEvidence
+        get() = ForensicEvidence.None
 }
 
 data class BasicDetectorResult(
@@ -58,6 +60,7 @@ data class BasicDetectorResult(
     override val subScores: Map<String, Float> = emptyMap(),
     override val uncertainReasons: List<UncertainReason> = emptyList(),
     override val fallbackUsed: FallbackLevel = FallbackLevel.NONE,
+    override val forensicEvidence: ForensicEvidence = ForensicEvidence.None,
 ) : DetectorResult
 
 private const val MIN_DETECTOR_SCORE = 0.02f
