@@ -464,6 +464,16 @@ The agent adds entries here whenever it makes a decision during build that:
 **Reversal cost:** low - the change is isolated to `DelegateChain`.
 **Approved by human:** pending checkpoint, 2026-04-26
 
+### D-043 - Phase 8 audio ONNX source path and conversion blocker
+**Phase:** 8
+**Date:** 2026-04-26
+**Context:** The standalone Phase 8 plan names `as1605/Deepfake-audio-detection-V2/model/model.onnx`, but the model repository's current `main` commit stores the ONNX at `onnx/model.onnx`. The older commit `275cf7c1ae10ee8b52628b404d637f03fb511352` still has `model/model.onnx`. Current `main` revision `3aeb18add053e945dc69025147afab0d70fa0188` reports `apache-2.0`, and `onnx/model.onnx` has SHA-256 `fc1847c0e6f294572d38b04ab9715c4af1edde45ce1ff7b1523220615d1903e2`.
+**Decision:** Pin the Phase 8 conversion script to current revision `3aeb18add053e945dc69025147afab0d70fa0188` and `onnx/model.onnx`, but stop before shipping an audio model because every TFLite artifact produced so far exceeds the 120 MB hard cap.
+**Alternatives considered:** (a) Use the stale `model/model.onnx` path - rejected because it 404s on current `main` and would require pinning an older commit without evidence it improves conversion. (b) Ship the smallest converted FP16 artifact - rejected because it is `189459212` bytes, above the Phase 8 hard cap. (c) Ship onnx2tf "INT8" outputs - rejected because the generated artifacts are `365701056` bytes or larger. (d) Use LiteRT Torch / ai-edge-torch - blocked because `ai-edge-torch 0.7.2` depends on `litert-torch`, which depends on `litert-converter==0.1.*`; `pip index versions litert-converter` returned no matching distribution in this Windows Python 3.12 environment.
+**Reasoning:** Phase 8 explicitly requires escalation if the final TFLite size exceeds 120 MB or both conversion paths fail. Continuing with an oversized or unsigned model would silently drop a deliverable and make APK size/security worse.
+**Reversal cost:** medium - conversion can resume from `tools/model-conversion/convert_audio_detector.py` on a Linux conversion host or with a different approved Apache 2.0 model if the human changes the Phase 8 model decision.
+**Approved by human:** pending checkpoint, 2026-04-26
+
 ## Part 4 - Open questions
 
 Questions that remain unresolved at start of build. The agent should revisit these at the relevant phase and either resolve (add to decision log) or escalate to human.
