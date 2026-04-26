@@ -4,9 +4,11 @@
 2026-04-26
 
 ## Branch
-`phase/7-image-detector`
+`main`
 
 ## Current Status
+- Phase 7 is complete and merged.
+- Ready for Phase 8 per `docs/07_PHASE_8_PLAN.md`.
 - Phase 7 image detector integration is implemented and verified on top of verified Phase 6.
 - `data-detection-ml` and `feature-detect-image` are wired into the app.
 - The signed Deep-Fake-Detector-v2 TFLite asset loads and runs on `veritas_play_avd`.
