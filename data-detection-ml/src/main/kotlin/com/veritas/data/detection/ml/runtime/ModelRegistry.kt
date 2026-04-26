@@ -7,6 +7,11 @@ object ModelRegistry {
     const val AUDIO_DEEPFAKE_DETECTOR_ID = "audio_deepfake_detector_hemgg_wi8"
     const val AUDIO_DEEPFAKE_DETECTOR_VERSION = "0.1.0-phase8"
     const val AUDIO_INPUT_SAMPLE_COUNT = 80_000
+    const val VIDEO_TEMPORAL_DETECTOR_ID = "video_temporal_movinet_a0_stream_int8"
+    const val VIDEO_TEMPORAL_DETECTOR_VERSION = "0.1.0-phase9"
+    const val VIDEO_FACE_DETECTOR_ID = "video_face_blazeface_short_range"
+    const val VIDEO_FACE_DETECTOR_VERSION = "0.1.0-phase9"
+    const val VIDEO_MOVINET_INPUT_SIZE = 172
 
     val imageInt8: ModelAssetSpec =
         ModelAssetSpec(
@@ -25,6 +30,26 @@ object ModelRegistry {
             assetPath = "models/audio/deepfake-audio-detector-hemgg-wi8.tflite",
             signatureAssetPath = "models/audio/deepfake-audio-detector-hemgg-wi8.tflite.sig",
             expectedSha256 = "3046375262e631f25eb801c3480306235731f9bd95cedcf450663a31116f0b4c",
+            publicKeyBase64 = "MCowBQYDK2VwAyEATNyvAq6FDkWUF9zUaVObExc/7QBE7PLa6QNt/AsP/10=",
+        )
+
+    val videoMovinetA0StreamInt8: ModelAssetSpec =
+        ModelAssetSpec(
+            id = VIDEO_TEMPORAL_DETECTOR_ID,
+            version = VIDEO_TEMPORAL_DETECTOR_VERSION,
+            assetPath = "models/video/movinet-a0-stream-int8.tflite",
+            signatureAssetPath = "models/video/movinet-a0-stream-int8.tflite.sig",
+            expectedSha256 = "6125b36e2485eeb5cc1fd6206cf5e5d70235593fbc84610d1dce97fe3aa9c2ac",
+            publicKeyBase64 = "MCowBQYDK2VwAyEATNyvAq6FDkWUF9zUaVObExc/7QBE7PLa6QNt/AsP/10=",
+        )
+
+    val videoBlazeFaceShortRange: ModelAssetSpec =
+        ModelAssetSpec(
+            id = VIDEO_FACE_DETECTOR_ID,
+            version = VIDEO_FACE_DETECTOR_VERSION,
+            assetPath = "models/video/blaze_face_short_range.tflite",
+            signatureAssetPath = "models/video/blaze_face_short_range.tflite.sig",
+            expectedSha256 = "b4578f35940bf5a1a655214a1cce5cab13eba73c1297cd78e1a04c2380b0152f",
             publicKeyBase64 = "MCowBQYDK2VwAyEATNyvAq6FDkWUF9zUaVObExc/7QBE7PLa6QNt/AsP/10=",
         )
 }

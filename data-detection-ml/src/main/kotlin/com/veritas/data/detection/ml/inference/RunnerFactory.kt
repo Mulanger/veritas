@@ -53,6 +53,29 @@ class RunnerFactory @Inject constructor(
         )
     }
 
+    suspend fun createMulti(spec: ModelAssetSpec): MultiRunnerHandle {
+        liteRtRuntime.ensureInitialized()
+        val modelAsset = verifier.loadVerified(appContext, spec)
+        val delegateSelection = delegateChain.optionsFor(appContext)
+        val runnerSelection = runCatching { MultiInputModelRunner(modelAsset, delegateSelection) to delegateSelection.fallbackLevel }
+            .onFailure { error ->
+                Log.w(TAG, "Failed to create multi-input runner with ${delegateSelection.fallbackLevel}; retrying CPU", error)
+            }
+            .recoverCatching { error ->
+                if (delegateSelection.fallbackLevel != FallbackLevel.GPU) {
+                    throw error
+                }
+                val cpuSelection = delegateChain.cpuOptions()
+                MultiInputModelRunner(modelAsset, cpuSelection) to cpuSelection.fallbackLevel
+            }
+            .getOrThrow()
+        return MultiRunnerHandle(
+            runner = runnerSelection.first,
+            fallbackLevel = runnerSelection.second,
+            modelVersion = modelAsset.version,
+        )
+    }
+
     private companion object {
         private const val TAG = "RunnerFactory"
     }
@@ -60,6 +83,12 @@ class RunnerFactory @Inject constructor(
 
 data class RunnerHandle(
     val runner: ModelRunner,
+    val fallbackLevel: FallbackLevel,
+    val modelVersion: String,
+)
+
+data class MultiRunnerHandle(
+    val runner: MultiInputModelRunner,
     val fallbackLevel: FallbackLevel,
     val modelVersion: String,
 )

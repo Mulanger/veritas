@@ -1,0 +1,43 @@
+{
+  "generatedAt": "2026-04-26T18:42:48.154105Z",
+  "dataset": "phase7_image_to_video_static",
+  "decisionPolicy": {
+    "syntheticThreshold": 0.5,
+    "goldenSetIsStaticImageDerived": true
+  },
+  "overall": {
+    "total": 200,
+    "binaryAccuracy": 0.905000,
+    "pipelineAccuracy": 0.750000,
+    "spatialOnlyAccuracy": 0.890000,
+    "fullMinusSpatialAccuracy": 0.015000,
+    "falsePositiveRate": 0.150000,
+    "falseNegativeRate": 0.040000,
+    "uncertainRate": 0.220000,
+    "p50LatencyMs": 2939,
+    "p95LatencyMs": 3074,
+    "p50ExtractionMs": 1054,
+    "p95ExtractionMs": 1158
+  },
+  "fallbackCounts": {
+    "GPU": 200
+  },
+  "temporalFallbackCounts": {
+    "GPU": 200
+  },
+  "faceFallbackCounts": {
+    "GPU": 200
+  },
+  "uncertainReasonCounts": {
+    "LOW_CONFIDENCE_RANGE": 24,
+    "VID_HEAVY_COMPRESSION": 21,
+    "VID_NO_FACES_DETECTED": 4
+  },
+  "latencyByDurationBucket": {
+    "0-5s": { "total": 200, "p50LatencyMs": 2939, "p95LatencyMs": 3074, "p50ExtractionMs": 1054, "p95ExtractionMs": 1158, "meanExtractionShare": 0.365094 }
+  },
+  "perGenerator": {
+    "image_to_video_static_camera_photo": { "total": 100, "binaryAccuracy": 0.850000, "pipelineAccuracy": 0.690000, "falsePositiveRate": 0.150000, "falseNegativeRate": 0.000000, "uncertainRate": 0.260000, "p95LatencyMs": 3074 },
+    "image_to_video_static_gan_or_diffusion": { "total": 100, "binaryAccuracy": 0.960000, "pipelineAccuracy": 0.810000, "falsePositiveRate": 0.000000, "falseNegativeRate": 0.040000, "uncertainRate": 0.200000, "p95LatencyMs": 3071 }
+  }
+}

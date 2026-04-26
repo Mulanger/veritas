@@ -17,5 +17,8 @@ docs/SESSION_NOTES.md
 /feature-detect-image/src/androidTest/assets/golden-image/synthetic/
 /feature-detect-audio/src/androidTest/assets/golden-audio/real/
 /feature-detect-audio/src/androidTest/assets/golden-audio/synthetic/
+/feature-detect-video/src/androidTest/assets/golden-video/real/
+/feature-detect-video/src/androidTest/assets/golden-video/synthetic/
 /phase_7_eval_results.json
 /phase_8_eval_results.json
+/phase_9_eval_results.json

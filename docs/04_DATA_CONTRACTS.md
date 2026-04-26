@@ -153,6 +153,13 @@ enum class ReasonCode {
   AUD_TOO_SHORT,
   AUD_LOW_QUALITY,
   AUD_NATURAL_PROSODY,
+  // Video — Phase 9 shipped detector
+  VID_TEMPORAL_DRIFT_HIGH,
+  VID_SPATIAL_SYNTHETIC_FRAMES,
+  VID_FACE_INCONSISTENT,
+  VID_LIP_SYNC_DRIFT,
+  VID_LOW_QUALITY,
+  VID_DECODE_FAILED,
   // Forensics
   METADATA_IMPLAUSIBLE,
   ELA_INCONSISTENT,
@@ -200,6 +207,25 @@ data class BBox(val x: Float, val y: Float, val w: Float, val h: Float) {
 |---|---|
 | `wav2vec2_model` | Hemgg wav2vec2-base softmax probability for `AIVoice` |
 | `codec` | codec plausibility score, where `1.0` is plausible and `0.0` is suspicious |
+
+**Phase 9 video reason-code content:**
+
+| Code | Trigger | User-facing meaning |
+|---|---|---|
+| `VID_SPATIAL_SYNTHETIC_FRAMES` | one or more sampled frames has `spatial_vit > 0.70` | Sampled frames contain still-image synthetic artifacts |
+| `VID_TEMPORAL_DRIFT_HIGH` | `temporal_movinet > 0.35` | MoViNet temporal embeddings change unusually between sampled frames |
+| `VID_FACE_INCONSISTENT` | `face_consistency > 0.70` on analyzed face crops | Face-region crops show inconsistent synthetic-artifact scores |
+| `VID_LOW_QUALITY` | video-specific uncertainty reason is present | Video quality or frame availability reduced detector confidence |
+| `VID_DECODE_FAILED` | frame extraction failed before detector inference | Video could not be decoded reliably on this device |
+| `CODEC_CONSISTENT` | no strong negative video signal | Spatial, temporal, and face signals did not show strong synthetic patterns |
+
+**Phase 9 video detector sub-scores:** video `DetectorResult.subScores` uses exactly:
+
+| Key | Meaning |
+|---|---|
+| `spatial_vit` | Mean Phase 7 image-detector synthetic probability across every other sampled frame |
+| `temporal_movinet` | Mean cosine drift of MoViNet-A0 streaming logits across sampled frames |
+| `face_consistency` | Mean Phase 7 image-detector synthetic probability over MediaPipe face crops; falls back to `spatial_vit` when no face signal is available |
 
 ### 1.5 `ScanStage`
 

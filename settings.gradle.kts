@@ -26,6 +26,7 @@ include(
     ":domain-detection",
     ":feature-detect-audio",
     ":feature-detect-image",
+    ":feature-detect-video",
     ":feature-home",
     ":feature-history",
     ":feature-onboarding",

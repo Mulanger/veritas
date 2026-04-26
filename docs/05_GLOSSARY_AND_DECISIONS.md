@@ -524,6 +524,76 @@ The agent adds entries here whenever it makes a decision during build that:
 **Reversal cost:** low - future eval sets can add ASVspoof/WaveFake/current TTS samples by extending the builder and rerunning the harness.
 **Approved by human:** pending checkpoint, 2026-04-26
 
+### D-049 - Phase 9 rPPG deferred to v1.5
+**Phase:** 9
+**Date:** 2026-04-26
+**Context:** The architecture document mentions rPPG as a possible video specialist, but the standalone Phase 9 plan explicitly defers it. Reliable CHROM/POS-style rPPG on compressed, user-supplied mobile video would add signal-processing and validation work beyond the v1 detector integration scope.
+**Decision:** Do not implement rPPG in Phase 9. Ship spatial frame scoring, MoViNet temporal drift, and optional face ROI consistency only. Reconsider rPPG in v1.5 with better video-quality controls and a dedicated validation set.
+**Alternatives considered:** Implement a simple green-channel or CHROM/POS heuristic in v1; rejected because false confidence from noisy compressed video would be worse than omitting the signal.
+**Reasoning:** Phase 9 is product-functional, not production-calibrated. A weak physiological heuristic would complicate calibration without a defensible acceptance gate.
+**Reversal cost:** medium - adding rPPG later requires face tracking, skin-region masking, temporal filtering, and a new evaluation harness.
+**Approved by human:** pending checkpoint, 2026-04-26
+
+### D-050 - Phase 9 temporal model uses MoViNet A0 stream INT8 v1
+**Phase:** 9
+**Date:** 2026-04-26
+**Context:** Phase 9 needs a small video temporal model and the plan selected MoViNet-A0-Stream INT8 from TensorFlow Hub. Current TF Hub v2/v3 lite-format URLs returned Kaggle HTML in this environment; the v1 lite-format endpoint returned a valid TFLite flatbuffer.
+**Decision:** Ship `movinet-a0-stream-int8.tflite` from `tensorflow/lite-model/movinet/a0/stream/kinetics-600/classification/tflite/int8/1`, signed with the existing Ed25519 model key. Use it only as a temporal drift feature by carrying stream state across sampled frames and measuring frame-to-frame logit cosine distance.
+**Alternatives considered:** Use MoViNet A1 or a non-stream model; rejected for APK and latency budget. Treat the 600-class classifier output as a semantic label; rejected because action labels are not deepfake labels.
+**Reasoning:** The model is `3276048` bytes, has no Flex/Erf strings in the flatbuffer, and runs through the shared Play Services LiteRT runner path. It adds temporal coverage without duplicating the Phase 7 spatial model.
+**Reversal cost:** low - future retraining can replace the TFLite asset behind the same `temporal_movinet` contract if input/state shapes remain compatible.
+**Approved by human:** pending checkpoint, 2026-04-26
+
+### D-051 - Phase 9 sampling and preprocessing policy
+**Phase:** 9
+**Date:** 2026-04-26
+**Context:** The plan allowed choosing a practical frame sampling policy and required documenting spatial inference cadence and aspect-ratio handling.
+**Decision:** Sample up to `4` timestamps across the clip with edge padding, run the Phase 7 spatial detector on the first sampled frame, and feed all sampled frames to MoViNet. MoViNet preprocessing center-crops to square, resizes to `172 x 172`, and normalizes RGB float32 values to `[0, 1]`. Face ROI consistency processes at most one face crop per video in v1.
+**Alternatives considered:** Spatial inference on every sampled frame or every other sampled frame; rejected after Pixel 8 profiling because repeated Phase 7 ViT inference caused p95 latency to exceed the Phase 9 `4s` gate. Letterboxing for MoViNet; rejected because center-crop matches the action-model assumption better and avoids black borders dominating small inputs.
+**Reasoning:** A one-frame spatial score keeps the strongest deepfake-specialized signal while preserving room for temporal and face GPU passes. Center crop is deterministic and keeps the stream input shape fixed.
+**Reversal cost:** low - frame count, stride, and crop strategy are localized to the video module.
+**Approved by human:** pending checkpoint, 2026-04-26
+
+### D-052 - Phase 9 fixed video fusion and static-derived golden set
+**Phase:** 9
+**Date:** 2026-04-26
+**Context:** Phase 9 fusion is product-functional and should be transparent. The available local reproducible dataset is the Phase 7 real/synthetic image corpus, not a licensed video deepfake corpus.
+**Decision:** Use fixed weights `0.50 spatialMean / 0.20 spatialMax / 0.20 temporalDrift / 0.10 faceConsistency`, minus a `0.03` false-positive guard band, clamped to `[0.02, 0.98]`. Build the local 200-video harness from Phase 7 images rendered into MP4/WebM/MOV clips, committing only `MANIFEST.csv` while keeping generated videos gitignored.
+**Alternatives considered:** Learn weights from the generated set; rejected because the static-derived videos would overfit to the still-image detector. Bundle the golden videos; rejected to avoid repository and APK bloat.
+**Reasoning:** The fixed weights reflect that Phase 7 spatial scoring is the only deepfake-specialized signal. The static-derived harness verifies decode, integration, and spatial-vs-full contribution, but does not replace a real FaceForensics++/DFDC/DF40 evaluation.
+**Reversal cost:** low - real video datasets can replace or augment the manifest later without changing the detector contract.
+**Approved by human:** pending checkpoint, 2026-04-26
+
+### D-053 - Phase 9 decode implementation replaced retriever fallback with MediaCodec
+**Phase:** 9
+**Date:** 2026-04-26
+**Context:** The initial implementation used Android `MediaMetadataRetriever` inside the `MediaCodecFrameExtractor` boundary and did not attempt a true MediaCodec path before the first checkpoint. Pixel 8 eval showed this was not acceptable: retriever extraction p95 was `3515 ms` and total p95 was `37093 ms` before inference-count reduction.
+**Decision:** Replace the primary extraction path with sequential `MediaExtractor` + `MediaCodec` decoding using output `Image` conversion to ARGB bitmaps. Keep `MediaMetadataRetriever` only as a fallback if MediaCodec returns no frames or throws.
+**Alternatives considered:** Accept the retriever-backed extractor for v1; rejected because it left too little latency margin and failed the Phase 9 p95 target. Implement a fully async MediaCodec + ImageReader pipeline; deferred because the synchronous MediaCodec path passes the Pixel 8 product-functional latency gate and keeps the implementation smaller for v1.
+**Reasoning:** The MediaCodec path lowered 200-video Pixel 8 extraction p95 to `1183 ms` and total detector p95 to `3105 ms`, while all interpreters reported `FallbackLevel.GPU`.
+**Reversal cost:** medium - a future async decoder can replace the synchronous decoder inside the same extractor boundary if longer videos become a primary use case.
+**Approved by human:** pending checkpoint, 2026-04-26
+
+### D-054 - Evidence required before substituting easier implementations
+**Phase:** 9
+**Date:** 2026-04-26
+**Context:** Phase 9 Step 1 explicitly required MediaExtractor + MediaCodec because video frame extraction was expected to be latency-sensitive. The initial implementation substituted MediaMetadataRetriever because it was faster to integrate, without first producing evidence that it met the phase budget. Pixel 8 eval proved the requirement was load-bearing: retriever extraction p95 was `3515 ms` and total p95 was `37093 ms`; replacing the primary path with MediaCodec lowered extraction p95 to `1158 ms` and total p95 to `3074 ms`.
+**Decision:** Future phases must not quietly substitute a simpler implementation for a phase requirement that is performance-, security-, privacy-, or correctness-bearing. If a substitute is proposed, document the attempted required implementation, exact failure or measured comparison, and acceptance-impact before relying on the substitute.
+**Alternatives considered:** Treat the retriever path as an acceptable v1 shortcut; rejected because the measured latency failed the Phase 9 acceptance gate.
+**Reasoning:** The project depends on honest constraint handling. Easier implementations are fine only when they still satisfy the acceptance contract or when the deviation is explicitly approved with evidence.
+**Reversal cost:** low - this is a process decision and can be refined, but should remain the default engineering bar.
+**Approved by human:** pending checkpoint, 2026-04-26
+
+### D-055 - Phase 9 v1.5 priority is real video deepfake evaluation
+**Phase:** 9
+**Date:** 2026-04-26
+**Context:** The Phase 9 200-video eval set is static-image-derived: real photos and AI images rendered into short videos. This verifies decode, model wiring, latency, and spatial-vs-full fusion behavior, but it does not validate true temporal video deepfake detection.
+**Decision:** Phase 9 v1.5 priority is to assemble a proper video deepfake eval set and rerun evaluation before claiming production-grade video deepfake detection. Required sources include FaceForensics++ face swaps, a DFDC subset, and hand-collected Sora/Runway/Veo-style full-frame generation and lip-sync samples.
+**Alternatives considered:** Treat the static-derived set as sufficient for video quality claims; rejected because spatial-only accuracy was `0.890` and full-fusion accuracy was only `0.905`, meaning the eval primarily measures Phase 7 image detection applied to sampled frames.
+**Reasoning:** The v1 detector is product-functional and locally verified, but true generator-family performance is unmeasured. The retraining/eval workstream needs real video families to tune temporal and face signals responsibly.
+**Reversal cost:** medium - assembling and licensing a real video set takes time, but the detector contract and harness are already in place.
+**Approved by human:** pending checkpoint, 2026-04-26
+
 ## Part 4 - Open questions
 
 Questions that remain unresolved at start of build. The agent should revisit these at the relevant phase and either resolve (add to decision log) or escalate to human.

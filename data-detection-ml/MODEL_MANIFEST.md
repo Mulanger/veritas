@@ -37,3 +37,32 @@
 | Asset | SHA-256 | Size bytes |
 | --- | --- | ---: |
 | `deepfake-audio-detector-hemgg-wi8.tflite` | `3046375262e631f25eb801c3480306235731f9bd95cedcf450663a31116f0b4c` | 96190928 |
+
+## Phase 9 Video Models
+
+### Temporal Detector
+
+- Source model: TensorFlow Hub `tensorflow/lite-model/movinet/a0/stream/kinetics-600/classification/tflite/int8/1`
+- License: Apache 2.0
+- Architecture: MoViNet-A0 streaming action-recognition model, used as a temporal drift heuristic rather than as a 600-class action labeler
+- Runtime asset: official TF Hub INT8 TFLite stream model
+- Input: sampled RGB video frames center-cropped/resized to `172 x 172`, float32 `[0, 1]`, one frame per streaming invocation
+- State handling: model state tensors are carried from each invocation output into the next invocation input
+- FlexOps check: asset bytes contain no `Flex`, `SELECT`, `Erf`, or `GELU` strings
+- Ed25519 public key (base64 DER): `MCowBQYDK2VwAyEATNyvAq6FDkWUF9zUaVObExc/7QBE7PLa6QNt/AsP/10=`
+
+| Asset | SHA-256 | Size bytes |
+| --- | --- | ---: |
+| `movinet-a0-stream-int8.tflite` | `6125b36e2485eeb5cc1fd6206cf5e5d70235593fbc84610d1dce97fe3aa9c2ac` | 3276048 |
+
+### Face Detector
+
+- Source model: MediaPipe `blaze_face_short_range`, float16 variant
+- License: Apache 2.0
+- Runtime asset: MediaPipe Face Detector short-range model
+- Use: face bounding boxes for optional ROI consistency scoring; no landmarks and no rPPG signal in v1
+- Ed25519 public key (base64 DER): `MCowBQYDK2VwAyEATNyvAq6FDkWUF9zUaVObExc/7QBE7PLa6QNt/AsP/10=`
+
+| Asset | SHA-256 | Size bytes |
+| --- | --- | ---: |
+| `blaze_face_short_range.tflite` | `b4578f35940bf5a1a655214a1cce5cab13eba73c1297cd78e1a04c2380b0152f` | 229746 |
