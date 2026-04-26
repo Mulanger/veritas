@@ -1,0 +1,5 @@
+# Veritas Phase 6 bundled C2PA issuer allowlist.
+# Phase 13 replaces this static asset with signed trust-list delivery.
+C2PA Test Signing Cert
+Truepic
+NIKON CORPORATION

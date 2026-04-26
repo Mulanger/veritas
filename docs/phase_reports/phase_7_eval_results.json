@@ -1,0 +1,45 @@
+{
+  "generatedAt": "2026-04-26T01:28:59.664634Z",
+  "model": "prithivMLmods/Deep-Fake-Detector-v2-Model",
+  "dataset": "manjilkarki/deepfake-and-real-images",
+  "decisionPolicy": {
+    "binarySyntheticThreshold": 0.5,
+    "pipelineSyntheticThreshold": 0.65,
+    "pipelineUncertainOnIntervalCrossing": true,
+    "pipelineUncertainReasons": ["TOO_SMALL", "HEAVY_COMPRESSION", "LOW_CONFIDENCE_RANGE"],
+    "cpuFallbackDiagnosticOnly": true
+  },
+  "acceptance": {
+    "accuracyGt65Pct": true,
+    "falsePositiveRateLte15Pct": true,
+    "uncertainRateGte5Pct": true,
+    "uncertainRateLte20Pct": true,
+    "p95LatencyLte2500Ms": true
+  },
+  "overall": {
+    "total": 500,
+    "realCount": 250,
+    "syntheticCount": 250,
+    "binaryAccuracy": 0.896000,
+    "falsePositiveRate": 0.064000,
+    "falseNegativeRate": 0.144000,
+    "pipelineAccuracy": 0.768000,
+    "uncertainRate": 0.190000,
+    "p50LatencyMs": 1020,
+    "p95LatencyMs": 1075,
+    "meanRealScore": 0.302647,
+    "meanSyntheticScore": 0.744359
+  },
+  "fallbackCounts": {
+    "CPU_XNNPACK": 500
+  },
+  "uncertainReasonCounts": {
+    "CPU_FALLBACK": 500,
+    "HEAVY_COMPRESSION": 20,
+    "LOW_CONFIDENCE_RANGE": 81
+  },
+  "perGenerator": {
+    "camera_photo": { "total": 250, "binaryAccuracy": 0.936000, "falsePositiveRate": 0.064000, "falseNegativeRate": 0.000000, "uncertainRate": 0.176000, "meanScore": 0.302647, "p95LatencyMs": 1098 },
+    "gan_or_diffusion": { "total": 250, "binaryAccuracy": 0.856000, "falsePositiveRate": 0.000000, "falseNegativeRate": 0.144000, "uncertainRate": 0.204000, "meanScore": 0.744359, "p95LatencyMs": 1063 }
+  }
+}

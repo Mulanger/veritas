@@ -8,8 +8,10 @@ plugins {
     alias(libs.plugins.detekt) apply false
     alias(libs.plugins.hilt) apply false
     alias(libs.plugins.ksp) apply false
+    alias(libs.plugins.kotlin.serialization) apply false
     alias(libs.plugins.kotlin.jvm) apply false
     alias(libs.plugins.ktlint) apply false
+    alias(libs.plugins.roborazzi) apply false
 }
 
 subprojects {
@@ -36,13 +38,20 @@ tasks.register("precommitCheck") {
         ":core-design:ktlintCheck",
         ":data-detection:ktlintCheck",
         ":domain-detection:ktlintCheck",
+        ":feature-history:ktlintCheck",
         ":feature-home:ktlintCheck",
+        ":feature-onboarding:ktlintCheck",
+        ":feature-settings:ktlintCheck",
         ":app:detekt",
         ":core-common:detekt",
         ":core-design:detekt",
+        ":core-design:verifyRoborazziDebug",
         ":data-detection:detekt",
         ":domain-detection:detekt",
+        ":feature-history:detekt",
         ":feature-home:detekt",
+        ":feature-onboarding:detekt",
+        ":feature-settings:detekt",
     )
 }
 
@@ -55,7 +64,9 @@ tasks.register("test") {
         ":core-design:testDebugUnitTest",
         ":data-detection:testDebugUnitTest",
         ":domain-detection:test",
+        ":feature-history:testDebugUnitTest",
         ":feature-home:testDebugUnitTest",
+        ":feature-onboarding:testDebugUnitTest",
+        ":feature-settings:testDebugUnitTest",
     )
 }
-

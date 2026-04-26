@@ -2,6 +2,7 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.compose.compiler)
     alias(libs.plugins.hilt)
+    alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.ksp)
 }
 
@@ -16,6 +17,9 @@ android {
         versionCode = 1
         versionName = "0.1.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        ndk {
+            abiFilters += listOf("arm64-v8a", "x86_64")
+        }
     }
 
     buildFeatures {
@@ -24,8 +28,19 @@ android {
     }
 
     buildTypes {
+        debug {
+            applicationIdSuffix = ".debug"
+            versionNameSuffix = "-debug"
+            buildConfigField("boolean", "ENABLE_DESIGN_GALLERY", "true")
+            buildConfigField("boolean", "ENABLE_HOME_DEV_MENU", "true")
+            buildConfigField("boolean", "ENABLE_HOME_MOCK_HISTORY", "false")
+        }
+
         release {
             isMinifyEnabled = false
+            buildConfigField("boolean", "ENABLE_DESIGN_GALLERY", "false")
+            buildConfigField("boolean", "ENABLE_HOME_DEV_MENU", "false")
+            buildConfigField("boolean", "ENABLE_HOME_MOCK_HISTORY", "false")
         }
     }
 
@@ -50,8 +65,13 @@ kotlin {
 dependencies {
     implementation(project(":core-design"))
     implementation(project(":data-detection"))
+    implementation(project(":data-detection-ml"))
     implementation(project(":domain-detection"))
+    implementation(project(":feature-detect-image"))
+    implementation(project(":feature-history"))
     implementation(project(":feature-home"))
+    implementation(project(":feature-onboarding"))
+    implementation(project(":feature-settings"))
 
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.activity.compose)
@@ -62,6 +82,7 @@ dependencies {
     implementation(libs.androidx.datastore.preferences)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.navigation.compose)
+    implementation(libs.kotlinx.serialization.json)
     implementation(libs.hilt.android)
     implementation(libs.kotlinx.coroutines.android)
     implementation(libs.timber)
@@ -72,6 +93,10 @@ dependencies {
 
     androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
+    androidTestImplementation(libs.androidx.navigation.testing)
+    androidTestImplementation(libs.androidx.test.core)
+    androidTestImplementation(libs.androidx.test.ext.junit)
+    androidTestImplementation(libs.androidx.work.testing)
 
     debugImplementation(libs.androidx.compose.ui.test.manifest)
     debugImplementation(libs.androidx.compose.ui.tooling)

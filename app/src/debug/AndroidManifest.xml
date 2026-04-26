@@ -1,0 +1,20 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <application>
+        <activity
+            android:name="com.veritas.app.debug.gallery.GalleryActivity"
+            android:exported="true"
+            android:label="Veritas Gallery" />
+        <activity
+            android:name="com.veritas.app.debug.testing.Phase2TestActivity"
+            android:exported="false"
+            android:label="Veritas Phase 2 Test" />
+        <activity
+            android:name="com.veritas.app.debug.testing.Phase3TestActivity"
+            android:exported="false"
+            android:label="Veritas Phase 3 Test" />
+        <activity
+            android:name="com.veritas.app.debug.testing.Phase4TestActivity"
+            android:exported="false"
+            android:label="Veritas Phase 4 Test" />
+    </application>
+</manifest>
