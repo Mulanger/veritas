@@ -24,6 +24,7 @@ include(
     ":data-detection",
     ":data-detection-ml",
     ":domain-detection",
+    ":feature-detect-audio",
     ":feature-detect-image",
     ":feature-home",
     ":feature-history",

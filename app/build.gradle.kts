@@ -67,6 +67,7 @@ dependencies {
     implementation(project(":data-detection"))
     implementation(project(":data-detection-ml"))
     implementation(project(":domain-detection"))
+    implementation(project(":feature-detect-audio"))
     implementation(project(":feature-detect-image"))
     implementation(project(":feature-history"))
     implementation(project(":feature-home"))
