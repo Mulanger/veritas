@@ -474,6 +474,16 @@ The agent adds entries here whenever it makes a decision during build that:
 **Reversal cost:** medium - conversion can resume from `tools/model-conversion/convert_audio_detector.py` on a Linux conversion host or with a different approved Apache 2.0 model if the human changes the Phase 8 model decision.
 **Approved by human:** pending checkpoint, 2026-04-26
 
+### D-044 - Phase 8 calibrated audio quantization retry and wav2vec2-base fallback
+**Phase:** 8
+**Date:** 2026-04-26
+**Context:** Human review rejected switching to Linux/WSL and requested a Windows-first retry: full INT8 calibration with 200+ real/synthetic audio clips, then a smaller Apache 2.0 wav2vec2-base fallback if the original model stayed above the 120 MB cap.
+**Decision:** Do not proceed to Step 3 signing yet. The real calibration retry used 220 clips (`10` committed fixtures, `120` real speech clips including `30` Common Voice-derived samples, and `90` Windows SAPI TTS synthetic clips). `as1605/Deepfake-audio-detection-V2` full-int8 output stayed oversized at `365701120` bytes and was not invokable because onnx2tf lowered one wav2vec2 positional convolution to unresolved `ONNX_CONV`. Fallback candidate `Hemgg/Deepfake-audio-detection` was selected for evaluation because its model card metadata is `apache-2.0`, base model is `facebook/wav2vec2-base`, and reported eval accuracy is `0.9545`; however, no Hemgg TFLite artifact passed both size and parity.
+**Alternatives considered:** (a) Ship Hemgg dynamic-range `-rtpo erf` TFLite - rejected despite `96194440` bytes because direct softmax MAE vs ONNX is `75.44%`, and even after correcting the observed two-logit output reversal MAE is `17.23%`, above the 5% gate. It also has float32 input/output and `1163` float32 tensors, so it is not full INT8 throughout the graph. (b) Ship Hemgg integer-quant `-rtpo erf` TFLite - rejected because it invokes with `DIV` failure (`data[i] != 0`) and is not runtime-valid. (c) Ship Hemgg dynamic-range without `-rtpo erf` or with `-rtpo gelu` - rejected because the model requires unsupported `FlexErf` without Select TF Ops. (d) Continue long full-INT8 `-rtpo erf` conversion indefinitely - rejected after it exceeded the human-requested time box and was still running after an additional 20-minute wait.
+**Reasoning:** The smaller-model route improves file size, but the parity/runtime gates are non-negotiable. A sub-120 MB artifact with 17% parity error or unsupported Flex ops would silently corrupt detector scores and make downstream calibration meaningless.
+**Reversal cost:** medium - the calibration/audit scripts and Hemgg ONNX export remain in `tools/model-conversion/work/`; conversion can resume by trying a different Apache 2.0 non-wav2vec2 architecture, a more exact GELU lowering, or a TensorFlow conversion path that avoids Flex ops while preserving parity.
+**Approved by human:** pending checkpoint, 2026-04-26
+
 ## Part 4 - Open questions
 
 Questions that remain unresolved at start of build. The agent should revisit these at the relevant phase and either resolve (add to decision log) or escalate to human.

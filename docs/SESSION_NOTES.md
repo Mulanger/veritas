@@ -9,8 +9,8 @@
 ## Current Status
 - Phase 8 is in progress on branch `phase/8-audio-detector`.
 - Phase 8 Step 1 is complete and committed as `6dd2425`.
-- Phase 8 is currently blocked in Step 2 by model conversion size / alternate-converter availability.
-- Resume point: resolve `as1605/Deepfake-audio-detection-V2` conversion to a signed TFLite artifact <= 120 MB, or get human approval to change the Phase 8 model decision.
+- Phase 8 is currently blocked in Step 2 by audio TFLite conversion parity/runtime validity.
+- Resume point: choose a Phase 8 audio model/conversion path that produces a runtime-valid TFLite artifact <= 120 MB with MAE <= 5% vs ONNX, then continue to Step 3 signing.
 - Phase 7 image detector integration is implemented and verified on top of verified Phase 6.
 - `data-detection-ml` and `feature-detect-image` are wired into the app.
 - The signed Deep-Fake-Detector-v2 TFLite asset loads and runs on `veritas_play_avd`.
@@ -31,6 +31,11 @@
   - 10 generated androidTest audio fixtures covering MP3, AAC, M4A, WAV, OGG, OPUS, varied sample rates, and mono/stereo layouts.
 - Added `tools/model-conversion/convert_audio_detector.py`, pinned to current HF revision `3aeb18add053e945dc69025147afab0d70fa0188` and `onnx/model.onnx`.
 - Logged D-043 for the ONNX path difference and conversion blocker.
+- Added `tools/model-conversion/build_audio_calibration_set.py` and `tools/model-conversion/audit_audio_tflite.py` for repeatable Phase 8 calibration/provenance/parity checks.
+- Built a 220-row real calibration tensor at `tools/model-conversion/work/audio_real_calibration_0_1.npy` with 10 fixtures, 120 real speech clips, and 90 Windows SAPI TTS synthetic clips.
+- Retried `as1605/Deepfake-audio-detection-V2` full integer quantization with real calibration and int8 input/output; output stayed oversized (`365701120` bytes) and was not invokable due unresolved `ONNX_CONV`.
+- Evaluated Apache 2.0 wav2vec2-base fallback `Hemgg/Deepfake-audio-detection`; dynamic-range `-rtpo erf` TFLite reached `96194440` bytes but failed parity (`17.23%` MAE even after correcting observed output-order reversal), so it was not accepted for signing.
+- Logged D-044 for the calibrated quantization retry and fallback-model result.
 - Added `data-detection-ml` for Play-services LiteRT runtime initialization, model verification, delegate selection, runners, preprocessing, and calibration.
 - Added `feature-detect-image` with Deep-Fake-Detector-v2 model wrapper, EXIF/ELA/JPEG forensic signals, and hand-tuned fusion.
 - Extended `DetectorResult` with confidence interval, subscores, uncertainty reasons, and fallback level.
@@ -51,6 +56,11 @@
 - `./gradlew :feature-detect-audio:compileDebugAndroidTestKotlin`
 - `./gradlew :feature-detect-audio:connectedDebugAndroidTest "-Pandroid.testInstrumentationRunnerArguments.class=com.veritas.feature.detect.audio.decode.AudioDecoderInstrumentedTest"`
 - `py -3 tools/model-conversion/convert_audio_detector.py --overwrite` failed as expected because the smallest TFLite output was `189459212` bytes, above the 120 MB Phase 8 hard cap.
+- `py -3 tools/model-conversion/build_audio_calibration_set.py --target-count 220 --common-voice-count 30 --real-count 120 --synthetic-count 90`
+- `py -3 -m onnx2tf -i tools/model-conversion/work/audio-hf/onnx/model.onnx -o tools/model-conversion/work/audio-tflite-real-int8 -b 1 -ois input_values:1,80000 -oiqt -cind input_values tools/model-conversion/work/audio_real_calibration_0_1.npy "[0.5]" "[0.5]" -iqd int8 -oqd int8`
+- `optimum-cli export onnx -m Hemgg/Deepfake-audio-detection --task audio-classification --opset 14 --audio_sequence_length 80000 --batch_size 1 --no-dynamic-axes --monolith tools/model-conversion/work/audio-base-hemgg-onnx`
+- `py -3 -m onnx2tf -i tools/model-conversion/work/audio-base-hemgg-onnx/model.onnx -o tools/model-conversion/work/audio-base-hemgg-tflite-tf-int8-rtpo-erf -tb tf_converter -b 1 -ois input_values:1,80000 -rtpo erf -oiqt -cind input_values tools/model-conversion/work/audio_real_calibration_0_1.npy "[0.5]" "[0.5]" -iqd int8 -oqd int8`
+- `py -3 tools/model-conversion/audit_audio_tflite.py --onnx tools/model-conversion/work/audio-base-hemgg-onnx/model.onnx --tflite tools/model-conversion/work/audio-base-hemgg-tflite-tf-int8-rtpo-erf/model_dynamic_range_quant.tflite --samples 20 --report tools/model-conversion/work/audio_base_hemgg_dynamic_rtpo_erf_audit.json`
 - `./gradlew :feature-detect-image:compileDebugKotlin :feature-detect-image:compileDebugAndroidTestKotlin`
 - `./gradlew :feature-detect-image:connectedDebugAndroidTest "-Pandroid.testInstrumentationRunnerArguments.class=com.veritas.feature.detect.image.Phase7GoldenSetEvalTest" --info`
 - `./gradlew :app:connectedDebugAndroidTest "-Pandroid.injected.device.serial=45131FDJH0015H" "-Pandroid.testInstrumentationRunnerArguments.class=com.veritas.app.Phase7ImageDetectorInstrumentedTest" --info`
@@ -58,8 +68,9 @@
 
 ## Open Questions
 - Phase 8 needs human direction before proceeding past Step 2:
-  - Use a Linux conversion host to retry LiteRT Torch / ai-edge-torch, since this Windows Python 3.12 environment cannot install `litert-converter==0.1.*`.
-  - Or approve a smaller Apache 2.0 audio model, because onnx2tf generated artifacts are all above the 120 MB hard cap.
+  - Hemgg wav2vec2-base dynamic-range TFLite is small enough but parity is too high (`17.23%` MAE after output-order correction).
+  - Full INT8 wav2vec2 conversion on Windows either stays oversized, requires unsupported/custom ops, or fails runtime invocation.
+  - Next practical path is likely a smaller non-wav2vec2 Apache 2.0 audio detector or a known-good conversion recipe that preserves GELU/Erf parity without Select TF Ops.
 
 ## Phase 8 Follow-Up
 - Phase 7 golden-set eval numbers were captured on emulator `CPU_XNNPACK` because the Google Play emulator image lacks the GPU delegate. The Pixel 8 smoke test verified `FallbackLevel.GPU`, but there is not yet a full GPU-baseline golden-set eval. During Phase 8's first instrumented test session, rerun the Phase 7 golden-set eval on the Pixel 8 to capture honest GPU baseline latency numbers.
