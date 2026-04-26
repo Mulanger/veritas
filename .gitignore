@@ -9,3 +9,10 @@ local.properties
 /files/
 
 docs/SESSION_NOTES.md
+
+/tools/model-conversion/private/
+/tools/model-conversion/work/
+/tools/eval-datasets/work/
+/feature-detect-image/src/androidTest/assets/golden-image/real/
+/feature-detect-image/src/androidTest/assets/golden-image/synthetic/
+/phase_7_eval_results.json

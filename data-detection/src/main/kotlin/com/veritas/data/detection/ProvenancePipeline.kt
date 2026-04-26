@@ -15,6 +15,7 @@
 package com.veritas.data.detection
 
 import android.content.Context
+import com.veritas.domain.detection.BasicDetectorResult
 import com.veritas.domain.detection.BBox
 import com.veritas.domain.detection.C2PAOutcome
 import com.veritas.domain.detection.C2PAResult
@@ -31,8 +32,11 @@ import com.veritas.domain.detection.ScanStage
 import com.veritas.domain.detection.ScannedMedia
 import com.veritas.domain.detection.Severity
 import com.veritas.domain.detection.StageTerminalState
+import com.veritas.domain.detection.UncertainReason
 import com.veritas.domain.detection.Verdict
 import com.veritas.domain.detection.VerdictOutcome
+import com.veritas.feature.detect.image.domain.ImageDetectionInput
+import com.veritas.feature.detect.image.domain.ImageDetector
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.delay
@@ -45,6 +49,7 @@ import java.util.UUID
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicReference
 import javax.inject.Inject
+import javax.inject.Provider
 import javax.inject.Singleton
 import kotlin.math.max
 
@@ -54,7 +59,21 @@ class ProvenancePipeline @Inject constructor(
     private val c2paDetector: C2PADetector,
     private val synthIDDetector: SynthIDDetector,
     private val fakeDetectionPipeline: FakeDetectionPipeline,
+    private val imageDetectorProvider: Provider<ImageDetector>,
 ) : DetectionPipeline {
+    constructor(
+        appContext: Context,
+        c2paDetector: C2PADetector,
+        synthIDDetector: SynthIDDetector,
+        fakeDetectionPipeline: FakeDetectionPipeline,
+    ) : this(
+        appContext = appContext,
+        c2paDetector = c2paDetector,
+        synthIDDetector = synthIDDetector,
+        fakeDetectionPipeline = fakeDetectionPipeline,
+        imageDetectorProvider = Provider { error("ImageDetector was not provided for this test pipeline") },
+    )
+
     private val activeScan = AtomicReference<ActiveScan?>()
     private val clock = Clock.System
 
@@ -72,7 +91,7 @@ class ProvenancePipeline @Inject constructor(
             if (session.cancelRequested.get()) { emit(ScanStage.Cancelled); return@flow }
             val synthIDResult = computeSynthIDResult(c2paResult, media, mediaFile)
             if (session.cancelRequested.get()) { emit(ScanStage.Cancelled); return@flow }
-            val verdict = buildVerdict(media, c2paResult, synthIDResult, startTime)
+            val verdict = buildVerdict(media, mediaFile, c2paResult, synthIDResult, startTime)
 
             if (verdict == null) {
                 fakeDetectionPipeline.scan(media).collect { stage ->
@@ -141,8 +160,9 @@ class ProvenancePipeline @Inject constructor(
         }
     }
 
-    private fun buildVerdict(
+    private suspend fun buildVerdict(
         media: ScannedMedia,
+        mediaFile: File?,
         c2paResult: C2PAResult,
         synthIDResult: SynthIDResult,
         startTime: kotlinx.datetime.Instant,
@@ -151,7 +171,7 @@ class ProvenancePipeline @Inject constructor(
             is C2PAResult.Present -> buildVerifiedAuthenticVerdict(media, result, startTime)
             is C2PAResult.Invalid -> buildInvalidC2PAVerdict(media, result)
             is C2PAResult.Revoked -> buildRevokedC2PAVerdict(media, result)
-            is C2PAResult.NotPresent -> buildSynthIDVerdictOrDefault(media, synthIDResult, startTime)
+            is C2PAResult.NotPresent -> buildSynthIDVerdictOrDefault(media, mediaFile, synthIDResult, startTime)
         }
     }
 
@@ -221,8 +241,9 @@ class ProvenancePipeline @Inject constructor(
         )
     }
 
-    private fun buildSynthIDVerdictOrDefault(
+    private suspend fun buildSynthIDVerdictOrDefault(
         media: ScannedMedia,
+        mediaFile: File?,
         synthIDResult: SynthIDResult,
         startTime: kotlinx.datetime.Instant,
     ): Verdict? {
@@ -244,9 +265,75 @@ class ProvenancePipeline @Inject constructor(
                 inferenceHardware = InferenceHardware.CPU_XNNPACK,
                 elapsedMs = 0L,
             )
-            SynthIDResult.NotPresent -> null
+            SynthIDResult.NotPresent -> buildImageDetectorVerdictOrDefault(media, mediaFile, startTime)
         }
     }
+
+    private suspend fun buildImageDetectorVerdictOrDefault(
+        media: ScannedMedia,
+        mediaFile: File?,
+        startTime: kotlinx.datetime.Instant,
+    ): Verdict? {
+        if (media.mediaType != MediaType.IMAGE || mediaFile == null || !mediaFile.exists()) {
+            return null
+        }
+        val detectorResult = imageDetectorProvider.get().detect(ImageDetectionInput(media = media, file = mediaFile))
+        val interval = detectorResult.confidenceInterval
+        val outcome =
+            when {
+                detectorResult.blocksImageVerdict() -> VerdictOutcome.UNCERTAIN
+                detectorResult.syntheticScore >= SYNTHETIC_THRESHOLD -> VerdictOutcome.LIKELY_SYNTHETIC
+                else -> VerdictOutcome.LIKELY_AUTHENTIC
+            }
+        return Verdict(
+            id = UUID.randomUUID().toString(),
+            mediaId = media.id,
+            mediaType = media.mediaType,
+            outcome = outcome,
+            confidence = ConfidenceRange(
+                lowPct = (interval.low * PERCENT).toInt().coerceIn(2, confidenceCapFor(outcome)),
+                highPct = (interval.high * PERCENT).toInt().coerceIn(2, confidenceCapFor(outcome)),
+            ),
+            summary = imageSummary(outcome),
+            reasons = detectorResult.reasons,
+            modelVersions = buildModelVersions(media.mediaType) + ("image" to detectorResult.detectorId),
+            scannedAt = clock.now(),
+            inferenceHardware =
+                when (detectorResult.fallbackUsed) {
+                    com.veritas.domain.detection.FallbackLevel.GPU -> InferenceHardware.GPU
+                    com.veritas.domain.detection.FallbackLevel.CPU_XNNPACK -> InferenceHardware.CPU_XNNPACK
+                    com.veritas.domain.detection.FallbackLevel.NONE -> InferenceHardware.CPU_XNNPACK
+                },
+            elapsedMs = detectorResult.elapsedMs,
+        )
+    }
+
+    private fun BasicDetectorResult.blocksImageVerdict(): Boolean {
+        val interval = confidenceInterval
+        return uncertainReasons.any { it in TERMINAL_IMAGE_UNCERTAIN_REASONS } ||
+            (interval.low < 0.5f && interval.high > 0.5f)
+    }
+
+    private fun imageSummary(outcome: VerdictOutcome): String =
+        when (outcome) {
+            VerdictOutcome.LIKELY_SYNTHETIC ->
+                "The image detector found generative image patterns and supporting forensic signals."
+            VerdictOutcome.LIKELY_AUTHENTIC ->
+                "The image detector did not find strong signs of AI generation."
+            VerdictOutcome.UNCERTAIN ->
+                "The image checks were not decisive enough for a confident verdict."
+            VerdictOutcome.VERIFIED_AUTHENTIC ->
+                "Signed Content Credentials verify this image's provenance."
+        }
+
+    private fun confidenceCapFor(outcome: VerdictOutcome): Int =
+        when (outcome) {
+            VerdictOutcome.LIKELY_SYNTHETIC -> 96
+            VerdictOutcome.LIKELY_AUTHENTIC,
+            VerdictOutcome.VERIFIED_AUTHENTIC,
+            -> 94
+            VerdictOutcome.UNCERTAIN -> 65
+        }
 
     private fun buildModelVersions(mediaType: MediaType): Map<String, String> = buildMap {
         put("pipeline", "phase6-provenance")
@@ -266,4 +353,14 @@ class ProvenancePipeline @Inject constructor(
         val mediaId: String,
         val cancelRequested: AtomicBoolean = AtomicBoolean(false),
     )
+
+    companion object {
+        private const val SYNTHETIC_THRESHOLD = 0.65f
+        private const val PERCENT = 100
+        private val TERMINAL_IMAGE_UNCERTAIN_REASONS = setOf(
+            UncertainReason.TOO_SMALL,
+            UncertainReason.HEAVY_COMPRESSION,
+            UncertainReason.LOW_CONFIDENCE_RANGE,
+        )
+    }
 }

@@ -414,6 +414,56 @@ The agent adds entries here whenever it makes a decision during build that:
 **Reversal cost:** medium — the policy is isolated to `data-detection`, but changing trust semantics affects every verified-authentic verdict.
 **Approved by human:** pending checkpoint, 2026-04-25
 
+### D-038 - Phase 7 image detector ships dynamic-range TFLite only
+**Phase:** 7
+**Date:** 2026-04-25
+**Context:** Phase 7 selected `prithivMLmods/Deep-Fake-Detector-v2-Model`, converted from the ONNX community export. The native flatbuffer-direct conversion path produced models over 300 MB. The TensorFlow-converter path produced an 87.8 MB dynamic-range quantized TFLite model, but only after pseudo-lowering `Erf`/`GeLU`; without that lowering the artifact required `FlexErf`, which is incompatible with the Play-services LiteRT runtime policy. The generated FP16 fallback was 171.8 MB.
+**Decision:** Ship the pseudo-lowered dynamic-range quantized TFLite artifact as `deepfake-detector-v2-int8.tflite`, verify it with Ed25519 at load time, and omit the FP16 fallback because it exceeds the 100 MB Phase 7 hard cap.
+**Alternatives considered:** (a) Ship Flex/select TensorFlow ops - rejected because the project uses LiteRT via Google Play Services and the Play-services runtime does not support custom/select op escape hatches. (b) Ship the native flatbuffer-direct model - rejected because generated artifacts exceeded the hard cap. (c) Commit the FP16 fallback - rejected because it was larger than 100 MB.
+**Reasoning:** The dynamic-range artifact stays under the hard cap, allocates without Flex, preserves ONNX parity with MAE `0.002471`, and keeps Phase 7 on the no-NNAPI Play-services LiteRT path.
+**Reversal cost:** medium - if a smaller fully-integer export becomes available, replace the asset/checksum/signature and switch the registry entry without changing the image detector contract.
+**Approved by human:** pending checkpoint, 2026-04-25
+
+### D-039 - Bouncy Castle verifies Ed25519 model signatures on Android
+**Phase:** 7
+**Date:** 2026-04-25
+**Context:** Host JVM tests passed with JDK Ed25519 APIs, but Android API 34 failed on-device with `NoSuchAlgorithmException: Ed25519 KeyFactory not available`.
+**Decision:** Use Bouncy Castle's lightweight Ed25519 verifier for model signature verification while keeping the same Ed25519 keypair, public key, `.sig` files, and manifest format.
+**Alternatives considered:** (a) Switch to ECDSA P-256 - rejected because Phase 7 and Phase 13 model delivery are specified around Ed25519. (b) Skip signature verification on older Android versions - rejected because it would defeat the signed-model-loading path. (c) Rely on platform crypto - rejected because the instrumented test proved it is unavailable on API 34.
+**Reasoning:** Bouncy Castle provides deterministic Ed25519 verification on Android without changing the asset format or model-delivery design. This keeps the Phase 13 OTA model update path aligned with the Phase 7 security model.
+**Reversal cost:** low - remove the dependency if future Android minSdk/platform crypto support makes Ed25519 universally available.
+**Approved by human:** pending checkpoint, 2026-04-25
+
+### D-040 - Phase 7 model score uses verified ONNX label order
+**Phase:** 7
+**Date:** 2026-04-25
+**Context:** The initial Android wrapper and conversion script interpreted the two-output ONNX/TFLite logits as `logit[1] - logit[0]`. The 500-image golden-set eval completed after bounded decode was added, but produced inverted scores: real images averaged high synthetic scores and synthetic images averaged low synthetic scores.
+**Decision:** Interpret the export as `logit[0] - logit[1]` for synthetic probability, update the Android wrapper and conversion script to match, and record the label order in the model manifest.
+**Alternatives considered:** (a) Calibrate around the inverted score - rejected because it would leave the model contract misleading. (b) Adjust only fusion weights - rejected because the model subscore itself was inverted. (c) Leave the eval failed - rejected because the golden-set result identified a concrete label-order bug.
+**Reasoning:** After the label-order fix, the same 500-image eval produced `0.896` accuracy, `0.064` false-positive rate, and `1093 ms` p95 latency, meeting Phase 7 detector acceptance.
+**Reversal cost:** low - if a future export changes output labels, update the wrapper/conversion helper and rerun the golden-set eval.
+**Approved by human:** pending checkpoint, 2026-04-25
+
+### D-041 - Phase 13 owns ML model app-size mitigation
+**Phase:** 7
+**Date:** 2026-04-26
+**Context:** Phase 7 bundles an 87.8 MB signed image detector model. The resulting `app-debug.apk` is `192153033` bytes (`183.25 MB`), which exceeds the 150 MB Play Store threshold. Phase 8 audio and Phase 9 video models will increase the size further if models continue to be bundled directly in the APK.
+**Decision:** Do not solve app-size delivery in Phase 7. Defer the mitigation to Phase 13's signed model delivery infrastructure using Play Asset Delivery for ML models. Phase 13 must reduce the installed APK below `100 MB` while preserving signed model verification.
+**Alternatives considered:** (a) Keep bundling all ML models in the APK - rejected because it will exceed store and user-install constraints. (b) Shrink or replace the Phase 7 model now - rejected because the current model passes Phase 7 accuracy/FPR/latency acceptance and delivery mechanics are explicitly Phase 13 scope. (c) Defer without an owner - rejected because audio/video models will compound the problem.
+**Reasoning:** Play Asset Delivery is the correct release mechanism for large signed ML assets and aligns with the existing Phase 13 model-delivery scope. Recording this now keeps Phase 7 honest without derailing the detector integration.
+**Reversal cost:** medium - changing delivery later affects Gradle packaging, model loading paths, and signature verification file locations, but leaves the detector contract intact.
+**Approved by human:** pending checkpoint, 2026-04-26
+
+### D-042 - Play Services LiteRT GPU uses delegate factory
+**Phase:** 7
+**Date:** 2026-04-26
+**Context:** Physical-device verification on a Google Pixel 8 initially reported `FallbackLevel.CPU_XNNPACK` even though Play Services had installed `tflite_gpu_dynamite`. Logcat showed `IllegalArgumentException: Instantiated delegates ... are not allowed when using TF Lite from Google Play Services`.
+**Decision:** Configure GPU acceleration through `InterpreterApi.Options.addDelegateFactory(GpuDelegateFactory())` instead of instantiating `com.google.android.gms.tflite.gpu.GpuDelegate` directly.
+**Alternatives considered:** (a) Treat Pixel 8 GPU fallback as acceptable - rejected because the device and Play Services module are capable. (b) Switch away from Play Services LiteRT to bundled native TensorFlow Lite - rejected because Phase 7 intentionally uses Play Services LiteRT. (c) Disable GPU support - rejected because Phase 7 requires physical GPU delegate verification.
+**Reasoning:** The Play Services LiteRT API requires delegate factories so the runtime can create delegates inside the Google Play Services module. After the change, the Pixel 8 smoke test reported `fallback=GPU` and logcat showed `TfLiteGpuDelegateV2` being applied.
+**Reversal cost:** low - the change is isolated to `DelegateChain`.
+**Approved by human:** pending checkpoint, 2026-04-26
+
 ## Part 4 - Open questions
 
 Questions that remain unresolved at start of build. The agent should revisit these at the relevant phase and either resolve (add to decision log) or escalate to human.
