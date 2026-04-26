@@ -484,6 +484,46 @@ The agent adds entries here whenever it makes a decision during build that:
 **Reversal cost:** medium - the calibration/audit scripts and Hemgg ONNX export remain in `tools/model-conversion/work/`; conversion can resume by trying a different Apache 2.0 non-wav2vec2 architecture, a more exact GELU lowering, or a TensorFlow conversion path that avoids Flex ops while preserving parity.
 **Approved by human:** pending checkpoint, 2026-04-26
 
+### D-045 - Phase 8 audio model ships Hemgg wav2vec2-base weight-only INT8
+**Phase:** 8
+**Date:** 2026-04-26
+**Context:** Human review requested fixing Hemgg conversion before trying another model. The original `as1605/Deepfake-audio-detection-V2` wav2vec2-large path exceeded the Phase 8 size cap and produced an unresolved `ONNX_CONV` runtime blocker. Hemgg's float32 export preserved ONNX parity, and ai-edge-quantizer weight-only INT8 produced a sub-120 MB artifact with softmax MAE `0.02847679`.
+**Decision:** Ship `Hemgg/Deepfake-audio-detection` as `audio_deepfake_detector_hemgg_wi8`, version `0.1.0-phase8`, with output label order `logit[0] = AIVoice`, `logit[1] = HumanVoice`.
+**Alternatives considered:** (a) Ship as1605 - rejected because the smallest runtime-valid conversion stayed over the hard cap or failed invocation. (b) Ship Hemgg dynamic/full-integer onnx2tf outputs - rejected because parity was 17% or worse, or the graph failed at runtime. (c) Switch to another wav2vec2-base fine-tune - deferred because Hemgg became runtime-valid after fixing the external-buffer issue.
+**Reasoning:** The selected artifact is `96190928` bytes, under the `120 MB` cap, signature-verified on Android, and passed the 500-clip product-functional eval gate.
+**Reversal cost:** medium - replacing the model requires rerunning conversion, signing, parity audit, and the audio golden-set eval, but the Kotlin detector contract can stay unchanged for wav2vec2-base replacements.
+**Approved by human:** pending checkpoint, 2026-04-26
+
+### D-046 - Force internal TFLite buffers for ai-edge audio quantization
+**Phase:** 8
+**Date:** 2026-04-26
+**Context:** ai-edge-quantizer's default weight-only output used external buffer serialization. Desktop TensorFlow could invoke it, but Play Services LiteRT on Android failed with `Input tensor 255 lacks data`. Analyzer output showed `Total data buffer size: 0 bytes`.
+**Decision:** Monkeypatch ai-edge-quantizer's packed-buffer path during conversion so the final `.tflite` stores weights in internal flatbuffer buffers. The final analyzer reports `94,946,332` bytes of model data buffers.
+**Alternatives considered:** (a) Keep the external-buffer artifact - rejected because Android invocation failed. (b) Switch back to onnx2tf dynamic quantization - rejected because parity was above the gate. (c) Move conversion to WSL/Linux - rejected per human instruction because the bug was serialization, not OS capability.
+**Reasoning:** The internal-buffer artifact keeps the same weight-only quantization profile and parity while making the asset compatible with the Play Services LiteRT runtime used by the app.
+**Reversal cost:** low - remove the monkeypatch if ai-edge-quantizer exposes an official internal-buffer flag or Play Services LiteRT supports the external-buffer format.
+**Approved by human:** pending checkpoint, 2026-04-26
+
+### D-047 - Phase 8 wav2vec2 audio runs CPU XNNPACK only
+**Phase:** 8
+**Date:** 2026-04-26
+**Context:** The Phase 8 plan allowed per-model CPU fallback for wav2vec2 if transformer audio was GPU-bottlenecked or delegate-problematic. The model is weight-only INT8 with float32 activations and consistently passed Android invocation on the CPU path.
+**Decision:** Load the Phase 8 audio model through `RunnerFactory.createCpu()` and report `FallbackLevel.CPU_XNNPACK` for the audio detector.
+**Alternatives considered:** (a) Try to force the Play Services GPU delegate - deferred because Phase 8's acceptance run already meets p95 latency on the CPU path and GPU transformer coverage is less predictable. (b) Use NNAPI - rejected by D-016.
+**Reasoning:** CPU XNNPACK keeps wav2vec2 invocation stable and passed the 500-clip p95 latency gate at `2877 ms`, below the `3500 ms` Phase 8 limit.
+**Reversal cost:** low - GPU can be re-tested behind a per-device model-runner policy later without changing detector outputs.
+**Approved by human:** pending checkpoint, 2026-04-26
+
+### D-048 - Phase 8 hand-tuned audio fusion and golden-set sources
+**Phase:** 8
+**Date:** 2026-04-26
+**Context:** Phase 8 is product-functional, not production-calibrated. The plan specified a dominant wav2vec2 score with a weak codec prior and a 500-clip local golden set.
+**Decision:** Use fixed fusion weights `0.92 wav2vec2_model / 0.08 codec_signal`. Build the local 500-clip eval set from the calibrated conversion sources: Common Voice English and MINDS14 for real speech, local Windows SAPI TTS for synthetic speech, expanded through WAV/MP3/M4A/Opus codec variants. Commit only `MANIFEST.csv`; keep the audio files gitignored.
+**Alternatives considered:** (a) Tune fusion weights on the eval set - rejected by the Phase 8 plan; learned calibration belongs to the retraining workstream. (b) Bundle the golden audio files - rejected to avoid repository and APK bloat. (c) Depend on Kaggle credentials or manual ASVspoof download for the gate - rejected because the local calibrated sources were already available and reproducible in this workspace.
+**Reasoning:** The fixed fusion keeps model behavior transparent. The generated codec variants exercise Android decode and codec robustness while preserving a reproducible manifest. The resulting eval passed with `0.88` overall accuracy, `0.088` FPR, and `2877 ms` p95 latency.
+**Reversal cost:** low - future eval sets can add ASVspoof/WaveFake/current TTS samples by extending the builder and rerunning the harness.
+**Approved by human:** pending checkpoint, 2026-04-26
+
 ## Part 4 - Open questions
 
 Questions that remain unresolved at start of build. The agent should revisit these at the relevant phase and either resolve (add to decision log) or escalate to human.

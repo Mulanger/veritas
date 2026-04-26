@@ -143,10 +143,16 @@ enum class ReasonCode {
   RPPG_ABSENT,                    // negative signal
   RPPG_IMPLAUSIBLE,               // negative signal
   RPPG_NATURAL,                   // positive signal
-  // Audio — negative
+  // Audio — legacy/general negative
   AUDIO_SPECTRAL_NEURAL,
   AUDIO_PROSODY_UNNATURAL,
   AUDIO_CODEC_MISMATCH,
+  // Audio — Phase 8 shipped detector
+  AUD_SYNTHETIC_VOICE_HIGH,
+  AUD_CODEC_MISMATCH,
+  AUD_TOO_SHORT,
+  AUD_LOW_QUALITY,
+  AUD_NATURAL_PROSODY,
   // Forensics
   METADATA_IMPLAUSIBLE,
   ELA_INCONSISTENT,
@@ -177,6 +183,23 @@ data class BBox(val x: Float, val y: Float, val w: Float, val h: Float) {
 ```
 
 **Reason ordering:** The `reasons` list on `Verdict` is ordered by `weight` descending. Top 3 shown as evidence chips on the verdict card. All shown in forensic view.
+
+**Phase 8 audio reason-code content:**
+
+| Code | Trigger | User-facing meaning |
+|---|---|---|
+| `AUD_SYNTHETIC_VOICE_HIGH` | `wav2vec2_model > 0.70` | AI voice detection model flagged synthetic patterns |
+| `AUD_CODEC_MISMATCH` | `codec < 0.40` | Audio compression does not match its stated source type |
+| `AUD_TOO_SHORT` | decoded duration `< 1000 ms` | Audio too short for reliable analysis |
+| `AUD_LOW_QUALITY` | decoded sample rate `< 8000 Hz` | Sample rate too low for reliable analysis |
+| `AUD_NATURAL_PROSODY` | `wav2vec2_model < 0.30` | No artifacts of synthetic speech detected |
+
+**Phase 8 audio detector sub-scores:** audio `DetectorResult.subScores` uses exactly:
+
+| Key | Meaning |
+|---|---|
+| `wav2vec2_model` | Hemgg wav2vec2-base softmax probability for `AIVoice` |
+| `codec` | codec plausibility score, where `1.0` is plausible and `0.0` is suspicious |
 
 ### 1.5 `ScanStage`
 

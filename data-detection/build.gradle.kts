@@ -27,6 +27,7 @@ kotlin {
 
 dependencies {
     implementation(project(":domain-detection"))
+    implementation(project(":feature-detect-audio"))
     implementation(project(":feature-detect-image"))
 
     implementation("com.github.contentauth:c2pa-android:0.0.9")

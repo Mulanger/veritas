@@ -1,0 +1,43 @@
+{
+  "total": 500,
+  "overall_accuracy": 0.88,
+  "false_positive_rate": 0.088,
+  "false_negative_rate": 0.056,
+  "uncertain_rate": 0.048,
+  "p50_latency_ms": 2241,
+  "p95_latency_ms": 2877,
+  "per_tts_system": {
+    "human_speaker": {
+      "count": 250,
+      "accuracy": 0.844,
+      "uncertain_rate": 0.068
+    },
+    "sapi": {
+      "count": 250,
+      "accuracy": 0.916,
+      "uncertain_rate": 0.028
+    }
+  },
+  "per_codec": {
+    "m4a": {
+      "count": 124,
+      "accuracy": 0.9193548387096774,
+      "uncertain_rate": 0.016129032258064516
+    },
+    "mp3": {
+      "count": 126,
+      "accuracy": 0.9206349206349206,
+      "uncertain_rate": 0.031746031746031744
+    },
+    "opus": {
+      "count": 124,
+      "accuracy": 0.7580645161290323,
+      "uncertain_rate": 0.0967741935483871
+    },
+    "wav": {
+      "count": 126,
+      "accuracy": 0.9206349206349206,
+      "uncertain_rate": 0.047619047619047616
+    }
+  }
+}

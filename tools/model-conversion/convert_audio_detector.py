@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
-"""Convert Deepfake-audio-detection-V2 ONNX to signed LiteRT assets.
+"""Convert the Phase 8 audio detector to a signed LiteRT asset.
 
-This script is intentionally strict: if conversion produces a model over the
-Phase 8 120 MB hard cap, it exits non-zero instead of copying an unusable asset.
+The shipped Phase 8 model is Hemgg/Deepfake-audio-detection, a wav2vec2-base
+binary classifier. The conversion path intentionally uses weight-only INT8:
+full-integer conversion either produced unsupported ops or unacceptable parity
+for this graph in the Windows conversion environment.
 """
 
 from __future__ import annotations
@@ -14,43 +16,39 @@ import json
 import shutil
 import subprocess
 import sys
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
 from pathlib import Path
 
-import numpy as np
 
-
-REPO_ID = "as1605/Deepfake-audio-detection-V2"
-ONNX_FILENAME = "onnx/model.onnx"
-MODEL_REVISION = "3aeb18add053e945dc69025147afab0d70fa0188"
-SAMPLE_RATE = 16_000
-SECONDS = 5
-SAMPLE_COUNT = SAMPLE_RATE * SECONDS
-TARGET_MODEL_BYTES = 100 * 1024 * 1024
+REPO_ID = "Hemgg/Deepfake-audio-detection"
+MODEL_REVISION = "0d75271368ef2c7efd14831dc503c431f6aab0eb"
+MODEL_ASSET_NAME = "deepfake-audio-detector-hemgg-wi8.tflite"
+PUBLIC_KEY_BASE64 = "MCowBQYDK2VwAyEATNyvAq6FDkWUF9zUaVObExc/7QBE7PLa6QNt/AsP/10="
 HARD_CAP_BYTES = 120 * 1024 * 1024
 
 
 @dataclass(frozen=True)
 class ConvertedAsset:
     name: str
-    path: Path
+    path: str
     sha256: str
     size_bytes: int
 
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--work-dir", default="tools/model-conversion/work/audio")
+    parser.add_argument("--work-dir", default="tools/model-conversion/work/audio-base-hemgg-script")
     parser.add_argument("--output-dir", default="data-detection-ml/src/main/assets/models/audio")
     parser.add_argument("--private-key", default="tools/model-conversion/private/ed25519_phase7_private.pem")
-    parser.add_argument("--public-key-out", default="data-detection-ml/src/main/assets/models/audio/deepfake-audio-detector-v2.pub")
+    parser.add_argument("--onnx-path", default=None, help="Use an existing Hemgg ONNX export instead of exporting from Hugging Face")
+    parser.add_argument("--skip-audit", action="store_true")
     parser.add_argument("--overwrite", action="store_true")
     return parser.parse_args()
 
 
 def ensure_dependencies() -> None:
     missing = []
-    for module in ("huggingface_hub", "onnxruntime", "onnx", "onnx2tf", "cryptography", "numpy"):
+    for module in ("ai_edge_quantizer", "ai_edge_litert", "cryptography", "huggingface_hub"):
         try:
             __import__(module)
         except ImportError:
@@ -59,7 +57,7 @@ def ensure_dependencies() -> None:
         raise SystemExit(
             "Missing Python packages: "
             + ", ".join(missing)
-            + "\nInstall with: py -m pip install huggingface_hub onnxruntime onnx onnx2tf cryptography numpy"
+            + "\nInstall the Phase 8 conversion environment before running this script."
         )
 
 
@@ -71,40 +69,50 @@ def sha256(path: Path) -> str:
     return digest.hexdigest()
 
 
-def download_onnx(work_dir: Path) -> Path:
-    from huggingface_hub import hf_hub_download, model_info
+def export_or_use_onnx(work_dir: Path, explicit_onnx: str | None) -> Path:
+    if explicit_onnx:
+        onnx_path = Path(explicit_onnx)
+        if not onnx_path.exists():
+            raise SystemExit(f"ONNX path does not exist: {onnx_path}")
+        return onnx_path
+
+    from huggingface_hub import model_info
 
     info = model_info(REPO_ID, revision=MODEL_REVISION)
     license_name = info.card_data.get("license") if info.card_data else None
     if license_name != "apache-2.0":
         raise SystemExit(f"Unexpected model license: {license_name}")
-    return Path(
-        hf_hub_download(
-            repo_id=REPO_ID,
-            filename=ONNX_FILENAME,
-            revision=MODEL_REVISION,
-            local_dir=work_dir / "hf",
-        ),
+
+    onnx_dir = work_dir / "onnx"
+    onnx_dir.mkdir(parents=True, exist_ok=True)
+    onnx_path = onnx_dir / "model.onnx"
+    if onnx_path.exists():
+        return onnx_path
+
+    subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "transformers.onnx",
+            "--model",
+            f"{REPO_ID}@{MODEL_REVISION}",
+            "--feature",
+            "audio-classification",
+            str(onnx_dir),
+        ],
+        check=True,
     )
+    if not onnx_path.exists():
+        candidates = sorted(onnx_dir.glob("*.onnx"))
+        if not candidates:
+            raise SystemExit("transformers.onnx produced no ONNX file")
+        return candidates[0]
+    return onnx_path
 
 
-def write_calibration_tensor(output_path: Path) -> None:
-    rng = np.random.default_rng(8)
-    samples = []
-    for index in range(64):
-        time = np.arange(SAMPLE_COUNT, dtype=np.float32) / SAMPLE_RATE
-        frequency = 180 + index * 13
-        wave = 0.25 * np.sin(2 * np.pi * frequency * time)
-        wave += 0.08 * np.sin(2 * np.pi * (frequency * 2.3) * time)
-        wave += rng.normal(0, 0.015, size=time.shape).astype(np.float32)
-        wave = np.clip(wave, -1.0, 1.0)
-        samples.append(((wave + 1.0) / 2.0).astype(np.float32))
-    np.save(output_path, np.stack(samples))
-
-
-def convert_with_onnx2tf(onnx_path: Path, conversion_dir: Path, calibration_path: Path) -> list[Path]:
-    if conversion_dir.exists():
-        shutil.rmtree(conversion_dir)
+def convert_onnx_to_float_tflite(onnx_path: Path, tflite_dir: Path) -> Path:
+    if tflite_dir.exists():
+        shutil.rmtree(tflite_dir)
     subprocess.run(
         [
             sys.executable,
@@ -113,41 +121,105 @@ def convert_with_onnx2tf(onnx_path: Path, conversion_dir: Path, calibration_path
             "-i",
             str(onnx_path),
             "-o",
-            str(conversion_dir),
+            str(tflite_dir),
             "-b",
             "1",
             "-ois",
-            f"input_values:1,{SAMPLE_COUNT}",
-            "-oiqt",
-            "-cind",
-            "input_values",
-            str(calibration_path),
-            "[0.5]",
-            "[0.5]",
-            "-iqd",
-            "float32",
-            "-oqd",
-            "float32",
+            "input_values:1,80000",
+            "-rtpo",
+            "erf",
         ],
         check=True,
     )
-    return sorted(conversion_dir.glob("*.tflite"))
+    float_model = tflite_dir / "model_float32.tflite"
+    if not float_model.exists():
+        raise SystemExit(f"onnx2tf did not produce {float_model}")
+    return float_model
 
 
-def sign_assets(assets: list[ConvertedAsset], private_key_path: Path, public_key_out: Path) -> str:
+def write_weight_only_recipe(recipe_path: Path) -> None:
+    recipe_path.write_text(
+        json.dumps(
+            [
+                {
+                    "regex": ".*",
+                    "operation": "*",
+                    "algorithm_key": "min_max_uniform_quantize",
+                    "op_config": {
+                        "weight_tensor_config": {
+                            "num_bits": 8,
+                            "symmetric": True,
+                            "granularity": "CHANNELWISE",
+                            "dtype": "INT",
+                        },
+                        "compute_precision": "FLOAT",
+                        "explicit_dequantize": True,
+                        "skip_checks": False,
+                        "min_weight_elements": 0,
+                    },
+                },
+            ],
+            indent=2,
+        ),
+        encoding="utf-8",
+    )
+
+
+def quantize_weight_only_internal(float_model: Path, recipe_path: Path, output_path: Path) -> None:
+    from ai_edge_litert.tools import mmap_utils
+    from ai_edge_quantizer import model_modifier, quantizer
+
+    mmap_utils.get_file_contents = lambda path: Path(path).read_bytes()
+    mmap_utils.set_file_contents = lambda path, data: Path(path).write_bytes(bytes(data))
+    mmap_utils.get_mapped_buffer_or_none = lambda *args, **kwargs: None
+    mmap_utils.advise_sequential = lambda *args, **kwargs: None
+    mmap_utils.advise_dont_need = lambda *args, **kwargs: None
+
+    original_init = model_modifier._PackedBufferData.__init__
+
+    def no_external_init(self, model):
+        original_init(self, model)
+        self.packed_size = 0
+
+    model_modifier._PackedBufferData.__init__ = no_external_init
+    qt = quantizer.Quantizer(str(float_model))
+    qt.load_quantization_recipe(str(recipe_path))
+    result = qt.quantize()
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    output_path.write_bytes(bytes(result.quantized_model))
+
+
+def sign_asset(asset_path: Path, private_key_path: Path) -> str:
     from cryptography.hazmat.primitives import serialization
 
     private_key = serialization.load_pem_private_key(private_key_path.read_bytes(), password=None)
-    public_key = private_key.public_key()
-    public_key_der = public_key.public_bytes(
+    public_key_der = private_key.public_key().public_bytes(
         encoding=serialization.Encoding.DER,
         format=serialization.PublicFormat.SubjectPublicKeyInfo,
     )
-    public_key_out.parent.mkdir(parents=True, exist_ok=True)
-    public_key_out.write_bytes(public_key_der)
-    for asset in assets:
-        asset.path.with_suffix(asset.path.suffix + ".sig").write_bytes(private_key.sign(asset.path.read_bytes()))
-    return base64.b64encode(public_key_der).decode("ascii")
+    public_key = base64.b64encode(public_key_der).decode("ascii")
+    if public_key != PUBLIC_KEY_BASE64:
+        raise SystemExit("Private key does not match the Phase 7/8 public key")
+    asset_path.with_suffix(asset_path.suffix + ".sig").write_bytes(private_key.sign(asset_path.read_bytes()))
+    return public_key
+
+
+def run_audit(onnx_path: Path, tflite_path: Path, report_path: Path) -> None:
+    subprocess.run(
+        [
+            sys.executable,
+            "tools/model-conversion/audit_audio_tflite.py",
+            "--onnx",
+            str(onnx_path),
+            "--tflite",
+            str(tflite_path),
+            "--samples",
+            "20",
+            "--report",
+            str(report_path),
+        ],
+        check=True,
+    )
 
 
 def main() -> None:
@@ -155,41 +227,37 @@ def main() -> None:
     ensure_dependencies()
     work_dir = Path(args.work_dir)
     output_dir = Path(args.output_dir)
-    private_key_path = Path(args.private_key)
-    if not private_key_path.exists():
-        raise SystemExit(f"Private key not found: {private_key_path}")
-    if output_dir.exists() and any(output_dir.iterdir()) and not args.overwrite:
-        raise SystemExit(f"{output_dir} is not empty; pass --overwrite to replace generated assets")
-    work_dir.mkdir(parents=True, exist_ok=True)
+    private_key = Path(args.private_key)
+    if not private_key.exists():
+        raise SystemExit(f"Private key not found: {private_key}")
     output_dir.mkdir(parents=True, exist_ok=True)
+    if (output_dir / MODEL_ASSET_NAME).exists() and not args.overwrite:
+        raise SystemExit(f"{output_dir / MODEL_ASSET_NAME} exists; pass --overwrite to replace it")
 
-    onnx_path = download_onnx(work_dir)
-    calibration_path = work_dir / "audio_calibration_0_1.npy"
-    write_calibration_tensor(calibration_path)
-    converted = convert_with_onnx2tf(onnx_path, work_dir / "tflite_onnx2tf_int8", calibration_path)
-    candidates = sorted(converted, key=lambda path: path.stat().st_size)
-    if not candidates:
-        raise SystemExit("onnx2tf produced no .tflite files")
-    best = candidates[0]
-    if best.stat().st_size > HARD_CAP_BYTES:
-        size_report = {path.name: path.stat().st_size for path in candidates}
-        raise SystemExit(f"Smallest converted TFLite exceeds 120 MB hard cap: {json.dumps(size_report, indent=2)}")
-    if best.stat().st_size > TARGET_MODEL_BYTES:
-        print(f"WARNING: model exceeds 100 MB target: {best.stat().st_size}", file=sys.stderr)
+    onnx_path = export_or_use_onnx(work_dir, args.onnx_path)
+    float_model = convert_onnx_to_float_tflite(onnx_path, work_dir / "tflite_float32_rtpo_erf")
+    recipe_path = work_dir / "ai_edge_weight_only_wi8_afp32_recipe.json"
+    write_weight_only_recipe(recipe_path)
+    quantized = work_dir / MODEL_ASSET_NAME
+    quantize_weight_only_internal(float_model, recipe_path, quantized)
+    if quantized.stat().st_size > HARD_CAP_BYTES:
+        raise SystemExit(f"Converted model exceeds 120 MB hard cap: {quantized.stat().st_size}")
+    if not args.skip_audit:
+        run_audit(onnx_path, quantized, work_dir / "audio_tflite_audit.json")
 
-    destination = output_dir / "deepfake-audio-detector-v2-int8.tflite"
-    shutil.copy2(best, destination)
-    asset = ConvertedAsset(destination.name, destination, sha256(destination), destination.stat().st_size)
-    public_key_base64 = sign_assets([asset], private_key_path, Path(args.public_key_out))
+    destination = output_dir / MODEL_ASSET_NAME
+    shutil.copy2(quantized, destination)
+    public_key = sign_asset(destination, private_key)
+    asset = ConvertedAsset(destination.name, str(destination), sha256(destination), destination.stat().st_size)
     print(
         json.dumps(
             {
+                "repo_id": REPO_ID,
+                "revision": MODEL_REVISION,
                 "source_onnx_sha256": sha256(onnx_path),
-                "source_revision": MODEL_REVISION,
-                "asset": asset.__dict__,
-                "public_key_base64": public_key_base64,
+                "asset": asdict(asset),
+                "public_key_base64": public_key,
             },
-            default=str,
             indent=2,
         ),
     )

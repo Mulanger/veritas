@@ -95,6 +95,9 @@ enum class FallbackLevel {
 
 enum class UncertainReason {
     TOO_SMALL,
+    TOO_SHORT,
+    TOO_LONG_PROCESSED_TRUNCATED,
+    LOW_SAMPLE_RATE,
     HEAVY_COMPRESSION,
     LOW_CONFIDENCE_RANGE,
     CPU_FALLBACK,

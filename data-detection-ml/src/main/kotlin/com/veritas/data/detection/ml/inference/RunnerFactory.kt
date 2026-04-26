@@ -42,6 +42,17 @@ class RunnerFactory @Inject constructor(
         )
     }
 
+    suspend fun createCpu(spec: ModelAssetSpec): RunnerHandle {
+        liteRtRuntime.ensureInitialized()
+        val modelAsset = verifier.loadVerified(appContext, spec)
+        val cpuSelection = delegateChain.cpuOptions()
+        return RunnerHandle(
+            runner = ModelRunner(modelAsset, cpuSelection),
+            fallbackLevel = cpuSelection.fallbackLevel,
+            modelVersion = modelAsset.version,
+        )
+    }
+
     private companion object {
         private const val TAG = "RunnerFactory"
     }

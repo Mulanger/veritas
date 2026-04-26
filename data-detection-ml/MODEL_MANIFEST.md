@@ -1,4 +1,6 @@
-# Phase 7 Image Model Manifest
+# Veritas Runtime Model Manifest
+
+## Phase 7 Image Model
 
 - Source model: `prithivMLmods/Deep-Fake-Detector-v2-Model`
 - ONNX conversion source: `onnx-community/Deep-Fake-Detector-v2-Model-ONNX` / `model.onnx`
@@ -14,3 +16,24 @@
 | Asset | SHA-256 | Size bytes |
 | --- | --- | ---: |
 | `deepfake-detector-v2-int8.tflite` | `1c2cb319ef5e01e5e6c0688b99817fcddf7719f8e8b69a18bba316972dbf2f1e` | 87776504 |
+
+## Phase 8 Audio Model
+
+- Source model: `Hemgg/Deepfake-audio-detection`
+- Hugging Face revision: `0d75271368ef2c7efd14831dc503c431f6aab0eb`
+- License: Apache 2.0
+- Architecture: `facebook/wav2vec2-base`, fine-tuned binary audio classification
+- Output label order: `logit[0] = AIVoice`, `logit[1] = HumanVoice`; synthetic score uses softmax index `0`
+- Runtime asset: TFLite weight-only INT8 quantized model from ai-edge-quantizer (`wi8_afp32`)
+- Quantization note: weights are INT8 while input, output, activations, and compute remain float32; full INT8 on this graph was not runtime-valid on Windows conversion attempts
+- Compatibility note: the final artifact forces internal TFLite buffers because Play Services LiteRT rejected ai-edge-quantizer's external-buffer serialization with `Input tensor 255 lacks data`
+- Input: 16 kHz mono raw PCM waveform, padded/truncated to `80000` float32 samples
+- Source ONNX SHA-256: `73f7c3104bf82b0c1f053daf3e5f01d260bdaa3f95f2fc1728d24a23a24d5351`
+- TFLite parity softmax MAE: `0.02847679`
+- TFLite parity max gate: `< 0.05`
+- Final size: `96190928` bytes
+- Ed25519 public key (base64 DER): `MCowBQYDK2VwAyEATNyvAq6FDkWUF9zUaVObExc/7QBE7PLa6QNt/AsP/10=`
+
+| Asset | SHA-256 | Size bytes |
+| --- | --- | ---: |
+| `deepfake-audio-detector-hemgg-wi8.tflite` | `3046375262e631f25eb801c3480306235731f9bd95cedcf450663a31116f0b4c` | 96190928 |
