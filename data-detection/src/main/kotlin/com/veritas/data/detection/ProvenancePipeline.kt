@@ -35,8 +35,12 @@ import com.veritas.domain.detection.StageTerminalState
 import com.veritas.domain.detection.UncertainReason
 import com.veritas.domain.detection.Verdict
 import com.veritas.domain.detection.VerdictOutcome
+import com.veritas.feature.detect.audio.domain.AudioDetectionInput
+import com.veritas.feature.detect.audio.domain.AudioDetector
 import com.veritas.feature.detect.image.domain.ImageDetectionInput
 import com.veritas.feature.detect.image.domain.ImageDetector
+import com.veritas.feature.detect.video.domain.VideoDetectionInput
+import com.veritas.feature.detect.video.domain.VideoDetector
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.delay
@@ -60,6 +64,8 @@ class ProvenancePipeline @Inject constructor(
     private val synthIDDetector: SynthIDDetector,
     private val fakeDetectionPipeline: FakeDetectionPipeline,
     private val imageDetectorProvider: Provider<ImageDetector>,
+    private val audioDetectorProvider: Provider<AudioDetector>,
+    private val videoDetectorProvider: Provider<VideoDetector>,
 ) : DetectionPipeline {
     constructor(
         appContext: Context,
@@ -72,6 +78,8 @@ class ProvenancePipeline @Inject constructor(
         synthIDDetector = synthIDDetector,
         fakeDetectionPipeline = fakeDetectionPipeline,
         imageDetectorProvider = Provider { error("ImageDetector was not provided for this test pipeline") },
+        audioDetectorProvider = Provider { error("AudioDetector was not provided for this test pipeline") },
+        videoDetectorProvider = Provider { error("VideoDetector was not provided for this test pipeline") },
     )
 
     private val activeScan = AtomicReference<ActiveScan?>()
@@ -265,9 +273,20 @@ class ProvenancePipeline @Inject constructor(
                 inferenceHardware = InferenceHardware.CPU_XNNPACK,
                 elapsedMs = 0L,
             )
-            SynthIDResult.NotPresent -> buildImageDetectorVerdictOrDefault(media, mediaFile, startTime)
+            SynthIDResult.NotPresent -> buildMlDetectorVerdictOrDefault(media, mediaFile, startTime)
         }
     }
+
+    private suspend fun buildMlDetectorVerdictOrDefault(
+        media: ScannedMedia,
+        mediaFile: File?,
+        startTime: kotlinx.datetime.Instant,
+    ): Verdict? =
+        when (media.mediaType) {
+            MediaType.IMAGE -> buildImageDetectorVerdictOrDefault(media, mediaFile, startTime)
+            MediaType.AUDIO -> buildAudioDetectorVerdictOrDefault(media, mediaFile)
+            MediaType.VIDEO -> buildVideoDetectorVerdictOrDefault(media, mediaFile)
+        }
 
     private suspend fun buildImageDetectorVerdictOrDefault(
         media: ScannedMedia,
@@ -305,12 +324,103 @@ class ProvenancePipeline @Inject constructor(
                     com.veritas.domain.detection.FallbackLevel.NONE -> InferenceHardware.CPU_XNNPACK
                 },
             elapsedMs = detectorResult.elapsedMs,
+            forensicEvidence = detectorResult.forensicEvidence,
         )
     }
 
     private fun BasicDetectorResult.blocksImageVerdict(): Boolean {
         val interval = confidenceInterval
         return uncertainReasons.any { it in TERMINAL_IMAGE_UNCERTAIN_REASONS } ||
+            (interval.low < 0.5f && interval.high > 0.5f)
+    }
+
+    private suspend fun buildAudioDetectorVerdictOrDefault(
+        media: ScannedMedia,
+        mediaFile: File?,
+    ): Verdict? {
+        if (mediaFile == null || !mediaFile.exists()) {
+            return null
+        }
+        val detectorResult = audioDetectorProvider.get().detect(AudioDetectionInput(media = media, file = mediaFile))
+        val interval = detectorResult.confidenceInterval
+        val outcome =
+            when {
+                detectorResult.blocksAudioVerdict() -> VerdictOutcome.UNCERTAIN
+                detectorResult.syntheticScore >= SYNTHETIC_THRESHOLD -> VerdictOutcome.LIKELY_SYNTHETIC
+                else -> VerdictOutcome.LIKELY_AUTHENTIC
+            }
+        return Verdict(
+            id = UUID.randomUUID().toString(),
+            mediaId = media.id,
+            mediaType = media.mediaType,
+            outcome = outcome,
+            confidence = ConfidenceRange(
+                lowPct = (interval.low * PERCENT).toInt().coerceIn(2, confidenceCapFor(outcome)),
+                highPct = (interval.high * PERCENT).toInt().coerceIn(2, confidenceCapFor(outcome)),
+            ),
+            summary = audioSummary(outcome),
+            reasons = detectorResult.reasons,
+            modelVersions = buildModelVersions(media.mediaType) + ("audio" to detectorResult.detectorId),
+            scannedAt = clock.now(),
+            inferenceHardware =
+                when (detectorResult.fallbackUsed) {
+                    com.veritas.domain.detection.FallbackLevel.GPU -> InferenceHardware.GPU
+                    com.veritas.domain.detection.FallbackLevel.CPU_XNNPACK -> InferenceHardware.CPU_XNNPACK
+                    com.veritas.domain.detection.FallbackLevel.NONE -> InferenceHardware.CPU_XNNPACK
+                },
+            elapsedMs = detectorResult.elapsedMs,
+            forensicEvidence = detectorResult.forensicEvidence,
+        )
+    }
+
+    private fun BasicDetectorResult.blocksAudioVerdict(): Boolean {
+        val interval = confidenceInterval
+        return uncertainReasons.any { it in TERMINAL_AUDIO_UNCERTAIN_REASONS } ||
+            (interval.low < 0.5f && interval.high > 0.5f)
+    }
+
+    private suspend fun buildVideoDetectorVerdictOrDefault(
+        media: ScannedMedia,
+        mediaFile: File?,
+    ): Verdict? {
+        if (mediaFile == null || !mediaFile.exists()) {
+            return null
+        }
+        val detectorResult = videoDetectorProvider.get().detect(VideoDetectionInput(media = media, file = mediaFile))
+        val interval = detectorResult.confidenceInterval
+        val outcome =
+            when {
+                detectorResult.blocksVideoVerdict() -> VerdictOutcome.UNCERTAIN
+                detectorResult.syntheticScore >= SYNTHETIC_THRESHOLD -> VerdictOutcome.LIKELY_SYNTHETIC
+                else -> VerdictOutcome.LIKELY_AUTHENTIC
+            }
+        return Verdict(
+            id = UUID.randomUUID().toString(),
+            mediaId = media.id,
+            mediaType = media.mediaType,
+            outcome = outcome,
+            confidence = ConfidenceRange(
+                lowPct = (interval.low * PERCENT).toInt().coerceIn(2, confidenceCapFor(outcome)),
+                highPct = (interval.high * PERCENT).toInt().coerceIn(2, confidenceCapFor(outcome)),
+            ),
+            summary = videoSummary(outcome),
+            reasons = detectorResult.reasons,
+            modelVersions = buildModelVersions(media.mediaType) + ("video" to detectorResult.detectorId),
+            scannedAt = clock.now(),
+            inferenceHardware =
+                when (detectorResult.fallbackUsed) {
+                    com.veritas.domain.detection.FallbackLevel.GPU -> InferenceHardware.GPU
+                    com.veritas.domain.detection.FallbackLevel.CPU_XNNPACK -> InferenceHardware.CPU_XNNPACK
+                    com.veritas.domain.detection.FallbackLevel.NONE -> InferenceHardware.CPU_XNNPACK
+                },
+            elapsedMs = detectorResult.elapsedMs,
+            forensicEvidence = detectorResult.forensicEvidence,
+        )
+    }
+
+    private fun BasicDetectorResult.blocksVideoVerdict(): Boolean {
+        val interval = confidenceInterval
+        return uncertainReasons.any { it in TERMINAL_VIDEO_UNCERTAIN_REASONS } ||
             (interval.low < 0.5f && interval.high > 0.5f)
     }
 
@@ -324,6 +434,30 @@ class ProvenancePipeline @Inject constructor(
                 "The image checks were not decisive enough for a confident verdict."
             VerdictOutcome.VERIFIED_AUTHENTIC ->
                 "Signed Content Credentials verify this image's provenance."
+        }
+
+    private fun audioSummary(outcome: VerdictOutcome): String =
+        when (outcome) {
+            VerdictOutcome.LIKELY_SYNTHETIC ->
+                "The audio detector found synthetic speech patterns and supporting format signals."
+            VerdictOutcome.LIKELY_AUTHENTIC ->
+                "The audio detector did not find strong signs of synthetic speech."
+            VerdictOutcome.UNCERTAIN ->
+                "The audio checks were not decisive enough for a confident verdict."
+            VerdictOutcome.VERIFIED_AUTHENTIC ->
+                "Signed Content Credentials verify this audio file's provenance."
+        }
+
+    private fun videoSummary(outcome: VerdictOutcome): String =
+        when (outcome) {
+            VerdictOutcome.LIKELY_SYNTHETIC ->
+                "The video detector found synthetic frame patterns and temporal consistency issues."
+            VerdictOutcome.LIKELY_AUTHENTIC ->
+                "The video detector did not find strong signs of AI generation."
+            VerdictOutcome.UNCERTAIN ->
+                "The video checks were not decisive enough for a confident verdict."
+            VerdictOutcome.VERIFIED_AUTHENTIC ->
+                "Signed Content Credentials verify this video file's provenance."
         }
 
     private fun confidenceCapFor(outcome: VerdictOutcome): Int =
@@ -345,7 +479,11 @@ class ProvenancePipeline @Inject constructor(
                 MediaType.AUDIO -> "audio"
                 MediaType.IMAGE -> "image"
             },
-            "stub-0.1",
+            when (mediaType) {
+                MediaType.VIDEO -> "video_detector_phase9"
+                MediaType.AUDIO -> "audio_deepfake_detector_hemgg_wi8"
+                else -> "stub-0.1"
+            },
         )
     }
 
@@ -360,6 +498,20 @@ class ProvenancePipeline @Inject constructor(
         private val TERMINAL_IMAGE_UNCERTAIN_REASONS = setOf(
             UncertainReason.TOO_SMALL,
             UncertainReason.HEAVY_COMPRESSION,
+            UncertainReason.LOW_CONFIDENCE_RANGE,
+        )
+        private val TERMINAL_AUDIO_UNCERTAIN_REASONS = setOf(
+            UncertainReason.TOO_SHORT,
+            UncertainReason.TOO_LONG_PROCESSED_TRUNCATED,
+            UncertainReason.LOW_SAMPLE_RATE,
+            UncertainReason.LOW_CONFIDENCE_RANGE,
+        )
+        private val TERMINAL_VIDEO_UNCERTAIN_REASONS = setOf(
+            UncertainReason.VID_TOO_SHORT,
+            UncertainReason.VID_LOW_RESOLUTION,
+            UncertainReason.VID_HEAVY_COMPRESSION,
+            UncertainReason.VID_INSUFFICIENT_FRAMES,
+            UncertainReason.VID_DECODE_FAILED,
             UncertainReason.LOW_CONFIDENCE_RANGE,
         )
     }

@@ -8,15 +8,17 @@ import com.veritas.core.design.StageRowState
 import com.veritas.core.design.VerdictTone
 import com.veritas.core.design.VeritasColors
 import com.veritas.domain.detection.MediaType
+import com.veritas.domain.detection.HeatmapData
+import com.veritas.domain.detection.HeatmapFrame
 import com.veritas.domain.detection.PipelineStage
 import com.veritas.domain.detection.Reason
 import com.veritas.domain.detection.ReasonCode
 import com.veritas.domain.detection.ReasonEvidence
+import com.veritas.domain.detection.Severity
 import com.veritas.domain.detection.ScanStage
 import com.veritas.domain.detection.ScannedMedia
 import com.veritas.domain.detection.Verdict
 import com.veritas.domain.detection.VerdictOutcome
-import java.text.DecimalFormat
 import java.util.Locale
 import kotlin.random.Random
 
@@ -241,6 +243,34 @@ fun toneColor(tone: VerdictTone): Color =
         VerdictTone.Bad -> VeritasColors.bad
     }
 
+fun toneForProbability(probability: Float): VerdictTone =
+    when {
+        probability >= 0.67f -> VerdictTone.Bad
+        probability >= 0.40f -> VerdictTone.Warn
+        else -> VerdictTone.Ok
+    }
+
+fun heatmapColor(intensity: Float): Color =
+    when {
+        intensity >= 0.72f -> VeritasColors.bad.copy(alpha = 0.28f + intensity * 0.42f)
+        intensity >= 0.34f -> VeritasColors.warn.copy(alpha = 0.18f + intensity * 0.34f)
+        else -> VeritasColors.warn.copy(alpha = intensity * 0.24f)
+    }
+
+fun severityColor(severity: Severity): Color =
+    when (severity) {
+        Severity.POSITIVE -> VeritasColors.ok
+        Severity.NEUTRAL,
+        Severity.MINOR,
+        -> VeritasColors.warn
+        Severity.MAJOR,
+        Severity.CRITICAL,
+        -> VeritasColors.bad
+    }
+
+fun HeatmapData.nearestFrame(timestampMs: Long): HeatmapFrame =
+    frames.minByOrNull { kotlin.math.abs(it.timestampMs - timestampMs) } ?: frames.first()
+
 fun reasonAccentColor(reason: Reason): Color =
     when (reason.code) {
         ReasonCode.C2PA_VERIFIED,
@@ -272,6 +302,17 @@ fun reasonChipCode(code: ReasonCode): String =
         ReasonCode.AUDIO_SPECTRAL_NEURAL -> "SPECTRAL"
         ReasonCode.AUDIO_PROSODY_UNNATURAL -> "PROSODY"
         ReasonCode.AUDIO_CODEC_MISMATCH -> "CODEC"
+        ReasonCode.AUD_SYNTHETIC_VOICE_HIGH -> "VOICE"
+        ReasonCode.AUD_CODEC_MISMATCH -> "CODEC"
+        ReasonCode.AUD_TOO_SHORT -> "SHORT"
+        ReasonCode.AUD_LOW_QUALITY -> "QUALITY"
+        ReasonCode.AUD_NATURAL_PROSODY -> "VOICE OK"
+        ReasonCode.VID_TEMPORAL_DRIFT_HIGH -> "DRIFT"
+        ReasonCode.VID_SPATIAL_SYNTHETIC_FRAMES -> "FRAMES"
+        ReasonCode.VID_FACE_INCONSISTENT -> "FACE"
+        ReasonCode.VID_LIP_SYNC_DRIFT -> "LIP SYNC"
+        ReasonCode.VID_LOW_QUALITY -> "QUALITY"
+        ReasonCode.VID_DECODE_FAILED -> "DECODE"
         ReasonCode.ELA_INCONSISTENT -> "ELA"
         ReasonCode.METADATA_IMPLAUSIBLE -> "METADATA"
         ReasonCode.EAR_GEOMETRY_DRIFT -> "EAR"
@@ -289,7 +330,7 @@ fun reasonDescription(reason: Reason): String =
         is ReasonEvidence.Region ->
             "Localized around the ${evidence.regionLabel.lowercase(Locale.US)} region."
         is ReasonEvidence.Scalar ->
-            "${reason.code.prettyTitle()} measured ${DecimalFormat("0.##").format(evidence.measurement)} ${evidence.unit}."
+            "${reason.code.prettyTitle()} measured ${String.format(Locale.US, "%.2f", evidence.measurement).trimEnd('0').trimEnd('.')} ${evidence.unit}."
         is ReasonEvidence.Qualitative -> evidence.note
         ReasonEvidence.None -> "${reason.code.prettyTitle()} contributed to this verdict in the Phase 5 stub pipeline."
     }

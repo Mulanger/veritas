@@ -1,0 +1,18 @@
+<resources>
+    <string name="history_brand">VERITAS</string>
+    <string name="history_title">HISTORY</string>
+    <string name="history_empty_title">No checks yet.</string>
+    <string name="history_empty_body">Verdicts you run appear here. Everything stays on your phone.</string>
+    <string name="history_check_something">Check something</string>
+    <string name="history_export_diagnostic">Export diagnostic</string>
+    <string name="history_delete">Delete</string>
+    <string name="history_group_today">Today</string>
+    <string name="history_group_yesterday">Yesterday</string>
+    <string name="history_group_this_week">This week</string>
+    <string name="history_group_earlier">Earlier</string>
+    <string name="history_media_meta">%1$s &#183; %2$s</string>
+    <string name="history_pill_verified">VERIFIED</string>
+    <string name="history_pill_authentic">AUTHENTIC</string>
+    <string name="history_pill_uncertain">UNCERTAIN</string>
+    <string name="history_pill_synthetic">SYNTHETIC</string>
+</resources>

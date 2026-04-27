@@ -464,6 +464,206 @@ The agent adds entries here whenever it makes a decision during build that:
 **Reversal cost:** low - the change is isolated to `DelegateChain`.
 **Approved by human:** pending checkpoint, 2026-04-26
 
+### D-043 - Phase 8 audio ONNX source path and conversion blocker
+**Phase:** 8
+**Date:** 2026-04-26
+**Context:** The standalone Phase 8 plan names `as1605/Deepfake-audio-detection-V2/model/model.onnx`, but the model repository's current `main` commit stores the ONNX at `onnx/model.onnx`. The older commit `275cf7c1ae10ee8b52628b404d637f03fb511352` still has `model/model.onnx`. Current `main` revision `3aeb18add053e945dc69025147afab0d70fa0188` reports `apache-2.0`, and `onnx/model.onnx` has SHA-256 `fc1847c0e6f294572d38b04ab9715c4af1edde45ce1ff7b1523220615d1903e2`.
+**Decision:** Pin the Phase 8 conversion script to current revision `3aeb18add053e945dc69025147afab0d70fa0188` and `onnx/model.onnx`, but stop before shipping an audio model because every TFLite artifact produced so far exceeds the 120 MB hard cap.
+**Alternatives considered:** (a) Use the stale `model/model.onnx` path - rejected because it 404s on current `main` and would require pinning an older commit without evidence it improves conversion. (b) Ship the smallest converted FP16 artifact - rejected because it is `189459212` bytes, above the Phase 8 hard cap. (c) Ship onnx2tf "INT8" outputs - rejected because the generated artifacts are `365701056` bytes or larger. (d) Use LiteRT Torch / ai-edge-torch - blocked because `ai-edge-torch 0.7.2` depends on `litert-torch`, which depends on `litert-converter==0.1.*`; `pip index versions litert-converter` returned no matching distribution in this Windows Python 3.12 environment.
+**Reasoning:** Phase 8 explicitly requires escalation if the final TFLite size exceeds 120 MB or both conversion paths fail. Continuing with an oversized or unsigned model would silently drop a deliverable and make APK size/security worse.
+**Reversal cost:** medium - conversion can resume from `tools/model-conversion/convert_audio_detector.py` on a Linux conversion host or with a different approved Apache 2.0 model if the human changes the Phase 8 model decision.
+**Approved by human:** pending checkpoint, 2026-04-26
+
+### D-044 - Phase 8 calibrated audio quantization retry and wav2vec2-base fallback
+**Phase:** 8
+**Date:** 2026-04-26
+**Context:** Human review rejected switching to Linux/WSL and requested a Windows-first retry: full INT8 calibration with 200+ real/synthetic audio clips, then a smaller Apache 2.0 wav2vec2-base fallback if the original model stayed above the 120 MB cap.
+**Decision:** Do not proceed to Step 3 signing yet. The real calibration retry used 220 clips (`10` committed fixtures, `120` real speech clips including `30` Common Voice-derived samples, and `90` Windows SAPI TTS synthetic clips). `as1605/Deepfake-audio-detection-V2` full-int8 output stayed oversized at `365701120` bytes and was not invokable because onnx2tf lowered one wav2vec2 positional convolution to unresolved `ONNX_CONV`. Fallback candidate `Hemgg/Deepfake-audio-detection` was selected for evaluation because its model card metadata is `apache-2.0`, base model is `facebook/wav2vec2-base`, and reported eval accuracy is `0.9545`; however, no Hemgg TFLite artifact passed both size and parity.
+**Alternatives considered:** (a) Ship Hemgg dynamic-range `-rtpo erf` TFLite - rejected despite `96194440` bytes because direct softmax MAE vs ONNX is `75.44%`, and even after correcting the observed two-logit output reversal MAE is `17.23%`, above the 5% gate. It also has float32 input/output and `1163` float32 tensors, so it is not full INT8 throughout the graph. (b) Ship Hemgg integer-quant `-rtpo erf` TFLite - rejected because it invokes with `DIV` failure (`data[i] != 0`) and is not runtime-valid. (c) Ship Hemgg dynamic-range without `-rtpo erf` or with `-rtpo gelu` - rejected because the model requires unsupported `FlexErf` without Select TF Ops. (d) Continue long full-INT8 `-rtpo erf` conversion indefinitely - rejected after it exceeded the human-requested time box and was still running after an additional 20-minute wait.
+**Reasoning:** The smaller-model route improves file size, but the parity/runtime gates are non-negotiable. A sub-120 MB artifact with 17% parity error or unsupported Flex ops would silently corrupt detector scores and make downstream calibration meaningless.
+**Reversal cost:** medium - the calibration/audit scripts and Hemgg ONNX export remain in `tools/model-conversion/work/`; conversion can resume by trying a different Apache 2.0 non-wav2vec2 architecture, a more exact GELU lowering, or a TensorFlow conversion path that avoids Flex ops while preserving parity.
+**Approved by human:** pending checkpoint, 2026-04-26
+
+### D-045 - Phase 8 audio model ships Hemgg wav2vec2-base weight-only INT8
+**Phase:** 8
+**Date:** 2026-04-26
+**Context:** Human review requested fixing Hemgg conversion before trying another model. The original `as1605/Deepfake-audio-detection-V2` wav2vec2-large path exceeded the Phase 8 size cap and produced an unresolved `ONNX_CONV` runtime blocker. Hemgg's float32 export preserved ONNX parity, and ai-edge-quantizer weight-only INT8 produced a sub-120 MB artifact with softmax MAE `0.02847679`.
+**Decision:** Ship `Hemgg/Deepfake-audio-detection` as `audio_deepfake_detector_hemgg_wi8`, version `0.1.0-phase8`, with output label order `logit[0] = AIVoice`, `logit[1] = HumanVoice`.
+**Alternatives considered:** (a) Ship as1605 - rejected because the smallest runtime-valid conversion stayed over the hard cap or failed invocation. (b) Ship Hemgg dynamic/full-integer onnx2tf outputs - rejected because parity was 17% or worse, or the graph failed at runtime. (c) Switch to another wav2vec2-base fine-tune - deferred because Hemgg became runtime-valid after fixing the external-buffer issue.
+**Reasoning:** The selected artifact is `96190928` bytes, under the `120 MB` cap, signature-verified on Android, and passed the 500-clip product-functional eval gate.
+**Reversal cost:** medium - replacing the model requires rerunning conversion, signing, parity audit, and the audio golden-set eval, but the Kotlin detector contract can stay unchanged for wav2vec2-base replacements.
+**Approved by human:** pending checkpoint, 2026-04-26
+
+### D-046 - Force internal TFLite buffers for ai-edge audio quantization
+**Phase:** 8
+**Date:** 2026-04-26
+**Context:** ai-edge-quantizer's default weight-only output used external buffer serialization. Desktop TensorFlow could invoke it, but Play Services LiteRT on Android failed with `Input tensor 255 lacks data`. Analyzer output showed `Total data buffer size: 0 bytes`.
+**Decision:** Monkeypatch ai-edge-quantizer's packed-buffer path during conversion so the final `.tflite` stores weights in internal flatbuffer buffers. The final analyzer reports `94,946,332` bytes of model data buffers.
+**Alternatives considered:** (a) Keep the external-buffer artifact - rejected because Android invocation failed. (b) Switch back to onnx2tf dynamic quantization - rejected because parity was above the gate. (c) Move conversion to WSL/Linux - rejected per human instruction because the bug was serialization, not OS capability.
+**Reasoning:** The internal-buffer artifact keeps the same weight-only quantization profile and parity while making the asset compatible with the Play Services LiteRT runtime used by the app.
+**Reversal cost:** low - remove the monkeypatch if ai-edge-quantizer exposes an official internal-buffer flag or Play Services LiteRT supports the external-buffer format.
+**Approved by human:** pending checkpoint, 2026-04-26
+
+### D-047 - Phase 8 wav2vec2 audio runs CPU XNNPACK only
+**Phase:** 8
+**Date:** 2026-04-26
+**Context:** The Phase 8 plan allowed per-model CPU fallback for wav2vec2 if transformer audio was GPU-bottlenecked or delegate-problematic. The model is weight-only INT8 with float32 activations and consistently passed Android invocation on the CPU path.
+**Decision:** Load the Phase 8 audio model through `RunnerFactory.createCpu()` and report `FallbackLevel.CPU_XNNPACK` for the audio detector.
+**Alternatives considered:** (a) Try to force the Play Services GPU delegate - deferred because Phase 8's acceptance run already meets p95 latency on the CPU path and GPU transformer coverage is less predictable. (b) Use NNAPI - rejected by D-016.
+**Reasoning:** CPU XNNPACK keeps wav2vec2 invocation stable and passed the 500-clip p95 latency gate at `2877 ms`, below the `3500 ms` Phase 8 limit.
+**Reversal cost:** low - GPU can be re-tested behind a per-device model-runner policy later without changing detector outputs.
+**Approved by human:** pending checkpoint, 2026-04-26
+
+### D-048 - Phase 8 hand-tuned audio fusion and golden-set sources
+**Phase:** 8
+**Date:** 2026-04-26
+**Context:** Phase 8 is product-functional, not production-calibrated. The plan specified a dominant wav2vec2 score with a weak codec prior and a 500-clip local golden set.
+**Decision:** Use fixed fusion weights `0.92 wav2vec2_model / 0.08 codec_signal`. Build the local 500-clip eval set from the calibrated conversion sources: Common Voice English and MINDS14 for real speech, local Windows SAPI TTS for synthetic speech, expanded through WAV/MP3/M4A/Opus codec variants. Commit only `MANIFEST.csv`; keep the audio files gitignored.
+**Alternatives considered:** (a) Tune fusion weights on the eval set - rejected by the Phase 8 plan; learned calibration belongs to the retraining workstream. (b) Bundle the golden audio files - rejected to avoid repository and APK bloat. (c) Depend on Kaggle credentials or manual ASVspoof download for the gate - rejected because the local calibrated sources were already available and reproducible in this workspace.
+**Reasoning:** The fixed fusion keeps model behavior transparent. The generated codec variants exercise Android decode and codec robustness while preserving a reproducible manifest. The resulting eval passed with `0.88` overall accuracy, `0.088` FPR, and `2877 ms` p95 latency.
+**Reversal cost:** low - future eval sets can add ASVspoof/WaveFake/current TTS samples by extending the builder and rerunning the harness.
+**Approved by human:** pending checkpoint, 2026-04-26
+
+### D-049 - Phase 9 rPPG deferred to v1.5
+**Phase:** 9
+**Date:** 2026-04-26
+**Context:** The architecture document mentions rPPG as a possible video specialist, but the standalone Phase 9 plan explicitly defers it. Reliable CHROM/POS-style rPPG on compressed, user-supplied mobile video would add signal-processing and validation work beyond the v1 detector integration scope.
+**Decision:** Do not implement rPPG in Phase 9. Ship spatial frame scoring, MoViNet temporal drift, and optional face ROI consistency only. Reconsider rPPG in v1.5 with better video-quality controls and a dedicated validation set.
+**Alternatives considered:** Implement a simple green-channel or CHROM/POS heuristic in v1; rejected because false confidence from noisy compressed video would be worse than omitting the signal.
+**Reasoning:** Phase 9 is product-functional, not production-calibrated. A weak physiological heuristic would complicate calibration without a defensible acceptance gate.
+**Reversal cost:** medium - adding rPPG later requires face tracking, skin-region masking, temporal filtering, and a new evaluation harness.
+**Approved by human:** pending checkpoint, 2026-04-26
+
+### D-050 - Phase 9 temporal model uses MoViNet A0 stream INT8 v1
+**Phase:** 9
+**Date:** 2026-04-26
+**Context:** Phase 9 needs a small video temporal model and the plan selected MoViNet-A0-Stream INT8 from TensorFlow Hub. Current TF Hub v2/v3 lite-format URLs returned Kaggle HTML in this environment; the v1 lite-format endpoint returned a valid TFLite flatbuffer.
+**Decision:** Ship `movinet-a0-stream-int8.tflite` from `tensorflow/lite-model/movinet/a0/stream/kinetics-600/classification/tflite/int8/1`, signed with the existing Ed25519 model key. Use it only as a temporal drift feature by carrying stream state across sampled frames and measuring frame-to-frame logit cosine distance.
+**Alternatives considered:** Use MoViNet A1 or a non-stream model; rejected for APK and latency budget. Treat the 600-class classifier output as a semantic label; rejected because action labels are not deepfake labels.
+**Reasoning:** The model is `3276048` bytes, has no Flex/Erf strings in the flatbuffer, and runs through the shared Play Services LiteRT runner path. It adds temporal coverage without duplicating the Phase 7 spatial model.
+**Reversal cost:** low - future retraining can replace the TFLite asset behind the same `temporal_movinet` contract if input/state shapes remain compatible.
+**Approved by human:** pending checkpoint, 2026-04-26
+
+### D-051 - Phase 9 sampling and preprocessing policy
+**Phase:** 9
+**Date:** 2026-04-26
+**Context:** The plan allowed choosing a practical frame sampling policy and required documenting spatial inference cadence and aspect-ratio handling.
+**Decision:** Sample up to `4` timestamps across the clip with edge padding, run the Phase 7 spatial detector on the first sampled frame, and feed all sampled frames to MoViNet. MoViNet preprocessing center-crops to square, resizes to `172 x 172`, and normalizes RGB float32 values to `[0, 1]`. Face ROI consistency processes at most one face crop per video in v1.
+**Alternatives considered:** Spatial inference on every sampled frame or every other sampled frame; rejected after Pixel 8 profiling because repeated Phase 7 ViT inference caused p95 latency to exceed the Phase 9 `4s` gate. Letterboxing for MoViNet; rejected because center-crop matches the action-model assumption better and avoids black borders dominating small inputs.
+**Reasoning:** A one-frame spatial score keeps the strongest deepfake-specialized signal while preserving room for temporal and face GPU passes. Center crop is deterministic and keeps the stream input shape fixed.
+**Reversal cost:** low - frame count, stride, and crop strategy are localized to the video module.
+**Approved by human:** pending checkpoint, 2026-04-26
+
+### D-052 - Phase 9 fixed video fusion and static-derived golden set
+**Phase:** 9
+**Date:** 2026-04-26
+**Context:** Phase 9 fusion is product-functional and should be transparent. The available local reproducible dataset is the Phase 7 real/synthetic image corpus, not a licensed video deepfake corpus.
+**Decision:** Use fixed weights `0.50 spatialMean / 0.20 spatialMax / 0.20 temporalDrift / 0.10 faceConsistency`, minus a `0.03` false-positive guard band, clamped to `[0.02, 0.98]`. Build the local 200-video harness from Phase 7 images rendered into MP4/WebM/MOV clips, committing only `MANIFEST.csv` while keeping generated videos gitignored.
+**Alternatives considered:** Learn weights from the generated set; rejected because the static-derived videos would overfit to the still-image detector. Bundle the golden videos; rejected to avoid repository and APK bloat.
+**Reasoning:** The fixed weights reflect that Phase 7 spatial scoring is the only deepfake-specialized signal. The static-derived harness verifies decode, integration, and spatial-vs-full contribution, but does not replace a real FaceForensics++/DFDC/DF40 evaluation.
+**Reversal cost:** low - real video datasets can replace or augment the manifest later without changing the detector contract.
+**Approved by human:** pending checkpoint, 2026-04-26
+
+### D-053 - Phase 9 decode implementation replaced retriever fallback with MediaCodec
+**Phase:** 9
+**Date:** 2026-04-26
+**Context:** The initial implementation used Android `MediaMetadataRetriever` inside the `MediaCodecFrameExtractor` boundary and did not attempt a true MediaCodec path before the first checkpoint. Pixel 8 eval showed this was not acceptable: retriever extraction p95 was `3515 ms` and total p95 was `37093 ms` before inference-count reduction.
+**Decision:** Replace the primary extraction path with sequential `MediaExtractor` + `MediaCodec` decoding using output `Image` conversion to ARGB bitmaps. Keep `MediaMetadataRetriever` only as a fallback if MediaCodec returns no frames or throws.
+**Alternatives considered:** Accept the retriever-backed extractor for v1; rejected because it left too little latency margin and failed the Phase 9 p95 target. Implement a fully async MediaCodec + ImageReader pipeline; deferred because the synchronous MediaCodec path passes the Pixel 8 product-functional latency gate and keeps the implementation smaller for v1.
+**Reasoning:** The MediaCodec path lowered 200-video Pixel 8 extraction p95 to `1183 ms` and total detector p95 to `3105 ms`, while all interpreters reported `FallbackLevel.GPU`.
+**Reversal cost:** medium - a future async decoder can replace the synchronous decoder inside the same extractor boundary if longer videos become a primary use case.
+**Approved by human:** pending checkpoint, 2026-04-26
+
+### D-054 - Evidence required before substituting easier implementations
+**Phase:** 9
+**Date:** 2026-04-26
+**Context:** Phase 9 Step 1 explicitly required MediaExtractor + MediaCodec because video frame extraction was expected to be latency-sensitive. The initial implementation substituted MediaMetadataRetriever because it was faster to integrate, without first producing evidence that it met the phase budget. Pixel 8 eval proved the requirement was load-bearing: retriever extraction p95 was `3515 ms` and total p95 was `37093 ms`; replacing the primary path with MediaCodec lowered extraction p95 to `1158 ms` and total p95 to `3074 ms`.
+**Decision:** Future phases must not quietly substitute a simpler implementation for a phase requirement that is performance-, security-, privacy-, or correctness-bearing. If a substitute is proposed, document the attempted required implementation, exact failure or measured comparison, and acceptance-impact before relying on the substitute.
+**Alternatives considered:** Treat the retriever path as an acceptable v1 shortcut; rejected because the measured latency failed the Phase 9 acceptance gate.
+**Reasoning:** The project depends on honest constraint handling. Easier implementations are fine only when they still satisfy the acceptance contract or when the deviation is explicitly approved with evidence.
+**Reversal cost:** low - this is a process decision and can be refined, but should remain the default engineering bar.
+**Approved by human:** pending checkpoint, 2026-04-26
+
+### D-055 - Phase 9 v1.5 priority is real video deepfake evaluation
+**Phase:** 9
+**Date:** 2026-04-26
+**Context:** The Phase 9 200-video eval set is static-image-derived: real photos and AI images rendered into short videos. This verifies decode, model wiring, latency, and spatial-vs-full fusion behavior, but it does not validate true temporal video deepfake detection.
+**Decision:** Phase 9 v1.5 priority is to assemble a proper video deepfake eval set and rerun evaluation before claiming production-grade video deepfake detection. Required sources include FaceForensics++ face swaps, a DFDC subset, and hand-collected Sora/Runway/Veo-style full-frame generation and lip-sync samples.
+**Alternatives considered:** Treat the static-derived set as sufficient for video quality claims; rejected because spatial-only accuracy was `0.890` and full-fusion accuracy was only `0.905`, meaning the eval primarily measures Phase 7 image detection applied to sampled frames.
+**Reasoning:** The v1 detector is product-functional and locally verified, but true generator-family performance is unmeasured. The retraining/eval workstream needs real video families to tune temporal and face signals responsibly.
+**Reversal cost:** medium - assembling and licensing a real video set takes time, but the detector contract and harness are already in place.
+**Approved by human:** pending checkpoint, 2026-04-26
+
+### D-056 - Phase 10 forensic evidence is session-only detector output
+**Phase:** 10
+**Date:** 2026-04-26
+**Context:** Phase 10 needs heatmaps, timelines, waveform flags, and reason detail sheets without writing media-derived tensors to disk.
+**Decision:** Add `ForensicEvidence` to `DetectorResult`/`Verdict` as in-memory session data with `HeatmapData`, `TemporalConfidence`, and `WaveformData`. Detectors populate it from their real scores, reasons, timestamps, and quality signals; the UI renders it directly and does not persist it.
+**Alternatives considered:** Store scan artifacts under cache for UI reload; rejected because the data contracts say heatmaps are not persisted and are discarded on activity destroy. Keep generating UI placeholders; rejected because Phase 10 requires real detector evidence.
+**Reasoning:** This keeps the privacy contract intact while giving the forensic view a typed data surface for all three media types.
+**Reversal cost:** medium - history reuse in Phase 11 would need separate persisted summaries, not raw forensic tensors.
+**Approved by human:** pending checkpoint, 2026-04-26
+
+### D-057 - Phase 10 uses 64 by 64 heatmap bins
+**Phase:** 10
+**Date:** 2026-04-26
+**Context:** Compose Canvas heatmap rendering must avoid full-resolution overlays during scroll and scrubbing.
+**Decision:** Render heatmap evidence as deterministic `64 x 64` bins and upscale in Canvas with `BlendMode.Screen`; labels and callouts are drawn over the reduced tensor.
+**Alternatives considered:** Full display-resolution heatmap cells; rejected because the Phase 10 pitfalls explicitly call out Canvas performance risk. `128 x 128`; deferred until profiling proves the extra detail is useful on device.
+**Reasoning:** `64 x 64` matches the low-resolution attention/Grad-CAM style output expected by the plan, keeps the render cost bounded, and is deterministic for unit tests.
+**Reversal cost:** low - the bin constant is isolated in `ForensicEvidenceFactory`.
+**Approved by human:** pending checkpoint, 2026-04-26
+
+### D-058 - Reason-code detail copy is resource-backed with generic fallback
+**Phase:** 10
+**Date:** 2026-04-26
+**Context:** Phase 10 requires reason-code copy to be translation-ready and stored in resources.
+**Decision:** Move high-value Phase 10 reason templates into `strings.xml` and keep a resource-backed generic fallback for less common codes.
+**Alternatives considered:** Keep the Phase 5 hardcoded placeholder dictionary; rejected because it blocks localization. Add exhaustive bespoke copy for every enum in this pass; deferred because several legacy/provenance codes need product copy review.
+**Reasoning:** The UI no longer hardcodes template bodies, and the common image/audio/video detector codes have specific plain-English explanations now.
+**Reversal cost:** low - adding bespoke strings for the remaining codes is additive.
+**Approved by human:** pending checkpoint, 2026-04-26
+
+### D-059 - History stores thumbnails and verdict summaries only
+**Phase:** 11
+**Date:** 2026-04-27
+**Context:** Phase 11 requires scan history while preserving the v1 privacy promise that original media and media-derived forensic tensors are not retained.
+**Decision:** Store Room history rows with media type, MIME type, source package, app-private thumbnail path, verdict outcome, confidence range, summary, top three serialized reasons, model versions, and scan time. Do not store original media URIs, paths, copied media, C2PA manifests, raw heatmaps, waveforms, timelines, or full reason detail text.
+**Alternatives considered:** Persist original media paths for replay; rejected because shared content may disappear and storing paths weakens the privacy contract. Persist full forensic evidence; rejected because Phase 10 evidence is session-only.
+**Reasoning:** History can answer "what did I scan and what was the verdict?" without becoming a media archive.
+**Reversal cost:** medium - adding richer history later would require a migration and a new privacy review.
+**Approved by human:** pending checkpoint, 2026-04-27
+
+### D-060 - History thumbnails are generated before purge and pruned with Room rows
+**Phase:** 11
+**Date:** 2026-04-27
+**Context:** History needs a visual cue after the temporary ingestion file is purged, but the app must not retain original media.
+**Decision:** Generate a bounded `240 px` JPEG thumbnail in `filesDir/history/thumbnails/` when the verdict is ready, before media cleanup. Room keeps the latest 100 rows and the repository deletes thumbnails when rows are deleted, cleared, or pruned.
+**Alternatives considered:** Use source URI thumbnails lazily in history; rejected because the source URI may be revoked and would couple history to original media access. Store larger thumbnails; rejected for storage and privacy minimization.
+**Reasoning:** Small app-private thumbnails make the history list useful while keeping retained media-derived data minimal and bounded.
+**Reversal cost:** low - thumbnail size/quality can change with a migrationless cache refresh.
+**Approved by human:** pending checkpoint, 2026-04-27
+
+### D-061 - Phase 11 settings use one Preferences DataStore
+**Phase:** 11
+**Date:** 2026-04-27
+**Context:** Phase 11 adds settings for overlay behavior, model updates, telemetry, privacy controls, and onboarding state.
+**Decision:** Use a single Preferences DataStore named `veritas_settings` for onboarding completion and app settings. Defaults are private/local: overlay disabled, haptics enabled, model auto-update enabled, Wi-Fi-only model updates enabled, telemetry off, telemetry prompt not shown.
+**Alternatives considered:** Keep the previous onboarding-only DataStore and add a second settings store; rejected because multiple stores increase migration and test complexity without a product benefit.
+**Reasoning:** One store gives deterministic app startup state and keeps settings reset semantics straightforward.
+**Reversal cost:** low - keys are additive and can be migrated if a typed Proto store is needed later.
+**Approved by human:** pending checkpoint, 2026-04-27
+
+### D-062 - Diagnostic export is aggregate and redacted
+**Phase:** 11
+**Date:** 2026-04-27
+**Context:** Diagnostics are useful for support but must not leak media, paths, manifests, user identifiers, or detailed per-scan explanations.
+**Decision:** Generate a plain text support export with device/app versions, model version labels, settings state, aggregate verdict counts for the last 30 days, and the last 50 Veritas-tagged redacted log lines. Exclude media files, media paths, source thumbnails, source packages, C2PA manifests, full logcat, per-scan reason detail text, and user identifiers.
+**Alternatives considered:** Attach full history rows or logcat; rejected because both can contain sensitive local context.
+**Reasoning:** Support can inspect environment and coarse app state without compromising the privacy thesis.
+**Reversal cost:** low - export fields are centrally generated and covered by unit tests.
+**Approved by human:** pending checkpoint, 2026-04-27
+
 ## Part 4 - Open questions
 
 Questions that remain unresolved at start of build. The agent should revisit these at the relevant phase and either resolve (add to decision log) or escalate to human.

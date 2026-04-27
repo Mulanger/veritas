@@ -18,6 +18,7 @@ data class Verdict(
     val scannedAt: Instant,
     val inferenceHardware: InferenceHardware,
     val elapsedMs: Long,
+    val forensicEvidence: ForensicEvidence = ForensicEvidence.None,
 )
 
 @Serializable
@@ -96,6 +97,17 @@ enum class ReasonCode {
     IMG_EXIF_SUSPICIOUS,
     IMG_ELA_ANOMALY,
     IMG_LOW_QUALITY,
+    AUD_SYNTHETIC_VOICE_HIGH,
+    AUD_CODEC_MISMATCH,
+    AUD_TOO_SHORT,
+    AUD_LOW_QUALITY,
+    AUD_NATURAL_PROSODY,
+    VID_TEMPORAL_DRIFT_HIGH,
+    VID_SPATIAL_SYNTHETIC_FRAMES,
+    VID_FACE_INCONSISTENT,
+    VID_LIP_SYNC_DRIFT,
+    VID_LOW_QUALITY,
+    VID_DECODE_FAILED,
 }
 
 @Serializable
@@ -147,5 +159,100 @@ data class BBox(
 ) {
     init {
         require(x in 0f..1f && y in 0f..1f && w in 0f..1f && h in 0f..1f)
+    }
+}
+
+@Serializable
+sealed class ForensicEvidence {
+    @Serializable
+    data class Image(
+        val heatmap: HeatmapData,
+    ) : ForensicEvidence()
+
+    @Serializable
+    data class Video(
+        val heatmap: HeatmapData,
+        val temporalConfidence: TemporalConfidence,
+    ) : ForensicEvidence()
+
+    @Serializable
+    data class Audio(
+        val waveform: WaveformData,
+        val temporalConfidence: TemporalConfidence,
+    ) : ForensicEvidence()
+
+    @Serializable
+    data object None : ForensicEvidence()
+}
+
+@Serializable
+data class HeatmapData(
+    val mediaType: MediaType,
+    val frames: List<HeatmapFrame>,
+)
+
+@Serializable
+data class HeatmapFrame(
+    val timestampMs: Long,
+    val widthBins: Int,
+    val heightBins: Int,
+    val intensities: List<Float>,
+    val labeledRegions: List<LabeledRegion>,
+) {
+    init {
+        require(widthBins > 0) { "widthBins must be positive" }
+        require(heightBins > 0) { "heightBins must be positive" }
+        require(intensities.size == widthBins * heightBins) { "intensities must match heatmap dimensions" }
+    }
+}
+
+@Serializable
+data class LabeledRegion(
+    val label: String,
+    val bbox: BBox,
+    val severity: Severity,
+)
+
+@Serializable
+data class WaveformData(
+    val durationMs: Long,
+    val samplesPerBin: Int,
+    val rmsBins: List<Float>,
+    val flaggedRegions: List<FlaggedAudioRegion>,
+) {
+    init {
+        require(durationMs >= 0) { "durationMs must be non-negative" }
+        require(samplesPerBin > 0) { "samplesPerBin must be positive" }
+    }
+}
+
+@Serializable
+data class FlaggedAudioRegion(
+    val startMs: Long,
+    val endMs: Long,
+    val severity: Severity,
+    val reasonCode: ReasonCode,
+) {
+    init {
+        require(startMs >= 0) { "startMs must be non-negative" }
+        require(endMs >= startMs) { "endMs must be >= startMs" }
+    }
+}
+
+@Serializable
+data class TemporalConfidence(
+    val bins: List<TemporalBin>,
+)
+
+@Serializable
+data class TemporalBin(
+    val startMs: Long,
+    val endMs: Long,
+    val syntheticProbability: Float,
+) {
+    init {
+        require(startMs >= 0) { "startMs must be non-negative" }
+        require(endMs >= startMs) { "endMs must be >= startMs" }
+        require(syntheticProbability in 0f..1f) { "syntheticProbability out of range" }
     }
 }

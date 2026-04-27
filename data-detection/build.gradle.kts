@@ -1,6 +1,7 @@
 plugins {
     alias(libs.plugins.android.library)
     alias(libs.plugins.hilt)
+    alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.ksp)
 }
 
@@ -16,6 +17,12 @@ android {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
+
+    testOptions {
+        unitTests {
+            isIncludeAndroidResources = true
+        }
+    }
 }
 
 kotlin {
@@ -27,7 +34,9 @@ kotlin {
 
 dependencies {
     implementation(project(":domain-detection"))
+    implementation(project(":feature-detect-audio"))
     implementation(project(":feature-detect-image"))
+    implementation(project(":feature-detect-video"))
 
     implementation("com.github.contentauth:c2pa-android:0.0.9")
 
@@ -37,9 +46,13 @@ dependencies {
     implementation(libs.hilt.android)
     implementation(libs.kotlinx.coroutines.core)
     implementation(libs.kotlinx.datetime)
+    implementation(libs.kotlinx.serialization.json)
 
     ksp(libs.androidx.room.compiler)
     ksp(libs.hilt.compiler)
 
     testImplementation(libs.junit)
+    testImplementation(libs.androidx.test.core)
+    testImplementation(libs.kotlinx.coroutines.test)
+    testImplementation(libs.robolectric)
 }

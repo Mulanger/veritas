@@ -48,6 +48,7 @@ import com.veritas.core.design.VeritasButton
 import com.veritas.core.design.VeritasButtonVariant
 import com.veritas.core.design.VeritasColors
 import com.veritas.core.design.VeritasType
+import com.veritas.data.detection.HistoryItem
 import com.veritas.feature.home.HomeRecentMode
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -72,6 +73,16 @@ fun VeritasHomeEntryHost(
     onPickAudio: () -> Unit,
     initialPasteLink: String? = null,
     isProcessingSelection: Boolean,
+    historyItems: List<HistoryItem> = emptyList(),
+    onDeleteHistoryItem: (String) -> Unit = {},
+    onClearHistory: () -> Unit = {},
+    settings: VeritasSettings = VeritasSettings(),
+    onSetOverlayEnabled: (Boolean) -> Unit = {},
+    onSetBubbleHaptics: (Boolean) -> Unit = {},
+    onSetModelAutoUpdate: (Boolean) -> Unit = {},
+    onSetModelWifiOnly: (Boolean) -> Unit = {},
+    onSetTelemetryOptIn: (Boolean) -> Unit = {},
+    onCreateDiagnosticExport: () -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
     var showPickerSheet by rememberSaveable { mutableStateOf(false) }
@@ -105,6 +116,16 @@ fun VeritasHomeEntryHost(
             enableHomeDevMenu = enableHomeDevMenu,
             onPickFile = { showPickerSheet = true },
             onPasteLink = { showPasteLinkSheet = true },
+            historyItems = historyItems,
+            onDeleteHistoryItem = onDeleteHistoryItem,
+            onClearHistory = onClearHistory,
+            settings = settings,
+            onSetOverlayEnabled = onSetOverlayEnabled,
+            onSetBubbleHaptics = onSetBubbleHaptics,
+            onSetModelAutoUpdate = onSetModelAutoUpdate,
+            onSetModelWifiOnly = onSetModelWifiOnly,
+            onSetTelemetryOptIn = onSetTelemetryOptIn,
+            onCreateDiagnosticExport = onCreateDiagnosticExport,
         )
 
         if (showPickerSheet) {

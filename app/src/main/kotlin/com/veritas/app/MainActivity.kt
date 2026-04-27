@@ -1,7 +1,10 @@
+@file:Suppress("LongMethod", "MaxLineLength")
+
 package com.veritas.app
 
 import android.content.Intent
 import android.os.Bundle
+import androidx.core.content.FileProvider
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
@@ -12,7 +15,9 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.veritas.core.design.VeritasTheme
+import com.veritas.data.detection.HistoryRepository
 import com.veritas.data.detection.MediaIngestionCoordinator
 import com.veritas.data.detection.MediaIngestionRequest
 import com.veritas.data.detection.MediaIngestionResult
@@ -20,6 +25,7 @@ import com.veritas.domain.detection.MediaSource
 import com.veritas.feature.home.HomeRecentMode
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
+import java.io.File
 import kotlinx.coroutines.launch
 
 const val EXTRA_INITIAL_PASTE_LINK = "extra_initial_paste_link"
@@ -29,12 +35,23 @@ class MainActivity : ComponentActivity() {
     @Inject
     lateinit var mediaIngestionCoordinator: MediaIngestionCoordinator
 
+    @Inject
+    lateinit var historyRepository: HistoryRepository
+
+    @Inject
+    lateinit var settingsRepository: SettingsRepository
+
+    @Inject
+    lateinit var diagnosticExportGenerator: DiagnosticExportGenerator
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
         setContent {
             val scope = rememberCoroutineScope()
             var isProcessingSelection by rememberSaveable { mutableStateOf(false) }
+            val historyItems by historyRepository.observeHistory().collectAsStateWithLifecycle(initialValue = emptyList())
+            val settings by settingsRepository.settings.collectAsStateWithLifecycle(initialValue = VeritasSettings())
 
             fun ingestPickedUri(uri: android.net.Uri?) {
                 if (uri == null) {
@@ -97,6 +114,44 @@ class MainActivity : ComponentActivity() {
                     onPickAudio = { audioPicker.launch(AUDIO_MIME_TYPES) },
                     initialPasteLink = intent.getStringExtra(EXTRA_INITIAL_PASTE_LINK),
                     isProcessingSelection = isProcessingSelection,
+                    historyItems = historyItems,
+                    onDeleteHistoryItem = { id ->
+                        scope.launch {
+                            historyRepository.delete(id)
+                        }
+                    },
+                    onClearHistory = {
+                        scope.launch {
+                            historyRepository.clear()
+                        }
+                    },
+                    settings = settings,
+                    onSetOverlayEnabled = { enabled ->
+                        scope.launch { settingsRepository.setOverlayEnabled(enabled) }
+                    },
+                    onSetBubbleHaptics = { enabled ->
+                        scope.launch { settingsRepository.setBubbleHaptics(enabled) }
+                    },
+                    onSetModelAutoUpdate = { enabled ->
+                        scope.launch { settingsRepository.setModelAutoUpdate(enabled) }
+                    },
+                    onSetModelWifiOnly = { enabled ->
+                        scope.launch { settingsRepository.setModelWifiOnly(enabled) }
+                    },
+                    onSetTelemetryOptIn = { enabled ->
+                        scope.launch { settingsRepository.setTelemetryOptIn(enabled) }
+                    },
+                    onCreateDiagnosticExport = {
+                        scope.launch {
+                            shareDiagnosticExport(
+                                diagnosticExportGenerator.generate(
+                                    settings = settings,
+                                    historyItems = historyRepository.allOnce(),
+                                    logs = veritasLogBuffer.snapshot(),
+                                ),
+                            )
+                        }
+                    },
                 )
             }
         }
@@ -109,6 +164,25 @@ class MainActivity : ComponentActivity() {
                 is MediaIngestionResult.Failure -> buildIngestionErrorIntent(result.error.toErrorScreen())
             }
         startActivity(nextIntent)
+    }
+
+    private fun shareDiagnosticExport(contents: String) {
+        val directory = File(cacheDir, "diagnostics").apply { mkdirs() }
+        val exportFile = File(directory, "veritas_diagnostic.txt")
+        exportFile.writeText(contents)
+        val uri =
+            FileProvider.getUriForFile(
+                this,
+                "$packageName.diagnostics",
+                exportFile,
+            )
+        val shareIntent =
+            Intent(Intent.ACTION_SEND).apply {
+                type = "text/plain"
+                putExtra(Intent.EXTRA_STREAM, uri)
+                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            }
+        startActivity(Intent.createChooser(shareIntent, "Export diagnostic"))
     }
 
     private companion object {

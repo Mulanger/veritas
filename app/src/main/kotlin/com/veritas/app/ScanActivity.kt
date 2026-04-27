@@ -1,3 +1,5 @@
+@file:Suppress("MaxLineLength")
+
 package com.veritas.app
 
 import android.content.Intent
@@ -10,6 +12,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.lifecycleScope
 import com.veritas.core.design.VeritasTheme
+import com.veritas.data.detection.HistoryRepository
 import com.veritas.data.detection.MediaIngestionCoordinator
 import com.veritas.domain.detection.DetectionPipeline
 import com.veritas.domain.detection.ScanStage
@@ -27,14 +30,31 @@ class ScanActivity : ComponentActivity() {
     @Inject
     lateinit var mediaIngestionCoordinator: MediaIngestionCoordinator
 
+    @Inject
+    lateinit var historyRepository: HistoryRepository
+
+    @Inject
+    lateinit var settingsRepository: SettingsRepository
+
     private val scannedMedia by lazy { intent.scannedMediaOrNull() }
     private val ingestionError by lazy { intent.ingestionErrorOrNull() }
 
     private var scanUiState by mutableStateOf(ScanUiState())
+    private var settings by mutableStateOf(VeritasSettings())
+    private var telemetryPromptDismissed by mutableStateOf(false)
     private var scanJob: Job? = null
 
+    @Suppress("DEPRECATION")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        window.statusBarColor = android.graphics.Color.BLACK
+        window.navigationBarColor = android.graphics.Color.BLACK
+
+        lifecycleScope.launch {
+            settingsRepository.settings.collect { current ->
+                settings = current
+            }
+        }
 
         scannedMedia?.let { media ->
             mediaIngestionCoordinator.schedulePurge(media)
@@ -54,6 +74,25 @@ class ScanActivity : ComponentActivity() {
                             onReasonSelected = ::showReason,
                             onReasonDismiss = ::dismissReason,
                             onFindOriginalDismiss = ::dismissFindOriginalSheet,
+                            showTelemetryPrompt = scanUiState.verdict != null && !settings.telemetryPromptShown && !telemetryPromptDismissed,
+                            onTelemetryOptIn = {
+                                telemetryPromptDismissed = true
+                                lifecycleScope.launch {
+                                    settingsRepository.setTelemetryOptIn(true)
+                                }
+                            },
+                            onTelemetryDecline = {
+                                telemetryPromptDismissed = true
+                                lifecycleScope.launch {
+                                    settingsRepository.setTelemetryOptIn(false)
+                                }
+                            },
+                            onTelemetryDecideLater = {
+                                telemetryPromptDismissed = true
+                                lifecycleScope.launch {
+                                    settingsRepository.dismissTelemetryPrompt(markShown = false)
+                                }
+                            },
                         )
 
                     ingestionError != null ->
@@ -87,6 +126,10 @@ class ScanActivity : ComponentActivity() {
                     when (stage) {
                         is ScanStage.Cancelled -> finishSafely()
                         is ScanStage.Failed -> finishSafely()
+                        is ScanStage.VerdictReady -> {
+                            historyRepository.saveScan(media, stage.verdict)
+                            scanUiState = scanUiState.applyStage(stage)
+                        }
                         else -> scanUiState = scanUiState.applyStage(stage)
                     }
                 }
