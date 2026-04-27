@@ -9,7 +9,7 @@
 ## Current Status
 - Phase 11 history and settings implementation is in place.
 - Completion/status report: `docs/phase_reports/phase_11.md`.
-- Pixel 8 visual review is complete; screenshots are embedded in `docs/phase_reports/phase_11.md`.
+- Pixel 8 visual review is complete; screenshots for history, settings, diagnostics, telemetry, and about are embedded in `docs/phase_reports/phase_11.md`.
 
 ## Phase 11 Outcome So Far
 - Added Room history persistence in `data-detection` with latest-100 retention.

@@ -104,7 +104,7 @@ Screenshots captured from the connected Pixel 8 with `adb shell screencap -p`:
 
 ![History empty](phase_11_screenshots/phase11_history_empty.png)
 
-![History populated](phase_11_screenshots/phase11_history_populated.png)
+![History populated, five representative rows](phase_11_screenshots/phase11_history_populated.png)
 
 ![Settings home](phase_11_screenshots/phase11_settings_home.png)
 
@@ -112,12 +112,16 @@ Screenshots captured from the connected Pixel 8 with `adb shell screencap -p`:
 
 ![Diagnostic export preview](phase_11_screenshots/phase11_diagnostic_export_preview.png)
 
+![Telemetry opt-in modal](phase_11_screenshots/phase11_telemetry_opt_in.png)
+
+![About screen](phase_11_screenshots/phase11_about_screen.png)
+
 Visual issues found and fixed during the Pixel 8 pass:
 - The debug app inherited a platform action bar, which pushed/overlapped Compose content. Fixed by applying `Theme.Veritas` with `NoActionBar`.
 - Removing the platform action bar exposed missing status-bar insets on the Compose top bars. Fixed with `statusBarsPadding()` on Home, History, and Settings top bars.
 - Long source package labels wrapped awkwardly in populated history rows. Fixed with single-line ellipsis on the source and metadata text.
 
-The populated history screenshot uses representative seeded local history rows to exercise image, audio, and video row layout without storing original media.
+The populated history screenshot uses five representative seeded local history rows to exercise image, audio, and video row layout without storing original media. The telemetry screenshot uses the debug forensic demo host to render the same production telemetry sheet component on Pixel 8.
 
 ## Connected Pixel 8 Test
 Command:

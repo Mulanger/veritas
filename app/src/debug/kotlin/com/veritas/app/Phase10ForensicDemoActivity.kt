@@ -63,6 +63,7 @@ class Phase10ForensicDemoActivity : ComponentActivity() {
                     onReasonSelected = { selectedReason = it },
                     onReasonDismiss = { selectedReason = null },
                     onFindOriginalDismiss = {},
+                    showTelemetryPrompt = mode == MODE_TELEMETRY,
                 )
             }
         }
@@ -152,5 +153,6 @@ class Phase10ForensicDemoActivity : ComponentActivity() {
         const val MODE_AUDIO = "audio"
         const val MODE_VIDEO = "video"
         const val MODE_SHEET = "sheet"
+        const val MODE_TELEMETRY = "telemetry"
     }
 }
