@@ -9,7 +9,7 @@
 ## Current Status
 - Phase 11 history and settings implementation is in place.
 - Completion/status report: `docs/phase_reports/phase_11.md`.
-- Pixel 8 connected testing and visual review are intentionally deferred because the device was unavailable during implementation.
+- Pixel 8 visual review is complete; screenshots are embedded in `docs/phase_reports/phase_11.md`.
 
 ## Phase 11 Outcome So Far
 - Added Room history persistence in `data-detection` with latest-100 retention.
@@ -31,7 +31,8 @@
 ## Verification Commands
 - `$env:JAVA_HOME='C:\Program Files\Java\jdk-21'; .\gradlew.bat :app:compileDebugKotlin`
 - `$env:JAVA_HOME='C:\Program Files\Java\jdk-21'; .\gradlew.bat :data-detection:testDebugUnitTest :app:testDebugUnitTest :app:compileDebugAndroidTestKotlin`
+- `$env:JAVA_HOME='C:\Program Files\Java\jdk-21'; .\gradlew.bat :app:assembleDebug`
 
 ## Known Follow-Up
-- Once Pixel 8 is connected, run Phase 11 connected UI verification and perform manual density review.
-- Phase 10 connected Compose test remains blocked on the Android 16 AndroidX Compose/Espresso runtime compatibility issue unless the AndroidX test stack is updated or the test is run on a compatible Android version.
+- Phase 11 connected Compose test reaches the Pixel 8 but fails before assertions on Android 16 with `NoSuchMethodException: android.hardware.input.InputManager.getInstance` from AndroidX Compose/Espresso idling.
+- Phase 10 and Phase 11 connected Compose tests remain blocked on the Android 16 AndroidX Compose/Espresso runtime compatibility issue unless the AndroidX test stack is updated or the tests are run on a compatible Android version.

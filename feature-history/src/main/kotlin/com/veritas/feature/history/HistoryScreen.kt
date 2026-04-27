@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
@@ -37,6 +38,7 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
@@ -213,10 +215,14 @@ private fun HistoryItemRow(
                 Text(
                     text = item.sourceLabel,
                     style = VeritasType.bodyMd.copy(color = VeritasColors.ink),
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
                 )
                 Text(
                     text = stringResource(R.string.history_media_meta, item.mediaType.name.lowercase(), formatTimestamp(item.scannedAtEpochMs)),
                     style = VeritasType.bodySm.copy(color = VeritasColors.inkMute),
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
                 )
             }
             VerdictPill(
@@ -261,6 +267,7 @@ private fun HistoryTopBar() {
         modifier =
             Modifier
                 .fillMaxWidth()
+                .statusBarsPadding()
                 .padding(
                     start = 22.dp,
                     end = 22.dp,

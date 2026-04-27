@@ -2,7 +2,7 @@
 
 **Phase:** 11 - History and settings
 **Completed:** 2026-04-27
-**Device review:** deferred; Pixel 8 unavailable during implementation
+**Device review:** Pixel 8 completed on 2026-04-27
 
 ## Deliverables
 - [x] Room-backed scan history with latest-100 retention.
@@ -16,6 +16,7 @@
 - [x] Diagnostic export generator and share flow with FileProvider.
 - [x] Unit and Compose-test coverage for the new persistence and UI surfaces.
 - [x] Phase 11 user-visible history, settings, and telemetry copy moved to `strings.xml`.
+- [x] Pixel 8 density review screenshots captured for history, settings, and diagnostic export.
 
 ## Privacy Review
 - Original media is not stored in history.
@@ -90,12 +91,49 @@ D/VeritasShare: provider content://[redacted]
 - `DiagnosticExportGeneratorTest`: export includes operational state and redacts/excludes sensitive values.
 - `Phase11HistorySettingsUiTest`: Compose API smoke coverage for history, settings panes, and telemetry modal dismissal.
 
-## Deferred Pixel 8 Work
-Pixel 8 was not connected for this session by request. Still required before final sign-off:
-- Install/run the debug build on Pixel 8.
-- Run Phase 11 connected Compose UI tests.
-- Manually inspect history and settings flows on Pixel 8 density.
-- Capture screenshots if requested for final review.
+## Pixel 8 Visual Review
+Device:
+- Google Pixel 8 (`shiba`)
+- Android 16 / SDK 36
+- Physical size: 1080x2400
+- Physical density: 420
+
+Screenshots captured from the connected Pixel 8 with `adb shell screencap -p`:
+
+![Home empty](phase_11_screenshots/phase11_home_empty.png)
+
+![History empty](phase_11_screenshots/phase11_history_empty.png)
+
+![History populated](phase_11_screenshots/phase11_history_populated.png)
+
+![Settings home](phase_11_screenshots/phase11_settings_home.png)
+
+![Diagnostic export screen](phase_11_screenshots/phase11_diagnostics_screen.png)
+
+![Diagnostic export preview](phase_11_screenshots/phase11_diagnostic_export_preview.png)
+
+Visual issues found and fixed during the Pixel 8 pass:
+- The debug app inherited a platform action bar, which pushed/overlapped Compose content. Fixed by applying `Theme.Veritas` with `NoActionBar`.
+- Removing the platform action bar exposed missing status-bar insets on the Compose top bars. Fixed with `statusBarsPadding()` on Home, History, and Settings top bars.
+- Long source package labels wrapped awkwardly in populated history rows. Fixed with single-line ellipsis on the source and metadata text.
+
+The populated history screenshot uses representative seeded local history rows to exercise image, audio, and video row layout without storing original media.
+
+## Connected Pixel 8 Test
+Command:
+
+```powershell
+$env:JAVA_HOME='C:\Program Files\Java\jdk-21'
+$env:ANDROID_SERIAL='45131FDJH0015H'
+.\gradlew.bat :app:connectedDebugAndroidTest '-Pandroid.testInstrumentationRunnerArguments.class=com.veritas.app.Phase11HistorySettingsUiTest'
+```
+
+Result:
+- The test installed and launched on Pixel 8, then failed before Phase 11 assertions inside AndroidX Compose test idling.
+- Failure signature: `java.lang.NoSuchMethodException: android.hardware.input.InputManager.getInstance`
+- Stack path: `androidx.compose.ui.test.EspressoLink_androidKt.runEspressoOnIdle` -> `androidx.test.espresso.Espresso.onIdle` -> `InputManagerEventInjectionStrategy.initialize`.
+
+This is the same Android 16 AndroidX Compose/Espresso runtime issue observed in Phase 10. The Phase 11 test itself uses Compose test APIs, but the current Compose test runtime still bridges through Espresso idling on device. JVM tests and Android test compilation remain green.
 
 ## Decisions Made
 - D-059: History stores thumbnails and verdict summaries only.
@@ -106,6 +144,4 @@ Pixel 8 was not connected for this session by request. Still required before fin
 ## Verification
 - `$env:JAVA_HOME='C:\Program Files\Java\jdk-21'; .\gradlew.bat :app:compileDebugKotlin`
 - `$env:JAVA_HOME='C:\Program Files\Java\jdk-21'; .\gradlew.bat :data-detection:testDebugUnitTest :app:testDebugUnitTest :app:compileDebugAndroidTestKotlin`
-
-## Remaining Before Sign-Off
-- Pixel 8 connected verification and visual review once the device is available.
+- `$env:JAVA_HOME='C:\Program Files\Java\jdk-21'; .\gradlew.bat :app:assembleDebug`
