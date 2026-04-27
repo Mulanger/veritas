@@ -277,6 +277,66 @@ fun FindOriginalSheet(
     }
 }
 
+const val TELEMETRY_OPT_IN_SHEET_TAG = "telemetry_opt_in_sheet"
+const val TELEMETRY_SHARE_TAG = "telemetry_share"
+const val TELEMETRY_NO_THANKS_TAG = "telemetry_no_thanks"
+const val TELEMETRY_DECIDE_LATER_TAG = "telemetry_decide_later"
+
+@Composable
+fun TelemetryOptInSheet(
+    onShareAnonymousData: () -> Unit,
+    onNoThanks: () -> Unit,
+    onDecideLater: () -> Unit,
+) {
+    Column(
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .testTag(TELEMETRY_OPT_IN_SHEET_TAG)
+                .padding(horizontal = 22.dp, vertical = 20.dp),
+        verticalArrangement = Arrangement.spacedBy(14.dp),
+    ) {
+        Text(
+            text = stringResource(R.string.telemetry_opt_in_title),
+            style = VeritasType.headingLg.copy(color = VeritasColors.ink),
+        )
+        Text(
+            text = stringResource(R.string.telemetry_opt_in_body),
+            style = VeritasType.bodyMd.copy(color = VeritasColors.inkDim),
+        )
+        Text(
+            text = stringResource(R.string.telemetry_opt_in_included),
+            style = VeritasType.bodySm.copy(color = VeritasColors.ink),
+        )
+        Text(
+            text = stringResource(R.string.telemetry_opt_in_never),
+            style = VeritasType.bodySm.copy(color = VeritasColors.inkMute),
+        )
+        Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            VeritasButton(
+                text = stringResource(R.string.telemetry_no_thanks),
+                onClick = onNoThanks,
+                modifier = Modifier.weight(1f),
+                variant = VeritasButtonVariant.Ghost,
+                testTag = TELEMETRY_NO_THANKS_TAG,
+            )
+            VeritasButton(
+                text = stringResource(R.string.telemetry_share),
+                onClick = onShareAnonymousData,
+                modifier = Modifier.weight(1f),
+                testTag = TELEMETRY_SHARE_TAG,
+            )
+        }
+        VeritasButton(
+            text = stringResource(R.string.telemetry_decide_later),
+            onClick = onDecideLater,
+            modifier = Modifier.fillMaxWidth(),
+            variant = VeritasButtonVariant.Ghost,
+            testTag = TELEMETRY_DECIDE_LATER_TAG,
+        )
+    }
+}
+
 @Composable
 private fun GuidanceRow(text: String) {
     Row(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.Top) {

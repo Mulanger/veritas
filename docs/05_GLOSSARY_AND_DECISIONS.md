@@ -624,6 +624,46 @@ The agent adds entries here whenever it makes a decision during build that:
 **Reversal cost:** low - adding bespoke strings for the remaining codes is additive.
 **Approved by human:** pending checkpoint, 2026-04-26
 
+### D-059 - History stores thumbnails and verdict summaries only
+**Phase:** 11
+**Date:** 2026-04-27
+**Context:** Phase 11 requires scan history while preserving the v1 privacy promise that original media and media-derived forensic tensors are not retained.
+**Decision:** Store Room history rows with media type, MIME type, source package, app-private thumbnail path, verdict outcome, confidence range, summary, top three serialized reasons, model versions, and scan time. Do not store original media URIs, paths, copied media, C2PA manifests, raw heatmaps, waveforms, timelines, or full reason detail text.
+**Alternatives considered:** Persist original media paths for replay; rejected because shared content may disappear and storing paths weakens the privacy contract. Persist full forensic evidence; rejected because Phase 10 evidence is session-only.
+**Reasoning:** History can answer "what did I scan and what was the verdict?" without becoming a media archive.
+**Reversal cost:** medium - adding richer history later would require a migration and a new privacy review.
+**Approved by human:** pending checkpoint, 2026-04-27
+
+### D-060 - History thumbnails are generated before purge and pruned with Room rows
+**Phase:** 11
+**Date:** 2026-04-27
+**Context:** History needs a visual cue after the temporary ingestion file is purged, but the app must not retain original media.
+**Decision:** Generate a bounded `240 px` JPEG thumbnail in `filesDir/history/thumbnails/` when the verdict is ready, before media cleanup. Room keeps the latest 100 rows and the repository deletes thumbnails when rows are deleted, cleared, or pruned.
+**Alternatives considered:** Use source URI thumbnails lazily in history; rejected because the source URI may be revoked and would couple history to original media access. Store larger thumbnails; rejected for storage and privacy minimization.
+**Reasoning:** Small app-private thumbnails make the history list useful while keeping retained media-derived data minimal and bounded.
+**Reversal cost:** low - thumbnail size/quality can change with a migrationless cache refresh.
+**Approved by human:** pending checkpoint, 2026-04-27
+
+### D-061 - Phase 11 settings use one Preferences DataStore
+**Phase:** 11
+**Date:** 2026-04-27
+**Context:** Phase 11 adds settings for overlay behavior, model updates, telemetry, privacy controls, and onboarding state.
+**Decision:** Use a single Preferences DataStore named `veritas_settings` for onboarding completion and app settings. Defaults are private/local: overlay disabled, haptics enabled, model auto-update enabled, Wi-Fi-only model updates enabled, telemetry off, telemetry prompt not shown.
+**Alternatives considered:** Keep the previous onboarding-only DataStore and add a second settings store; rejected because multiple stores increase migration and test complexity without a product benefit.
+**Reasoning:** One store gives deterministic app startup state and keeps settings reset semantics straightforward.
+**Reversal cost:** low - keys are additive and can be migrated if a typed Proto store is needed later.
+**Approved by human:** pending checkpoint, 2026-04-27
+
+### D-062 - Diagnostic export is aggregate and redacted
+**Phase:** 11
+**Date:** 2026-04-27
+**Context:** Diagnostics are useful for support but must not leak media, paths, manifests, user identifiers, or detailed per-scan explanations.
+**Decision:** Generate a plain text support export with device/app versions, model version labels, settings state, aggregate verdict counts for the last 30 days, and the last 50 Veritas-tagged redacted log lines. Exclude media files, media paths, source thumbnails, source packages, C2PA manifests, full logcat, per-scan reason detail text, and user identifiers.
+**Alternatives considered:** Attach full history rows or logcat; rejected because both can contain sensitive local context.
+**Reasoning:** Support can inspect environment and coarse app state without compromising the privacy thesis.
+**Reversal cost:** low - export fields are centrally generated and covered by unit tests.
+**Approved by human:** pending checkpoint, 2026-04-27
+
 ## Part 4 - Open questions
 
 Questions that remain unresolved at start of build. The agent should revisit these at the relevant phase and either resolve (add to decision log) or escalate to human.

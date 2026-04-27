@@ -103,6 +103,11 @@ fun ScanFlowScreen(
     onReasonDismiss: () -> Unit,
     onFindOriginalDismiss: () -> Unit,
     modifier: Modifier = Modifier,
+    displayMode: ScanDisplayMode = ScanDisplayMode.Live,
+    showTelemetryPrompt: Boolean = false,
+    onTelemetryOptIn: () -> Unit = {},
+    onTelemetryDecline: () -> Unit = {},
+    onTelemetryDecideLater: () -> Unit = {},
 ) {
     val media = requireNotNull(state.media)
     val verdict = state.verdict
@@ -129,6 +134,7 @@ fun ScanFlowScreen(
                 VerdictScreen(
                     media = media,
                     verdict = requireNotNull(verdict),
+                    displayMode = displayMode,
                     onClose = onClose,
                     onPrimaryAction = onPrimaryVerdictAction,
                     onDone = onDone,
@@ -175,7 +181,29 @@ fun ScanFlowScreen(
                 )
             }
         }
+
+        if (showTelemetryPrompt) {
+            ModalBottomSheet(
+                onDismissRequest = onTelemetryDecideLater,
+                containerColor = VeritasColors.panel,
+                contentColor = VeritasColors.ink,
+            ) {
+                TelemetryOptInSheet(
+                    onShareAnonymousData = onTelemetryOptIn,
+                    onNoThanks = onTelemetryDecline,
+                    onDecideLater = onTelemetryDecideLater,
+                )
+            }
+        }
     }
+}
+
+sealed interface ScanDisplayMode {
+    data object Live : ScanDisplayMode
+
+    data class Historical(
+        val label: String,
+    ) : ScanDisplayMode
 }
 
 @Composable
@@ -216,6 +244,7 @@ private fun ScanningScreen(
 private fun VerdictScreen(
     media: ScannedMedia,
     verdict: com.veritas.domain.detection.Verdict,
+    displayMode: ScanDisplayMode,
     onClose: () -> Unit,
     onPrimaryAction: () -> Unit,
     onDone: () -> Unit,
@@ -236,6 +265,17 @@ private fun VerdictScreen(
             verticalArrangement = Arrangement.SpaceBetween,
         ) {
             Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                if (displayMode is ScanDisplayMode.Historical) {
+                    Text(
+                        text = displayMode.label,
+                        modifier =
+                            Modifier
+                                .fillMaxWidth()
+                                .background(VeritasColors.panel, RoundedCornerShape(8.dp))
+                                .padding(horizontal = 12.dp, vertical = 9.dp),
+                        style = VeritasType.monoXs.copy(color = VeritasColors.inkMute, fontWeight = FontWeight.W700),
+                    )
+                }
                 VeritasTag(text = verdictTag(media))
                 Text(
                     text = presentation.headline,
@@ -629,6 +669,7 @@ private fun ImageForensicTabs(
                 )
             }
         }
+
     }
 }
 

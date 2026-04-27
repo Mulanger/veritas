@@ -29,8 +29,10 @@ kotlin {
 
 dependencies {
     implementation(project(":core-design"))
+    implementation(project(":domain-detection"))
 
     implementation(platform(libs.androidx.compose.bom))
+    implementation(libs.coil.compose)
     implementation(libs.androidx.compose.foundation)
     implementation(libs.androidx.compose.material3)
     implementation(libs.androidx.compose.ui)

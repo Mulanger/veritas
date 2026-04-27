@@ -1,6 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Veritas</string>
+    <string name="telemetry_opt_in_title">Help improve detection</string>
+    <string name="telemetry_opt_in_body">Veritas can send anonymous, aggregate data to improve our models:</string>
+    <string name="telemetry_opt_in_included">Verdict distribution\nDevice type and model version\nCrash reports</string>
+    <string name="telemetry_opt_in_never">Never: your media, your history, your identity, file hashes, or reason codes from specific scans.</string>
+    <string name="telemetry_no_thanks">No thanks</string>
+    <string name="telemetry_share">Share anonymous data</string>
+    <string name="telemetry_decide_later">Decide later in settings</string>
     <string name="reason_generic_what">%1$s is one signal Veritas records during a scan. The detail depends on the media type and the measurements attached to this result.</string>
     <string name="reason_generic_why">%1$s matters only in context. Veritas weighs it with the other detector and provenance signals before choosing a verdict.</string>
     <string name="reason_generic_risk">This signal is not proof by itself. Capture conditions, editing, platform recompression, or unusual source material can create similar measurements in authentic media.</string>
